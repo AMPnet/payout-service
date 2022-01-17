@@ -10,7 +10,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint").version(Versions.Plugins.ktlint)
     id("io.gitlab.arturbosch.detekt").version(Versions.Plugins.detekt)
     id("org.unbroken-dome.test-sets").version(Versions.Plugins.testSets)
-    id("com.adarshr.test-logger").version(Versions.Plugins.testLogger)
+//    id("com.adarshr.test-logger").version(Versions.Plugins.testLogger) // does not work with current version of Kotlin
     id("org.springframework.boot").version(Versions.Plugins.springBoot)
     id("io.spring.dependency-management").version(Versions.Plugins.springDependencyManagement)
     id("com.google.cloud.tools.jib").version(Versions.Plugins.jib)
