@@ -708,8 +708,10 @@ class MerkleTreeTest : TestBase() {
                         hash = nonTrivialHashFn((hashes[2] + NilNode.hash).value)
                     ),
                     hash = nonTrivialHashFn(
-                        (nonTrivialHashFn((hashes[0] + hashes[1]).value) +
-                            nonTrivialHashFn((hashes[2] + NilNode.hash).value)).value
+                        (
+                            nonTrivialHashFn((hashes[0] + hashes[1]).value) +
+                                nonTrivialHashFn((hashes[2] + NilNode.hash).value)
+                            ).value
                     ),
                     depth = 2
                 )
