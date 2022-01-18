@@ -14,6 +14,7 @@ class MerkleTreeTest : TestBase() {
 
     private val identityHashFn: (String) -> Hash = { Hash(it) }
     private val fixedHashFn: (String) -> Hash = { Hash("0") }
+    private val nonTrivialHashFn: (String) -> Hash = { Hash("--" + it.hashCode().toString() + "//") }
     private val nonContainedBalance = AccountBalance(WalletAddress("0xffff"), Balance(BigInteger("99999999")))
 
     @Test
@@ -639,11 +640,116 @@ class MerkleTreeTest : TestBase() {
         }
     }
 
-    private fun List<AccountBalance>.leafNode(index: Int): LeafNode =
-        LeafNode(this[index], Hash(this[index].abiEncode()), index)
+    @Test
+    fun mustCorrectlyWorkWithNonTrivialHashFunctionForSingleElement() {
+        val balance = AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0")))
+        val tree = suppose("Merkle tree with single element is created") {
+            MerkleTree(
+                listOf(balance),
+                nonTrivialHashFn
+            )
+        }
 
-    private fun List<AccountBalance>.hashes(): List<Hash> =
-        this.map { Hash(it.abiEncode()) }
+        verify("Merkle tree has correct structure") {
+            assertThat(tree.root).withMessage().isEqualTo(
+                RootNode(
+                    left = LeafNode(balance, nonTrivialHashFn(balance.abiEncode()), 0),
+                    right = NilNode,
+                    hash = nonTrivialHashFn(nonTrivialHashFn(balance.abiEncode()).value + NilNode.hash.value),
+                    depth = 1
+                )
+            )
+        }
+
+        verify("Merkle tree has correct leaf nodes") {
+            assertThat(tree.leafNodes).withMessage().hasSize(1)
+            assertThat(tree.leafNodes).withMessage().containsEntry(
+                nonTrivialHashFn(balance.abiEncode()), LeafNode(balance, nonTrivialHashFn(balance.abiEncode()), 0)
+            )
+        }
+
+        verify("Merkle tree path is correct") {
+            assertThat(tree.pathTo(balance)).withMessage().isEqualTo(
+                listOf(NilNode.hash)
+            )
+        }
+
+        verify("Merkle tree does not return a path for non-contained node") {
+            assertThat(tree.pathTo(nonContainedBalance)).withMessage().isNull()
+        }
+    }
+
+    @Test
+    fun mustCorrectlyWorkWithNonTrivialHashFunctionForMultipleElements() {
+        val balances = listOf(
+            AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0"))),
+            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("1"))),
+            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("2")))
+        )
+        val hashes = balances.hashes(nonTrivialHashFn)
+        val tree = suppose("Merkle tree with multiple elements is created") {
+            MerkleTree(
+                balances.shuffled(),
+                nonTrivialHashFn
+            )
+        }
+
+        verify("Merkle tree has correct structure") {
+            assertThat(tree.root).withMessage().isEqualTo(
+                RootNode(
+                    left = MiddleNode(
+                        left = balances.leafNode(0, nonTrivialHashFn),
+                        right = balances.leafNode(1, nonTrivialHashFn),
+                        hash = nonTrivialHashFn(hashes[0].value + hashes[1].value)
+                    ),
+                    right = MiddleNode(
+                        left = balances.leafNode(2, nonTrivialHashFn),
+                        right = NilNode,
+                        hash = nonTrivialHashFn(hashes[2].value + NilNode.hash.value)
+                    ),
+                    hash = nonTrivialHashFn(
+                        nonTrivialHashFn(hashes[0].value + hashes[1].value).value +
+                            nonTrivialHashFn(hashes[2].value + NilNode.hash.value).value
+                    ),
+                    depth = 2
+                )
+            )
+        }
+
+        verify("Merkle tree has correct leaf nodes") {
+            assertThat(tree.leafNodes).withMessage().hasSize(3)
+            assertThat(tree.leafNodes.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+                balances.mapIndexed { index, node ->
+                    Pair(
+                        nonTrivialHashFn(node.abiEncode()),
+                        LeafNode(node, nonTrivialHashFn(node.abiEncode()), index)
+                    )
+                }
+            )
+        }
+
+        verify("Merkle tree paths are correct") {
+            assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
+                listOf(hashes[1], nonTrivialHashFn(hashes[2].value + NilNode.hash.value))
+            )
+            assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
+                listOf(hashes[0], nonTrivialHashFn(hashes[2].value + NilNode.hash.value))
+            )
+            assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
+                listOf(NilNode.hash, nonTrivialHashFn(hashes[0].value + hashes[1].value))
+            )
+        }
+
+        verify("Merkle tree does not return a path for non-contained node") {
+            assertThat(tree.pathTo(nonContainedBalance)).withMessage().isNull()
+        }
+    }
+
+    private fun List<AccountBalance>.leafNode(index: Int, hashFn: (String) -> Hash = identityHashFn): LeafNode =
+        LeafNode(this[index], hashFn(this[index].abiEncode()), index)
+
+    private fun List<AccountBalance>.hashes(hashFn: (String) -> Hash = identityHashFn): List<Hash> =
+        this.map { hashFn(it.abiEncode()) }
 
     private fun List<Hash>.all(): Hash =
         Hash(this.joinToString(separator = "") { it.value })
