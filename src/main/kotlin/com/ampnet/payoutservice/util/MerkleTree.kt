@@ -15,7 +15,7 @@ class MerkleTree(nodes: List<AccountBalance>, private val hashFn: (String) -> Ha
         }
 
         object NilNode : Node {
-            override val hash: Hash = Hash("")
+            override val hash: Hash = Hash("0")
         }
 
         data class LeafNode(val data: AccountBalance, override val hash: Hash, val index: Int) : Node
@@ -85,7 +85,7 @@ class MerkleTree(nodes: List<AccountBalance>, private val hashFn: (String) -> Ha
         get() = hashFn(abiEncode())
 
     private val Pair<Node, Node>.hash: Hash
-        get() = hashFn(first.hash.value + second.hash.value)
+        get() = hashFn((first.hash + second.hash).value)
 
     private fun Collection<Node>.pairwise(): List<Pair<Node, Node>> =
         this.chunked(2).map { Pair(it.first(), it.getOrNull(1) ?: NilNode) }

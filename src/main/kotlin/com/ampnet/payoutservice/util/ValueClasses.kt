@@ -6,7 +6,9 @@ import org.web3j.abi.datatypes.Uint
 import java.math.BigInteger
 
 @JvmInline
-value class Hash(val value: String)
+value class Hash(val value: String) {
+    operator fun plus(other: Hash): Hash = Hash(value + other.value)
+}
 
 @JvmInline
 value class WalletAddress(val value: Address) : Comparable<WalletAddress> {
