@@ -1,6 +1,32 @@
 package com.ampnet.payoutservice.util
 
+import java.util.LinkedList
+
 class MerkleTree(nodes: List<AccountBalance>, private val hashFn: (String) -> Hash) {
+
+    companion object {
+        sealed interface Node {
+            val hash: Hash
+        }
+
+        sealed interface PathNode : Node {
+            val left: Node
+            val right: Node
+        }
+
+        object NilNode : Node {
+            override val hash: Hash = Hash("")
+        }
+
+        data class LeafNode(val data: AccountBalance, override val hash: Hash, val index: Int) : Node
+        data class MiddleNode(override val left: Node, override val right: Node, override val hash: Hash) : PathNode
+        data class RootNode(
+            override val left: Node,
+            override val right: Node,
+            override val hash: Hash,
+            val depth: Int
+        ) : PathNode
+    }
 
     val leafNodes: Map<Hash, LeafNode>
     val root: RootNode
@@ -19,39 +45,41 @@ class MerkleTree(nodes: List<AccountBalance>, private val hashFn: (String) -> Ha
         root = buildTree(sortedNodes)
     }
 
-    companion object {
-        sealed interface Node {
-            val hash: Hash
+    fun pathTo(element: AccountBalance): List<Hash>? {
+        val index = leafNodes[element.hash]?.index ?: return null
+        val moves = index.toString(2).padStart(root.depth, '0')
+
+        tailrec fun findPath(currentNode: Node, d: Int, path: LinkedList<Hash>): List<Hash> {
+            return if (currentNode is PathNode) {
+                val isLeft = moves[d] == '0'
+                val nextNode = if (isLeft) currentNode.left else currentNode.right
+                val siblingNode = if (isLeft.not()) currentNode.left else currentNode.right
+                findPath(nextNode, d + 1, path.withFirst(siblingNode.hash))
+            } else {
+                path
+            }
         }
 
-        object NilNode : Node {
-            override val hash: Hash = Hash("")
-        }
-
-        data class LeafNode(val data: AccountBalance, override val hash: Hash, val index: Int) : Node
-        data class MiddleNode(val left: Node, val right: Node, override val hash: Hash) : Node
-        data class RootNode(val left: Node, val right: Node, override val hash: Hash) : Node
+        return findPath(root, 0, LinkedList())
     }
 
     private fun buildTree(sortedNodes: Set<AccountBalance>): RootNode {
         val leafNodes = sortedNodes.mapIndexed { index, node -> LeafNode(node, node.hash, index) }
 
-        tailrec fun buildLayer(nodes: Collection<Node>): RootNode {
+        tailrec fun buildLayer(nodes: Collection<Node>, depth: Int): RootNode {
             val pairs = nodes.pairwise()
 
             return if (pairs.size == 1) {
                 val pair = pairs[0]
-                RootNode(pair.first, pair.second, pair.hash)
+                RootNode(pair.first, pair.second, pair.hash, depth)
             } else {
                 val parentLayer = pairs.map { MiddleNode(it.first, it.second, it.hash) }
-                buildLayer(parentLayer)
+                buildLayer(parentLayer, depth + 1)
             }
         }
 
-        return buildLayer(leafNodes)
+        return buildLayer(leafNodes, 1)
     }
-
-    // TODO implement path finding
 
     private val AccountBalance.hash: Hash
         get() = hashFn(abiEncode())
@@ -61,4 +89,9 @@ class MerkleTree(nodes: List<AccountBalance>, private val hashFn: (String) -> Ha
 
     private fun Collection<Node>.pairwise(): List<Pair<Node, Node>> =
         this.chunked(2).map { Pair(it.first(), it.getOrNull(1) ?: NilNode) }
+
+    private fun LinkedList<Hash>.withFirst(first: Hash): LinkedList<Hash> {
+        addFirst(first)
+        return this
+    }
 }

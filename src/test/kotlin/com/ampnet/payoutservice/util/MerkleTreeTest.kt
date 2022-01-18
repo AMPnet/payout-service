@@ -14,6 +14,7 @@ class MerkleTreeTest : TestBase() {
 
     private val identityHashFn: (String) -> Hash = { Hash(it) }
     private val fixedHashFn: (String) -> Hash = { Hash("0") }
+    private val nonContainedBalance = AccountBalance(WalletAddress("0xffff"), Balance(BigInteger("99999999")))
 
     @Test
     fun mustThrowExceptionForEmptyNodeList() {
@@ -52,7 +53,8 @@ class MerkleTreeTest : TestBase() {
                 RootNode(
                     left = LeafNode(balance, Hash(balance.abiEncode()), 0),
                     right = NilNode,
-                    hash = Hash(balance.abiEncode())
+                    hash = Hash(balance.abiEncode()),
+                    depth = 1
                 )
             )
         }
@@ -63,7 +65,16 @@ class MerkleTreeTest : TestBase() {
                 Hash(balance.abiEncode()), LeafNode(balance, Hash(balance.abiEncode()), 0)
             )
         }
-        // TODO test path
+
+        verify("Merkle tree path is correct") {
+            assertThat(tree.pathTo(balance)).withMessage().isEqualTo(
+                listOf(NilNode.hash)
+            )
+        }
+
+        verify("Merkle tree does not return a path for non-contained node") {
+            assertThat(tree.pathTo(nonContainedBalance)).withMessage().isNull()
+        }
     }
 
     @Test
@@ -85,7 +96,8 @@ class MerkleTreeTest : TestBase() {
                 RootNode(
                     left = balances.leafNode(0),
                     right = balances.leafNode(1),
-                    hash = hashes.all()
+                    hash = hashes.all(),
+                    depth = 1
                 )
             )
         }
@@ -101,7 +113,19 @@ class MerkleTreeTest : TestBase() {
                 }
             )
         }
-        // TODO test path
+
+        verify("Merkle tree paths are correct") {
+            assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
+                listOf(hashes[1])
+            )
+            assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
+                listOf(hashes[0])
+            )
+        }
+
+        verify("Merkle tree does not return a path for non-contained node") {
+            assertThat(tree.pathTo(nonContainedBalance)).withMessage().isNull()
+        }
     }
 
     @Test
@@ -132,7 +156,8 @@ class MerkleTreeTest : TestBase() {
                         right = NilNode,
                         hash = hashes[2]
                     ),
-                    hash = hashes.all()
+                    hash = hashes.all(),
+                    depth = 2
                 )
             )
         }
@@ -148,7 +173,22 @@ class MerkleTreeTest : TestBase() {
                 }
             )
         }
-        // TODO test path
+
+        verify("Merkle tree paths are correct") {
+            assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
+                listOf(hashes[1], hashes[2])
+            )
+            assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
+                listOf(hashes[0], hashes[2])
+            )
+            assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
+                listOf(NilNode.hash, hashes[0..1])
+            )
+        }
+
+        verify("Merkle tree does not return a path for non-contained node") {
+            assertThat(tree.pathTo(nonContainedBalance)).withMessage().isNull()
+        }
     }
 
     @Test
@@ -180,7 +220,8 @@ class MerkleTreeTest : TestBase() {
                         right = balances.leafNode(3),
                         hash = hashes[2..3]
                     ),
-                    hash = hashes.all()
+                    hash = hashes.all(),
+                    depth = 2
                 )
             )
         }
@@ -196,7 +237,25 @@ class MerkleTreeTest : TestBase() {
                 }
             )
         }
-        // TODO test path
+
+        verify("Merkle tree paths are correct") {
+            assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
+                listOf(hashes[1], hashes[2..3])
+            )
+            assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
+                listOf(hashes[0], hashes[2..3])
+            )
+            assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
+                listOf(hashes[3], hashes[0..1])
+            )
+            assertThat(tree.pathTo(balances[3])).withMessage().isEqualTo(
+                listOf(hashes[2], hashes[0..1])
+            )
+        }
+
+        verify("Merkle tree does not return a path for non-contained node") {
+            assertThat(tree.pathTo(nonContainedBalance)).withMessage().isNull()
+        }
     }
 
     @Test
@@ -248,7 +307,8 @@ class MerkleTreeTest : TestBase() {
                         ),
                         hash = hashes[4..7]
                     ),
-                    hash = hashes.all()
+                    hash = hashes.all(),
+                    depth = 3
                 )
             )
         }
@@ -264,7 +324,37 @@ class MerkleTreeTest : TestBase() {
                 }
             )
         }
-        // TODO test path
+
+        verify("Merkle tree paths are correct") {
+            assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
+                listOf(hashes[1], hashes[2..3], hashes[4..7])
+            )
+            assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
+                listOf(hashes[0], hashes[2..3], hashes[4..7])
+            )
+            assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
+                listOf(hashes[3], hashes[0..1], hashes[4..7])
+            )
+            assertThat(tree.pathTo(balances[3])).withMessage().isEqualTo(
+                listOf(hashes[2], hashes[0..1], hashes[4..7])
+            )
+            assertThat(tree.pathTo(balances[4])).withMessage().isEqualTo(
+                listOf(hashes[5], hashes[6..7], hashes[0..3])
+            )
+            assertThat(tree.pathTo(balances[5])).withMessage().isEqualTo(
+                listOf(hashes[4], hashes[6..7], hashes[0..3])
+            )
+            assertThat(tree.pathTo(balances[6])).withMessage().isEqualTo(
+                listOf(hashes[7], hashes[4..5], hashes[0..3])
+            )
+            assertThat(tree.pathTo(balances[7])).withMessage().isEqualTo(
+                listOf(hashes[6], hashes[4..5], hashes[0..3])
+            )
+        }
+
+        verify("Merkle tree does not return a path for non-contained node") {
+            assertThat(tree.pathTo(nonContainedBalance)).withMessage().isNull()
+        }
     }
 
     @Test
@@ -340,7 +430,8 @@ class MerkleTreeTest : TestBase() {
                         right = NilNode,
                         hash = hashes[8..11]
                     ),
-                    hash = hashes.all()
+                    hash = hashes.all(),
+                    depth = 4
                 )
             )
         }
@@ -356,7 +447,49 @@ class MerkleTreeTest : TestBase() {
                 }
             )
         }
-        // TODO test path
+
+        verify("Merkle tree paths are correct") {
+            assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
+                listOf(hashes[1], hashes[2..3], hashes[4..7], hashes[8..11])
+            )
+            assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
+                listOf(hashes[0], hashes[2..3], hashes[4..7], hashes[8..11])
+            )
+            assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
+                listOf(hashes[3], hashes[0..1], hashes[4..7], hashes[8..11])
+            )
+            assertThat(tree.pathTo(balances[3])).withMessage().isEqualTo(
+                listOf(hashes[2], hashes[0..1], hashes[4..7], hashes[8..11])
+            )
+            assertThat(tree.pathTo(balances[4])).withMessage().isEqualTo(
+                listOf(hashes[5], hashes[6..7], hashes[0..3], hashes[8..11])
+            )
+            assertThat(tree.pathTo(balances[5])).withMessage().isEqualTo(
+                listOf(hashes[4], hashes[6..7], hashes[0..3], hashes[8..11])
+            )
+            assertThat(tree.pathTo(balances[6])).withMessage().isEqualTo(
+                listOf(hashes[7], hashes[4..5], hashes[0..3], hashes[8..11])
+            )
+            assertThat(tree.pathTo(balances[7])).withMessage().isEqualTo(
+                listOf(hashes[6], hashes[4..5], hashes[0..3], hashes[8..11])
+            )
+            assertThat(tree.pathTo(balances[8])).withMessage().isEqualTo(
+                listOf(hashes[9], hashes[10..11], NilNode.hash, hashes[0..7])
+            )
+            assertThat(tree.pathTo(balances[9])).withMessage().isEqualTo(
+                listOf(hashes[8], hashes[10..11], NilNode.hash, hashes[0..7])
+            )
+            assertThat(tree.pathTo(balances[10])).withMessage().isEqualTo(
+                listOf(hashes[11], hashes[8..9], NilNode.hash, hashes[0..7])
+            )
+            assertThat(tree.pathTo(balances[11])).withMessage().isEqualTo(
+                listOf(hashes[10], hashes[8..9], NilNode.hash, hashes[0..7])
+            )
+        }
+
+        verify("Merkle tree does not return a path for non-contained node") {
+            assertThat(tree.pathTo(nonContainedBalance)).withMessage().isNull()
+        }
     }
 
     @Test
@@ -441,7 +574,8 @@ class MerkleTreeTest : TestBase() {
                         ),
                         hash = hashes[8..12]
                     ),
-                    hash = hashes.all()
+                    hash = hashes.all(),
+                    depth = 4
                 )
             )
         }
@@ -457,7 +591,52 @@ class MerkleTreeTest : TestBase() {
                 }
             )
         }
-        // TODO test path
+
+        verify("Merkle tree paths are correct") {
+            assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
+                listOf(hashes[1], hashes[2..3], hashes[4..7], hashes[8..12])
+            )
+            assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
+                listOf(hashes[0], hashes[2..3], hashes[4..7], hashes[8..12])
+            )
+            assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
+                listOf(hashes[3], hashes[0..1], hashes[4..7], hashes[8..12])
+            )
+            assertThat(tree.pathTo(balances[3])).withMessage().isEqualTo(
+                listOf(hashes[2], hashes[0..1], hashes[4..7], hashes[8..12])
+            )
+            assertThat(tree.pathTo(balances[4])).withMessage().isEqualTo(
+                listOf(hashes[5], hashes[6..7], hashes[0..3], hashes[8..12])
+            )
+            assertThat(tree.pathTo(balances[5])).withMessage().isEqualTo(
+                listOf(hashes[4], hashes[6..7], hashes[0..3], hashes[8..12])
+            )
+            assertThat(tree.pathTo(balances[6])).withMessage().isEqualTo(
+                listOf(hashes[7], hashes[4..5], hashes[0..3], hashes[8..12])
+            )
+            assertThat(tree.pathTo(balances[7])).withMessage().isEqualTo(
+                listOf(hashes[6], hashes[4..5], hashes[0..3], hashes[8..12])
+            )
+            assertThat(tree.pathTo(balances[8])).withMessage().isEqualTo(
+                listOf(hashes[9], hashes[10..11], hashes[12], hashes[0..7])
+            )
+            assertThat(tree.pathTo(balances[9])).withMessage().isEqualTo(
+                listOf(hashes[8], hashes[10..11], hashes[12], hashes[0..7])
+            )
+            assertThat(tree.pathTo(balances[10])).withMessage().isEqualTo(
+                listOf(hashes[11], hashes[8..9], hashes[12], hashes[0..7])
+            )
+            assertThat(tree.pathTo(balances[11])).withMessage().isEqualTo(
+                listOf(hashes[10], hashes[8..9], hashes[12], hashes[0..7])
+            )
+            assertThat(tree.pathTo(balances[12])).withMessage().isEqualTo(
+                listOf(NilNode.hash, NilNode.hash, hashes[8..11], hashes[0..7])
+            )
+        }
+
+        verify("Merkle tree does not return a path for non-contained node") {
+            assertThat(tree.pathTo(nonContainedBalance)).withMessage().isNull()
+        }
     }
 
     private fun List<AccountBalance>.leafNode(index: Int): LeafNode =
