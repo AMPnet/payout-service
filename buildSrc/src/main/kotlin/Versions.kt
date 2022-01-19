@@ -18,7 +18,6 @@ object Versions {
         const val testLogger = "3.1.0"
         const val springBoot = "2.6.2"
         const val springDependencyManagement = "1.0.11.RELEASE"
-        const val web3j = "4.8.9"
         const val flyway = "8.4.1"
         const val jooq = "6.0.1"
         const val jib = "3.1.4"

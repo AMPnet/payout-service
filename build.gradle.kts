@@ -14,7 +14,6 @@ plugins {
     id("org.springframework.boot").version(Versions.Plugins.springBoot)
     id("io.spring.dependency-management").version(Versions.Plugins.springDependencyManagement)
     id("com.google.cloud.tools.jib").version(Versions.Plugins.jib)
-    id("org.web3j").version(Versions.Plugins.web3j)
     id("org.flywaydb.flyway").version(Versions.Plugins.flyway)
     id("nu.studer.jooq").version(Versions.Plugins.jooq)
     id("application")
@@ -42,24 +41,6 @@ allprojects {
 
 testSets {
     Configurations.Tests.testSets.forEach { create(it) }
-}
-
-node {
-    nodeProjectDir.set(file("node/"))
-}
-
-solidity {
-    version = Versions.Tools.solidity
-}
-
-web3j {
-    generatedPackageName = "com.ampnet.payoutservice.generated.contract"
-}
-
-sourceSets.main {
-    java.srcDirs(
-        "$buildDir/generated/sources/web3j/main/java"
-    )
 }
 
 kotlin {
@@ -188,7 +169,6 @@ tasks.withType<KotlinCompile> {
         jvmTarget = Versions.Compile.jvmTarget
     }
     dependsOn.add(tasks["generateJooq"])
-    dependsOn.add("generateContractWrappers")
 }
 
 tasks.withType<Test> {

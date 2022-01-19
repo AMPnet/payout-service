@@ -37,6 +37,8 @@ value class BlockNumber(val value: BigInteger)
 
 @JvmInline
 value class ContractAddress(val value: Address) {
+    constructor(value: String) : this(Address(value))
+
     val rawValue: String
         get() = value.value
 }

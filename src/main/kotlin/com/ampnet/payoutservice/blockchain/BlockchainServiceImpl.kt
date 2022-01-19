@@ -65,6 +65,7 @@ class BlockchainServiceImpl(applicationProperties: ApplicationProperties) : Bloc
         logger.debug { "Found ${accounts.size} holder addresses for ERC20 contract: $erc20ContractAddress" }
 
         contract.setDefaultBlockParameter(endBlockParameter)
+
         return accounts.map { account ->
             val balance =
                 contract.balanceOf(account.rawValue).sendSafely()?.let { Balance(it) } ?: throw InternalException(
