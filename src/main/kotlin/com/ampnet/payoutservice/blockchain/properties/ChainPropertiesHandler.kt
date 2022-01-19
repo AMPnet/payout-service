@@ -12,11 +12,9 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
     private val blockchainPropertiesMap = mutableMapOf<ChainId, ChainPropertiesWithServices>()
 
     fun getBlockchainProperties(chainId: ChainId): ChainPropertiesWithServices {
-        blockchainPropertiesMap[chainId]?.let { return it }
-        val chain = getChain(chainId)
-        val properties = generateBlockchainProperties(chain)
-        blockchainPropertiesMap[chainId] = properties
-        return properties
+        return blockchainPropertiesMap.computeIfAbsent(chainId) {
+            generateBlockchainProperties(getChain(it))
+        }
     }
 
     internal fun getChainRpcUrl(chain: Chain): String =

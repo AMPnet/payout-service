@@ -14,6 +14,18 @@ import org.junit.jupiter.api.assertThrows
 class ChainPropertiesHandlerTest : TestBase() {
 
     @Test
+    fun mustCorrectlyCreateChainPropertiesWithServices() {
+        val chainPropertiesHandler = suppose("chain properties handler is created from application properties") {
+            ChainPropertiesHandler(ApplicationProperties().apply { infuraId = "" })
+        }
+
+        verify("chain properties with services are correctly created") {
+            val chainProperties = chainPropertiesHandler.getBlockchainProperties(Chain.MATIC_TESTNET_MUMBAI.id)
+            assertThat(chainProperties.web3j).withMessage().isNotNull()
+        }
+    }
+
+    @Test
     fun mustThrowExceptionForInvalidChainId() {
         val chainPropertiesHandler = suppose("chain properties handler is created from application properties") {
             ChainPropertiesHandler(ApplicationProperties())
@@ -36,6 +48,20 @@ class ChainPropertiesHandlerTest : TestBase() {
 
         verify("correct RPC URL is returned") {
             val chain = Chain.MATIC_TESTNET_MUMBAI
+            val rpc = chainPropertiesHandler.getChainRpcUrl(chain)
+            assertThat(rpc).withMessage().isEqualTo(chain.rpcUrl)
+        }
+    }
+
+    @Test
+    fun mustReturnDefaultRpcWhenChainDoesNotHaveInfuraRpcDefined() {
+        val chainPropertiesHandler = suppose("chain properties handler is created from application properties") {
+            val applicationProperties = ApplicationProperties().apply { infuraId = "" }
+            ChainPropertiesHandler(applicationProperties)
+        }
+
+        verify("correct RPC URL is returned") {
+            val chain = Chain.HARDHAT_TESTNET
             val rpc = chainPropertiesHandler.getChainRpcUrl(chain)
             assertThat(rpc).withMessage().isEqualTo(chain.rpcUrl)
         }
