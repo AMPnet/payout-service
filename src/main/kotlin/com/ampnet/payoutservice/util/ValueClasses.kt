@@ -25,3 +25,6 @@ value class Balance(val value: Uint) {
 
     fun abiEncode(): String = TypeEncoder.encode(value)
 }
+
+@JvmInline
+value class BlockNumber(val value: BigInteger)
