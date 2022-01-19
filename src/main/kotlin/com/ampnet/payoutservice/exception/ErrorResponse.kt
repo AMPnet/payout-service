@@ -1,4 +1,4 @@
-package com.ampnet.identityservice.exception
+package com.ampnet.payoutservice.exception
 
 data class ErrorResponse(
     val description: String,

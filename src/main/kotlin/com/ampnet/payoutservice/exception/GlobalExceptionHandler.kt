@@ -1,4 +1,4 @@
-package com.ampnet.identityservice.exception
+package com.ampnet.payoutservice.exception
 
 import mu.KLogging
 import org.springframework.http.HttpStatus

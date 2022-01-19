@@ -1,4 +1,4 @@
-package com.ampnet.identityservice.exception
+package com.ampnet.payoutservice.exception
 
 enum class ErrorCode(val categoryCode: String, var specificCode: String, var message: String) {
     // Blockchain: 04

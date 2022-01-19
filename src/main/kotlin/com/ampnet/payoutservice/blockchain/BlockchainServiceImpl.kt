@@ -1,9 +1,9 @@
 package com.ampnet.payoutservice.blockchain
 
-import com.ampnet.identityservice.exception.ErrorCode
-import com.ampnet.identityservice.exception.InternalException
 import com.ampnet.payoutservice.blockchain.properties.ChainPropertiesHandler
 import com.ampnet.payoutservice.config.ApplicationProperties
+import com.ampnet.payoutservice.exception.ErrorCode
+import com.ampnet.payoutservice.exception.InternalException
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
@@ -25,6 +25,7 @@ class BlockchainServiceImpl(applicationProperties: ApplicationProperties) : Bloc
 
     private val chainHandler = ChainPropertiesHandler(applicationProperties)
 
+    // TODO write integTest with HardHat
     @Throws(InternalException::class)
     override fun fetchErc20AccountBalances(
         chainId: ChainId,

@@ -1,8 +1,8 @@
 package com.ampnet.payoutservice.blockchain.properties
 
-import com.ampnet.identityservice.exception.ErrorCode
-import com.ampnet.identityservice.exception.InternalException
 import com.ampnet.payoutservice.config.ApplicationProperties
+import com.ampnet.payoutservice.exception.ErrorCode
+import com.ampnet.payoutservice.exception.InternalException
 import com.ampnet.payoutservice.util.ChainId
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
@@ -19,7 +19,7 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
         return properties
     }
 
-    private fun getChainRpcUrl(chain: Chain): String =
+    internal fun getChainRpcUrl(chain: Chain): String =
         if (chain.infura == null || applicationProperties.infuraId.isBlank()) {
             chain.rpcUrl
         } else {

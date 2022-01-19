@@ -1,4 +1,4 @@
-package com.ampnet.identityservice.exception
+package com.ampnet.payoutservice.exception
 
 class InvalidRequestException(val errorCode: ErrorCode, exceptionMessage: String, throwable: Throwable? = null) :
     Exception(exceptionMessage, throwable) {
