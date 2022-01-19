@@ -14,6 +14,9 @@ value class Hash(val value: String) {
 value class WalletAddress(val value: Address) : Comparable<WalletAddress> {
     constructor(value: String) : this(Address(value))
 
+    val rawValue: String
+        get() = value.value
+
     fun abiEncode(): String = TypeEncoder.encode(value)
 
     override fun compareTo(other: WalletAddress): Int = value.toUint().value.compareTo(other.value.toUint().value)
@@ -27,4 +30,13 @@ value class Balance(val value: Uint) {
 }
 
 @JvmInline
+value class ChainId(val value: Long)
+
+@JvmInline
 value class BlockNumber(val value: BigInteger)
+
+@JvmInline
+value class ContractAddress(val value: Address) {
+    val rawValue: String
+        get() = value.value
+}
