@@ -28,6 +28,11 @@ enum class Chain(val id: ChainId, val rpcUrl: String, val infura: String?) {
         ChainId(31337),
         "http://hardhat:8545",
         null
+    ),
+    HARDHAT_TESTNET_LOCALHOST(
+        ChainId(31337),
+        "http://localhost:8545",
+        null
     );
 
     companion object {

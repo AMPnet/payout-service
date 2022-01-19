@@ -182,7 +182,7 @@ task("fullTest") {
 
 jacoco.toolVersion = Versions.Tools.jacoco
 tasks.withType<JacocoReport> {
-    val allTestExecFiles = (listOf("test")) // + Configurations.Tests.testSets) // TODO enable later
+    val allTestExecFiles = (listOf("test") + Configurations.Tests.testSets)
         .map { "$buildDir/jacoco/$it.exec" }
     executionData(*allTestExecFiles.toTypedArray())
 
@@ -202,7 +202,7 @@ tasks.withType<JacocoReport> {
 }
 
 tasks.withType<JacocoCoverageVerification> {
-    val allTestExecFiles = (listOf("test")) // + Configurations.Tests.testSets) // TODO enable later
+    val allTestExecFiles = (listOf("test") + Configurations.Tests.testSets)
         .map { "$buildDir/jacoco/$it.exec" }
     executionData(*allTestExecFiles.toTypedArray())
 
