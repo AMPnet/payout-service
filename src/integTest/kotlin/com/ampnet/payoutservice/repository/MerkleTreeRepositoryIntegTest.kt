@@ -312,4 +312,116 @@ class MerkleTreeRepositoryIntegTest : TestBase() {
                 .isEqualTo(merkleTree.hashFn)
         }
     }
+
+    @Test
+    fun mustCorrectlyCheckIfLeafNodeExists() {
+        val treeRootUuid = UUID.randomUUID()
+        val leaf1Uuid = UUID.randomUUID()
+        val leaf2Uuid = UUID.randomUUID()
+        val leaf3Uuid = UUID.randomUUID()
+        val leaf4Uuid = UUID.randomUUID()
+
+        suppose("UUID provider will return specified UUIDs") {
+            given(uuidProvider.getUuid()).willReturn(treeRootUuid, leaf1Uuid, leaf2Uuid, leaf3Uuid, leaf4Uuid)
+        }
+
+        val leafNode1 = AccountBalance(WalletAddress("a"), Balance(BigInteger.ZERO))
+        val leafNode2 = AccountBalance(WalletAddress("b"), Balance(BigInteger("100")))
+        val leafNode3 = AccountBalance(WalletAddress("c"), Balance(BigInteger("200")))
+        val leafNode4 = AccountBalance(WalletAddress("d"), Balance(BigInteger("300")))
+        val merkleTree = MerkleTree(listOf(leafNode1, leafNode2, leafNode3, leafNode4), HashFunction.IDENTITY)
+
+        suppose("multi-node Merkle tree is stored into database") {
+            repository.storeTree(
+                merkleTree,
+                ChainId(1L),
+                ContractAddress("b"),
+                BlockNumber(BigInteger("123"))
+            )
+        }
+
+        verify("multi-node Merkle tree leaves are correctly contained within the tree") {
+            val leaf1Result = repository.containsLeaf(
+                merkleTree.root.hash,
+                ChainId(1L),
+                ContractAddress("b"),
+                BlockNumber(BigInteger("123")),
+                leafNode1
+            )
+            assertThat(leaf1Result).withMessage()
+                .isTrue()
+
+            val leaf2Result = repository.containsLeaf(
+                merkleTree.root.hash,
+                ChainId(1L),
+                ContractAddress("b"),
+                BlockNumber(BigInteger("123")),
+                leafNode2
+            )
+            assertThat(leaf2Result).withMessage()
+                .isTrue()
+
+            val leaf3Result = repository.containsLeaf(
+                merkleTree.root.hash,
+                ChainId(1L),
+                ContractAddress("b"),
+                BlockNumber(BigInteger("123")),
+                leafNode3
+            )
+            assertThat(leaf3Result).withMessage()
+                .isTrue()
+
+            val leaf4Result = repository.containsLeaf(
+                merkleTree.root.hash,
+                ChainId(1L),
+                ContractAddress("b"),
+                BlockNumber(BigInteger("123")),
+                leafNode4
+            )
+            assertThat(leaf4Result).withMessage()
+                .isTrue()
+        }
+
+        verify("other leaves are not contained within the tree") {
+            val fakeLeaf1Result = repository.containsLeaf(
+                merkleTree.root.hash,
+                ChainId(2L),
+                ContractAddress("b"),
+                BlockNumber(BigInteger("123")),
+                leafNode1
+            )
+            assertThat(fakeLeaf1Result).withMessage()
+                .isFalse()
+
+            val fakeLeaf2Result = repository.containsLeaf(
+                merkleTree.root.hash,
+                ChainId(1L),
+                ContractAddress("c"),
+                BlockNumber(BigInteger("123")),
+                leafNode1
+            )
+            assertThat(fakeLeaf2Result).withMessage()
+                .isFalse()
+
+            val fakeLeaf3Result = repository.containsLeaf(
+                merkleTree.root.hash,
+                ChainId(1L),
+                ContractAddress("b"),
+                BlockNumber(BigInteger("124")),
+                leafNode1
+            )
+            assertThat(fakeLeaf3Result).withMessage()
+                .isFalse()
+
+            val fakeLeaf4Result = repository.containsLeaf(
+                merkleTree.root.hash,
+                ChainId(1L),
+                ContractAddress("b"),
+                BlockNumber(BigInteger("123")),
+                AccountBalance(WalletAddress("5"), Balance(BigInteger("400")))
+            )
+            assertThat(fakeLeaf4Result).withMessage()
+                .isFalse()
+        }
+    }
 }

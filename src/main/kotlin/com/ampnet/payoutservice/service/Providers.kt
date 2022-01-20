@@ -11,4 +11,3 @@ interface UuidProvider {
 class RandomUuidProvider : UuidProvider {
     override fun getUuid(): UUID = UUID.randomUUID()
 }
-

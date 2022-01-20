@@ -66,7 +66,7 @@ class MerkleTreeRepository(private val dslContext: DSLContext, private val uuidP
         blockNumber: BlockNumber
     ): MerkleTree? {
         logger.info {
-            "Fetching Merkle tree with root hash: ${rootHash} for chainId: $chainId," +
+            "Fetching Merkle tree with root hash: $rootHash for chainId: $chainId," +
                 " contractAddress: $contractAddress, blockNumber: $blockNumber"
         }
 
@@ -88,16 +88,51 @@ class MerkleTreeRepository(private val dslContext: DSLContext, private val uuidP
 
         return if (tree.root.hash == rootHash) {
             logger.info {
-                "Successfully fetched and reconstructed Merkle tree with root hash: ${rootHash} for" +
+                "Successfully fetched and reconstructed Merkle tree with root hash: $rootHash for" +
                     " chainId: $chainId, contractAddress: $contractAddress, blockNumber: $blockNumber"
             }
             tree
         } else {
             logger.error {
-                "Failed to reconstruct Merkle tree with root hash: ${rootHash} for" +
+                "Failed to reconstruct Merkle tree with root hash: $rootHash for" +
                     " chainId: $chainId, contractAddress: $contractAddress, blockNumber: $blockNumber"
             }
             null
         }
+    }
+
+    fun containsLeaf(
+        rootHash: Hash,
+        chainId: ChainId,
+        contractAddress: ContractAddress,
+        blockNumber: BlockNumber,
+        leaf: AccountBalance
+    ): Boolean {
+        logger.info {
+            "Checking if Merkle tree with root hash: $rootHash for chainId: $chainId," +
+                " contractAddress: $contractAddress, blockNumber: $blockNumber contains leaf: $leaf"
+        }
+
+        val root = dslContext.selectFrom(MerkleTreeRoot.MERKLE_TREE_ROOT)
+            .where(
+                DSL.and(
+                    MerkleTreeRoot.MERKLE_TREE_ROOT.CHAIN_ID.eq(chainId.value),
+                    MerkleTreeRoot.MERKLE_TREE_ROOT.CONTRACT_ADDRESS.eq(contractAddress.rawValue),
+                    MerkleTreeRoot.MERKLE_TREE_ROOT.BLOCK_NUMBER.eq(blockNumber.value),
+                    MerkleTreeRoot.MERKLE_TREE_ROOT.HASH.eq(rootHash.value)
+                )
+            )
+            .fetchOne() ?: return false
+
+        return dslContext.fetchExists(
+            dslContext.selectFrom(MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE)
+                .where(
+                    DSL.and(
+                        MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE.MERKLE_ROOT.eq(root.id),
+                        MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE.ADDRESS.eq(leaf.address.rawValue),
+                        MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE.BALANCE.eq(leaf.balance.rawValue)
+                    )
+                )
+        )
     }
 }
