@@ -26,6 +26,9 @@ value class WalletAddress(val value: Address) : Comparable<WalletAddress> {
 value class Balance(val value: Uint) {
     constructor(value: BigInteger) : this(Uint(value))
 
+    val rawValue: BigInteger
+        get() = value.value
+
     fun abiEncode(): String = TypeEncoder.encode(value)
 }
 

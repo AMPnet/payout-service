@@ -2,7 +2,7 @@ package com.ampnet.payoutservice.util
 
 import java.util.LinkedList
 
-class MerkleTree(nodes: List<AccountBalance>, private val hashFn: (String) -> Hash) {
+class MerkleTree(nodes: List<AccountBalance>, private val hashFn: HashFunction) {
 
     companion object {
         sealed interface Node {
