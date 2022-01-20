@@ -59,8 +59,6 @@ class BlockchainServiceIntegTest : TestBase() {
             contract.transferAndMine(accounts[6].address, BigInteger("2000"))
         }
 
-        val endBlock2 = HardhatTestContainer.blockNumber()
-
         verify("Correct balances are fetched for first end block") {
             val service = BlockchainServiceImpl(ApplicationProperties().apply { infuraId = "" })
             val balances = service.fetchErc20AccountBalances(
@@ -78,6 +76,8 @@ class BlockchainServiceIntegTest : TestBase() {
                 AccountBalance(WalletAddress(accounts[4].address), Balance(BigInteger("400")))
             )
         }
+
+        val endBlock2 = HardhatTestContainer.blockNumber()
 
         verify("Correct balances are fetched for second end block") {
             val service = BlockchainServiceImpl(ApplicationProperties().apply { infuraId = "" })
@@ -134,8 +134,6 @@ class BlockchainServiceIntegTest : TestBase() {
             contract.transferAndMine(accounts[6].address, BigInteger("2000"))
         }
 
-        val endBlock2 = HardhatTestContainer.blockNumber()
-
         verify("Correct balances are fetched for first end block") {
             val service = BlockchainServiceImpl(ApplicationProperties().apply { infuraId = "" })
             val balances = service.fetchErc20AccountBalances(
@@ -153,6 +151,8 @@ class BlockchainServiceIntegTest : TestBase() {
                 AccountBalance(WalletAddress(accounts[4].address), Balance(BigInteger("400")))
             )
         }
+
+        val endBlock2 = HardhatTestContainer.blockNumber()
 
         verify("Correct balances are fetched for second end block") {
             val service = BlockchainServiceImpl(ApplicationProperties().apply { infuraId = "" })
