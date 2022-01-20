@@ -25,7 +25,6 @@ class BlockchainServiceImpl(applicationProperties: ApplicationProperties) : Bloc
 
     private val chainHandler = ChainPropertiesHandler(applicationProperties)
 
-    // TODO write integTest with HardHat
     @Throws(InternalException::class)
     override fun fetchErc20AccountBalances(
         chainId: ChainId,
@@ -47,21 +46,7 @@ class BlockchainServiceImpl(applicationProperties: ApplicationProperties) : Bloc
 
         logger.debug { "Block range from: ${startBlockParameter.value} to: ${endBlockParameter.value}" }
 
-        val accounts = HashSet<WalletAddress>()
-
-        contract.transferEventFlowable(startBlockParameter, endBlockParameter).subscribe(
-            { event ->
-                accounts.add(WalletAddress(event.from))
-                accounts.add(WalletAddress(event.to))
-            },
-            { error ->
-                logger.error(error) { "Error processing contract transfer event" }
-                throw InternalException(
-                    ErrorCode.BLOCKCHAIN_CONTRACT_EVENT_READ_ERROR,
-                    "Error processing contract transfer event"
-                )
-            }
-        )
+        val accounts = contract.findAccounts(startBlockParameter, endBlockParameter)
 
         logger.debug { "Found ${accounts.size} holder addresses for ERC20 contract: $erc20ContractAddress" }
 
@@ -76,8 +61,37 @@ class BlockchainServiceImpl(applicationProperties: ApplicationProperties) : Bloc
         }
     }
 
+    private fun IERC20.findAccounts(
+        startBlockParameter: DefaultBlockParameter,
+        endBlockParameter: DefaultBlockParameter
+    ): HashSet<WalletAddress> {
+        val accounts = HashSet<WalletAddress>()
+        val errors = mutableListOf<InternalException>()
+
+        transferEventFlowable(startBlockParameter, endBlockParameter)
+            .subscribe(
+                { event ->
+                    accounts.add(WalletAddress(event.from))
+                    accounts.add(WalletAddress(event.to))
+                },
+                { error ->
+                    logger.error(error) { "Error processing contract transfer event" }
+                    errors += InternalException(
+                        ErrorCode.BLOCKCHAIN_CONTRACT_EVENT_READ_ERROR,
+                        "Error processing contract transfer event"
+                    )
+                }
+            )
+
+        if (errors.isNotEmpty()) {
+            throw errors[0]
+        }
+
+        return accounts
+    }
+
     @Suppress("TooGenericExceptionCaught")
-    fun <T> RemoteFunctionCall<T>.sendSafely(): T? {
+    private fun <T> RemoteFunctionCall<T>.sendSafely(): T? {
         return try {
             this.send()
         } catch (ex: Exception) {
