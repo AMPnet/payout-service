@@ -3,6 +3,7 @@ package com.ampnet.payoutservice.repository
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeLeafNode
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeRoot
 import com.ampnet.payoutservice.generated.jooq.tables.records.MerkleTreeLeafNodeRecord
+import com.ampnet.payoutservice.generated.jooq.tables.records.MerkleTreeRootRecord
 import com.ampnet.payoutservice.service.UuidProvider
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
@@ -31,27 +32,31 @@ class MerkleTreeRepository(private val dslContext: DSLContext, private val uuidP
 
         val rootId = uuidProvider.getUuid()
 
-        dslContext.insertInto(MerkleTreeRoot.MERKLE_TREE_ROOT)
-            .set(MerkleTreeRoot.MERKLE_TREE_ROOT.ID, rootId)
-            .set(MerkleTreeRoot.MERKLE_TREE_ROOT.CHAIN_ID, chainId.value)
-            .set(MerkleTreeRoot.MERKLE_TREE_ROOT.CONTRACT_ADDRESS, contractAddress.rawValue)
-            .set(MerkleTreeRoot.MERKLE_TREE_ROOT.BLOCK_NUMBER, blockNumber.value)
-            .set(MerkleTreeRoot.MERKLE_TREE_ROOT.HASH, tree.root.hash.value)
-            .set(MerkleTreeRoot.MERKLE_TREE_ROOT.HASH_FN, tree.hashFn.toDbEnum)
-            .execute()
+        dslContext.executeInsert(
+            MerkleTreeRootRecord(
+                id = rootId,
+                chainId = chainId.value,
+                contractAddress = contractAddress.rawValue,
+                blockNumber = blockNumber.value,
+                hash = tree.root.hash.value,
+                hashFn = tree.hashFn.toDbEnum
+            )
+        )
 
-        val leafNodes = tree.leafNodes.values.map {
-            MerkleTreeLeafNodeRecord(
-                id = uuidProvider.getUuid(),
-                merkleRoot = rootId,
-                address = it.data.address.rawValue,
-                balance = it.data.balance.rawValue
+        val insert = dslContext.insertQuery(MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE)
+
+        tree.leafNodes.values.forEach {
+            insert.addRecord(
+                MerkleTreeLeafNodeRecord(
+                    id = uuidProvider.getUuid(),
+                    merkleRoot = rootId,
+                    address = it.data.address.rawValue,
+                    balance = it.data.balance.rawValue
+                )
             )
         }
 
-        dslContext.insertInto(MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE)
-            .values(leafNodes)
-            .execute()
+        insert.execute()
     }
 
     fun fetchTree(

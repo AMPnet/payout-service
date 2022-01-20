@@ -18,4 +18,3 @@ CREATE TABLE payout_service.merkle_tree_leaf_node (
     address     VARCHAR     NOT NULL,
     balance     NUMERIC(78) NOT NULL
 );
-
