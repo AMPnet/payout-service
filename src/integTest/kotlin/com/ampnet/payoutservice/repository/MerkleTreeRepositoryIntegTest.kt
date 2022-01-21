@@ -31,7 +31,7 @@ import java.util.UUID
 import com.ampnet.payoutservice.generated.jooq.enums.HashFunction as DbHashFunction
 
 @JooqTest
-@Import(MerkleTreeRepository::class)
+@Import(JooqMerkleTreeRepository::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class MerkleTreeRepositoryIntegTest : TestBase() {
 
