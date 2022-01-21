@@ -26,3 +26,8 @@ There are 3 tests sets:
 - `apiTest` for tests which run the entire Spring Boot application
 
 To execute all tests run `./gradlew fullTest`
+
+### RPC configuration
+
+Most of the free RPC providers do not support block filters which this service uses to get contract event history. For
+that reason, appropriate RPC provider has to be chosen when running this service in the production environment.
