@@ -5,9 +5,9 @@ import java.time.ZonedDateTime
 
 data class PinataResponse(
     @JsonProperty("IpfsHash")
-    val ipfsHash: String,
+    val ipfsHash: String?,
     @JsonProperty("PinSize")
-    val pinSize: Long,
+    val pinSize: Long?,
     @JsonProperty("Timestamp")
-    val timestamp: ZonedDateTime
+    val timestamp: ZonedDateTime?
 )

@@ -11,7 +11,7 @@ class ApplicationProperties {
 }
 
 class IpfsProperties {
-    val url = "https://api.pinata.cloud/"
-    val apiKey = ""
-    val secretApiKey = ""
+    var url = "https://api.pinata.cloud/"
+    var apiKey = ""
+    var secretApiKey = ""
 }
