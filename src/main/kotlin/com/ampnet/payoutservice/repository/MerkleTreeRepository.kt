@@ -6,9 +6,7 @@ import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.Hash
 import com.ampnet.payoutservice.util.MerkleTree
-import org.springframework.stereotype.Repository
 
-@Repository
 interface MerkleTreeRepository {
 
     fun storeTree(tree: MerkleTree, chainId: ChainId, contractAddress: ContractAddress, blockNumber: BlockNumber)
