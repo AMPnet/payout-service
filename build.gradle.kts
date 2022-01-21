@@ -109,6 +109,7 @@ dependencies {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 
     integTestImplementation("org.testcontainers:testcontainers:${Versions.Dependencies.testContainers}")
+    integTestImplementation("org.testcontainers:postgresql:${Versions.Dependencies.testContainers}")
     integTestImplementation("com.github.tomakehurst:wiremock:${Versions.Dependencies.wireMock}")
     integTestImplementation(sourceSets.test.get().output)
 

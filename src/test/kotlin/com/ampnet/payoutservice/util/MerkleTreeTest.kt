@@ -12,15 +12,12 @@ import java.math.BigInteger
 
 class MerkleTreeTest : TestBase() {
 
-    private val identityHashFn: (String) -> Hash = { Hash(it) }
-    private val fixedHashFn: (String) -> Hash = { Hash("0") }
-    private val nonTrivialHashFn: (String) -> Hash = { Hash("--" + it.hashCode().toString() + "//") }
     private val nonContainedBalance = AccountBalance(WalletAddress("0xffff"), Balance(BigInteger("99999999")))
 
     @Test
     fun mustThrowExceptionForEmptyNodeList() {
         verify("exception is thrown when building Merkle tree from empty list") {
-            assertThrows<IllegalArgumentException>(message) { MerkleTree(emptyList(), identityHashFn) }
+            assertThrows<IllegalArgumentException>(message) { MerkleTree(emptyList(), HashFunction.IDENTITY) }
         }
     }
 
@@ -33,7 +30,7 @@ class MerkleTreeTest : TestBase() {
                         AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0"))),
                         AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0")))
                     ),
-                    fixedHashFn
+                    HashFunction.FIXED
                 )
             }
         }
@@ -45,7 +42,7 @@ class MerkleTreeTest : TestBase() {
         val tree = suppose("Merkle tree with single element is created") {
             MerkleTree(
                 listOf(balance),
-                identityHashFn
+                HashFunction.IDENTITY
             )
         }
 
@@ -88,7 +85,7 @@ class MerkleTreeTest : TestBase() {
         val tree = suppose("Merkle tree with two elements is created") {
             MerkleTree(
                 balances.shuffled(),
-                identityHashFn
+                HashFunction.IDENTITY
             )
         }
 
@@ -140,7 +137,7 @@ class MerkleTreeTest : TestBase() {
         val tree = suppose("Merkle tree with three elements is created") {
             MerkleTree(
                 balances.shuffled(),
-                identityHashFn
+                HashFunction.IDENTITY
             )
         }
 
@@ -204,7 +201,7 @@ class MerkleTreeTest : TestBase() {
         val tree = suppose("Merkle tree with four elements is created") {
             MerkleTree(
                 balances.shuffled(),
-                identityHashFn
+                HashFunction.IDENTITY
             )
         }
 
@@ -275,7 +272,7 @@ class MerkleTreeTest : TestBase() {
         val tree = suppose("Merkle tree with 8 elements is created") {
             MerkleTree(
                 balances.shuffled(),
-                identityHashFn
+                HashFunction.IDENTITY
             )
         }
 
@@ -378,7 +375,7 @@ class MerkleTreeTest : TestBase() {
         val tree = suppose("Merkle tree with 12 elements is created") {
             MerkleTree(
                 balances.shuffled(),
-                identityHashFn
+                HashFunction.IDENTITY
             )
         }
 
@@ -514,7 +511,7 @@ class MerkleTreeTest : TestBase() {
         val tree = suppose("Merkle tree with 13 elements is created") {
             MerkleTree(
                 balances.shuffled(),
-                identityHashFn
+                HashFunction.IDENTITY
             )
         }
 
@@ -646,16 +643,16 @@ class MerkleTreeTest : TestBase() {
         val tree = suppose("Merkle tree with single element is created") {
             MerkleTree(
                 listOf(balance),
-                nonTrivialHashFn
+                HashFunction.SIMPLE
             )
         }
 
         verify("Merkle tree has correct structure") {
             assertThat(tree.root).withMessage().isEqualTo(
                 RootNode(
-                    left = LeafNode(balance, nonTrivialHashFn(balance.abiEncode()), 0),
+                    left = LeafNode(balance, HashFunction.SIMPLE(balance.abiEncode()), 0),
                     right = NilNode,
-                    hash = nonTrivialHashFn((nonTrivialHashFn(balance.abiEncode()) + NilNode.hash).value),
+                    hash = HashFunction.SIMPLE((HashFunction.SIMPLE(balance.abiEncode()) + NilNode.hash).value),
                     depth = 1
                 )
             )
@@ -664,7 +661,7 @@ class MerkleTreeTest : TestBase() {
         verify("Merkle tree has correct leaf nodes") {
             assertThat(tree.leafNodes).withMessage().hasSize(1)
             assertThat(tree.leafNodes).withMessage().containsEntry(
-                nonTrivialHashFn(balance.abiEncode()), LeafNode(balance, nonTrivialHashFn(balance.abiEncode()), 0)
+                HashFunction.SIMPLE(balance.abiEncode()), LeafNode(balance, HashFunction.SIMPLE(balance.abiEncode()), 0)
             )
         }
 
@@ -686,11 +683,11 @@ class MerkleTreeTest : TestBase() {
             AccountBalance(WalletAddress("0x1"), Balance(BigInteger("1"))),
             AccountBalance(WalletAddress("0x2"), Balance(BigInteger("2")))
         )
-        val hashes = balances.hashes(nonTrivialHashFn)
+        val hashes = balances.hashes(HashFunction.SIMPLE)
         val tree = suppose("Merkle tree with multiple elements is created") {
             MerkleTree(
                 balances.shuffled(),
-                nonTrivialHashFn
+                HashFunction.SIMPLE
             )
         }
 
@@ -698,19 +695,19 @@ class MerkleTreeTest : TestBase() {
             assertThat(tree.root).withMessage().isEqualTo(
                 RootNode(
                     left = MiddleNode(
-                        left = balances.leafNode(0, nonTrivialHashFn),
-                        right = balances.leafNode(1, nonTrivialHashFn),
-                        hash = nonTrivialHashFn((hashes[0] + hashes[1]).value)
+                        left = balances.leafNode(0, HashFunction.SIMPLE),
+                        right = balances.leafNode(1, HashFunction.SIMPLE),
+                        hash = HashFunction.SIMPLE((hashes[0] + hashes[1]).value)
                     ),
                     right = MiddleNode(
-                        left = balances.leafNode(2, nonTrivialHashFn),
+                        left = balances.leafNode(2, HashFunction.SIMPLE),
                         right = NilNode,
-                        hash = nonTrivialHashFn((hashes[2] + NilNode.hash).value)
+                        hash = HashFunction.SIMPLE((hashes[2] + NilNode.hash).value)
                     ),
-                    hash = nonTrivialHashFn(
+                    hash = HashFunction.SIMPLE(
                         (
-                            nonTrivialHashFn((hashes[0] + hashes[1]).value) +
-                                nonTrivialHashFn((hashes[2] + NilNode.hash).value)
+                            HashFunction.SIMPLE((hashes[0] + hashes[1]).value) +
+                                HashFunction.SIMPLE((hashes[2] + NilNode.hash).value)
                             ).value
                     ),
                     depth = 2
@@ -723,8 +720,8 @@ class MerkleTreeTest : TestBase() {
             assertThat(tree.leafNodes.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
                 balances.mapIndexed { index, node ->
                     Pair(
-                        nonTrivialHashFn(node.abiEncode()),
-                        LeafNode(node, nonTrivialHashFn(node.abiEncode()), index)
+                        HashFunction.SIMPLE(node.abiEncode()),
+                        LeafNode(node, HashFunction.SIMPLE(node.abiEncode()), index)
                     )
                 }
             )
@@ -732,13 +729,13 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1], nonTrivialHashFn((hashes[2] + NilNode.hash).value))
+                listOf(hashes[1], HashFunction.SIMPLE((hashes[2] + NilNode.hash).value))
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0], nonTrivialHashFn((hashes[2] + NilNode.hash).value))
+                listOf(hashes[0], HashFunction.SIMPLE((hashes[2] + NilNode.hash).value))
             )
             assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
-                listOf(NilNode.hash, nonTrivialHashFn((hashes[0] + hashes[1]).value))
+                listOf(NilNode.hash, HashFunction.SIMPLE((hashes[0] + hashes[1]).value))
             )
         }
 
@@ -747,10 +744,10 @@ class MerkleTreeTest : TestBase() {
         }
     }
 
-    private fun List<AccountBalance>.leafNode(index: Int, hashFn: (String) -> Hash = identityHashFn): LeafNode =
+    private fun List<AccountBalance>.leafNode(index: Int, hashFn: HashFunction = HashFunction.IDENTITY): LeafNode =
         LeafNode(this[index], hashFn(this[index].abiEncode()), index)
 
-    private fun List<AccountBalance>.hashes(hashFn: (String) -> Hash = identityHashFn): List<Hash> =
+    private fun List<AccountBalance>.hashes(hashFn: HashFunction = HashFunction.IDENTITY): List<Hash> =
         this.map { hashFn(it.abiEncode()) }
 
     private fun List<Hash>.all(): Hash =

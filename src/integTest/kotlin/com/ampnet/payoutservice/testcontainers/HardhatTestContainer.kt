@@ -10,7 +10,7 @@ import org.web3j.protocol.core.methods.response.VoidResponse
 import org.web3j.protocol.http.HttpService
 import java.io.IOException
 
-object HardhatTestContainer : GenericContainer<HardhatTestContainer>("gluwa/hardhat-dev:1.0.0") {
+class HardhatTestContainer : GenericContainer<HardhatTestContainer>("gluwa/hardhat-dev:1.0.0") {
 
     private val web3jService = HttpService(Chain.HARDHAT_TESTNET_LOCALHOST.rpcUrl)
     val web3j = Web3j.build(web3jService)

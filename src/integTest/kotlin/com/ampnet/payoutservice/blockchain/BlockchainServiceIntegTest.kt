@@ -23,7 +23,8 @@ import java.math.BigInteger
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BlockchainServiceIntegTest : TestBase() {
 
-    private val accounts = HardhatTestContainer.accounts
+    private val hardhatContainer = HardhatTestContainer()
+    private val accounts = hardhatContainer.accounts
 
     @Test
     fun mustCorrectlyFetchBalancesBasedOnBlockRange() {
@@ -31,13 +32,13 @@ class BlockchainServiceIntegTest : TestBase() {
 
         val contract = suppose("Simple ERC20 contract is deployed") {
             val future = SimpleERC20.deploy(
-                HardhatTestContainer.web3j,
+                hardhatContainer.web3j,
                 mainAccount,
                 DefaultGasProvider(),
                 listOf(mainAccount.address),
                 listOf(BigInteger("10000"))
             ).sendAsync()
-            HardhatTestContainer.waitAndMine()
+            hardhatContainer.waitAndMine()
             future.get()
         }
 
@@ -49,7 +50,7 @@ class BlockchainServiceIntegTest : TestBase() {
         }
 
         val startBlock = BlockNumber(BigInteger.ZERO)
-        val endBlock1 = HardhatTestContainer.blockNumber()
+        val endBlock1 = hardhatContainer.blockNumber()
 
         contract.applyWeb3jFilterFix(startBlock, endBlock1)
 
@@ -77,7 +78,7 @@ class BlockchainServiceIntegTest : TestBase() {
             )
         }
 
-        val endBlock2 = HardhatTestContainer.blockNumber()
+        val endBlock2 = hardhatContainer.blockNumber()
 
         verify("Correct balances are fetched for second end block") {
             val service = BlockchainServiceImpl(ApplicationProperties().apply { infuraId = "" })
@@ -106,13 +107,13 @@ class BlockchainServiceIntegTest : TestBase() {
 
         val contract = suppose("Simple ERC20 contract is deployed") {
             val future = SimpleERC20.deploy(
-                HardhatTestContainer.web3j,
+                hardhatContainer.web3j,
                 mainAccount,
                 DefaultGasProvider(),
                 listOf(mainAccount.address),
                 listOf(BigInteger("10000"))
             ).sendAsync()
-            HardhatTestContainer.waitAndMine()
+            hardhatContainer.waitAndMine()
             future.get()
         }
 
@@ -124,7 +125,7 @@ class BlockchainServiceIntegTest : TestBase() {
         }
 
         val startBlock = null
-        val endBlock1 = HardhatTestContainer.blockNumber()
+        val endBlock1 = hardhatContainer.blockNumber()
 
         contract.applyWeb3jFilterFix(startBlock, endBlock1)
 
@@ -152,7 +153,7 @@ class BlockchainServiceIntegTest : TestBase() {
             )
         }
 
-        val endBlock2 = HardhatTestContainer.blockNumber()
+        val endBlock2 = hardhatContainer.blockNumber()
 
         verify("Correct balances are fetched for second end block") {
             val service = BlockchainServiceImpl(ApplicationProperties().apply { infuraId = "" })
@@ -192,7 +193,7 @@ class BlockchainServiceIntegTest : TestBase() {
 
     private fun SimpleERC20.transferAndMine(address: String, amount: BigInteger) {
         transfer(address, amount).sendAsync()
-        HardhatTestContainer.mineUntil {
+        hardhatContainer.mineUntil {
             balanceOf(address).send() == amount
         }
     }
@@ -204,7 +205,7 @@ class BlockchainServiceIntegTest : TestBase() {
         val endBlockParameter = DefaultBlockParameter.valueOf(endBlock.value)
 
         repeat(15) {
-            HardhatTestContainer.web3j.ethNewFilter(
+            hardhatContainer.web3j.ethNewFilter(
                 EthFilter(startBlockParameter, endBlockParameter, contractAddress)
             ).send()
         }
