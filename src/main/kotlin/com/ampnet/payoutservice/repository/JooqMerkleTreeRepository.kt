@@ -30,7 +30,7 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
         chainId: ChainId,
         contractAddress: ContractAddress,
         blockNumber: BlockNumber
-    ) {
+    ): Hash {
         logger.info {
             "Storing Merkle tree with root hash: ${tree.root.hash} for chainId: $chainId," +
                 " contractAddress: $contractAddress, blockNumber: $blockNumber"
@@ -63,6 +63,8 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
         }
 
         insert.execute()
+
+        return tree.root.hash
     }
 
     override fun fetchTree(

@@ -59,13 +59,18 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
         val leafNode = AccountBalance(WalletAddress("a"), Balance(BigInteger.ZERO))
         val merkleTree = MerkleTree(listOf(leafNode), HashFunction.IDENTITY)
 
-        suppose("simple Merkle tree is stored into database") {
+        val storedRootHash = suppose("simple Merkle tree is stored into database") {
             repository.storeTree(
                 merkleTree,
                 ChainId(1L),
                 ContractAddress("b"),
                 BlockNumber(BigInteger("123"))
             )
+        }
+
+        verify("correct root hash is returned") {
+            assertThat(storedRootHash).withMessage()
+                .isEqualTo(merkleTree.root.hash)
         }
 
         verify("simple Merkle tree root is correctly stored into database") {
@@ -126,13 +131,18 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
         val leafNode4 = AccountBalance(WalletAddress("d"), Balance(BigInteger("300")))
         val merkleTree = MerkleTree(listOf(leafNode1, leafNode2, leafNode3, leafNode4), HashFunction.IDENTITY)
 
-        suppose("multi-node Merkle tree is stored into database") {
+        val storedRootHash = suppose("multi-node Merkle tree is stored into database") {
             repository.storeTree(
                 merkleTree,
                 ChainId(1L),
                 ContractAddress("b"),
                 BlockNumber(BigInteger("123"))
             )
+        }
+
+        verify("correct root hash is returned") {
+            assertThat(storedRootHash).withMessage()
+                .isEqualTo(merkleTree.root.hash)
         }
 
         verify("multi-node Merkle tree root is correctly stored into database") {
@@ -241,13 +251,18 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
         val leafNode4 = AccountBalance(WalletAddress("d"), Balance(BigInteger("300")))
         val merkleTree = MerkleTree(listOf(leafNode1, leafNode2, leafNode3, leafNode4), HashFunction.IDENTITY)
 
-        suppose("multi-node Merkle tree is stored into database") {
+        val storedRootHash = suppose("multi-node Merkle tree is stored into database") {
             repository.storeTree(
                 merkleTree,
                 ChainId(1L),
                 ContractAddress("b"),
                 BlockNumber(BigInteger("123"))
             )
+        }
+
+        verify("correct root hash is returned") {
+            assertThat(storedRootHash).withMessage()
+                .isEqualTo(merkleTree.root.hash)
         }
 
         suppose("Merkle tree leaf node was deleted without updating root hash") {
@@ -286,13 +301,18 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
         val leafNode4 = AccountBalance(WalletAddress("d"), Balance(BigInteger("300")))
         val merkleTree = MerkleTree(listOf(leafNode1, leafNode2, leafNode3, leafNode4), HashFunction.IDENTITY)
 
-        suppose("multi-node Merkle tree is stored into database") {
+        val storedRootHash = suppose("multi-node Merkle tree is stored into database") {
             repository.storeTree(
                 merkleTree,
                 ChainId(1L),
                 ContractAddress("b"),
                 BlockNumber(BigInteger("123"))
             )
+        }
+
+        verify("correct root hash is returned") {
+            assertThat(storedRootHash).withMessage()
+                .isEqualTo(merkleTree.root.hash)
         }
 
         verify("Merkle tree is correctly fetched and reconstructed") {
@@ -331,13 +351,18 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
         val leafNode4 = AccountBalance(WalletAddress("d"), Balance(BigInteger("300")))
         val merkleTree = MerkleTree(listOf(leafNode1, leafNode2, leafNode3, leafNode4), HashFunction.IDENTITY)
 
-        suppose("multi-node Merkle tree is stored into database") {
+        val storedRootHash = suppose("multi-node Merkle tree is stored into database") {
             repository.storeTree(
                 merkleTree,
                 ChainId(1L),
                 ContractAddress("b"),
                 BlockNumber(BigInteger("123"))
             )
+        }
+
+        verify("correct root hash is returned") {
+            assertThat(storedRootHash).withMessage()
+                .isEqualTo(merkleTree.root.hash)
         }
 
         verify("multi-node Merkle tree leaves are correctly contained within the tree") {
