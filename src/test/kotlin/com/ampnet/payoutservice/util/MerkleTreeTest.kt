@@ -4,6 +4,7 @@ import com.ampnet.payoutservice.TestBase
 import com.ampnet.payoutservice.util.MerkleTree.Companion.LeafNode
 import com.ampnet.payoutservice.util.MerkleTree.Companion.MiddleNode
 import com.ampnet.payoutservice.util.MerkleTree.Companion.NilNode
+import com.ampnet.payoutservice.util.MerkleTree.Companion.PathSegment
 import com.ampnet.payoutservice.util.MerkleTree.Companion.RootNode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -66,7 +67,7 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree path is correct") {
             assertThat(tree.pathTo(balance)).withMessage().isEqualTo(
-                listOf(NilNode.hash)
+                listOf(NilNode.hash.r)
             )
         }
 
@@ -114,10 +115,10 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1])
+                listOf(hashes[1].r)
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0])
+                listOf(hashes[0].l)
             )
         }
 
@@ -174,13 +175,13 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1], hashes[2] + NilNode.hash)
+                listOf(hashes[1].r, (hashes[2] + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0], hashes[2] + NilNode.hash)
+                listOf(hashes[0].l, (hashes[2] + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
-                listOf(NilNode.hash, hashes[0..1])
+                listOf(NilNode.hash.r, hashes[0..1].l)
             )
         }
 
@@ -238,16 +239,16 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1], hashes[2..3])
+                listOf(hashes[1].r, hashes[2..3].r)
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0], hashes[2..3])
+                listOf(hashes[0].l, hashes[2..3].r)
             )
             assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
-                listOf(hashes[3], hashes[0..1])
+                listOf(hashes[3].r, hashes[0..1].l)
             )
             assertThat(tree.pathTo(balances[3])).withMessage().isEqualTo(
-                listOf(hashes[2], hashes[0..1])
+                listOf(hashes[2].l, hashes[0..1].l)
             )
         }
 
@@ -325,28 +326,28 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1], hashes[2..3], hashes[4..7])
+                listOf(hashes[1].r, hashes[2..3].r, hashes[4..7].r)
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0], hashes[2..3], hashes[4..7])
+                listOf(hashes[0].l, hashes[2..3].r, hashes[4..7].r)
             )
             assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
-                listOf(hashes[3], hashes[0..1], hashes[4..7])
+                listOf(hashes[3].r, hashes[0..1].l, hashes[4..7].r)
             )
             assertThat(tree.pathTo(balances[3])).withMessage().isEqualTo(
-                listOf(hashes[2], hashes[0..1], hashes[4..7])
+                listOf(hashes[2].l, hashes[0..1].l, hashes[4..7].r)
             )
             assertThat(tree.pathTo(balances[4])).withMessage().isEqualTo(
-                listOf(hashes[5], hashes[6..7], hashes[0..3])
+                listOf(hashes[5].r, hashes[6..7].r, hashes[0..3].l)
             )
             assertThat(tree.pathTo(balances[5])).withMessage().isEqualTo(
-                listOf(hashes[4], hashes[6..7], hashes[0..3])
+                listOf(hashes[4].l, hashes[6..7].r, hashes[0..3].l)
             )
             assertThat(tree.pathTo(balances[6])).withMessage().isEqualTo(
-                listOf(hashes[7], hashes[4..5], hashes[0..3])
+                listOf(hashes[7].r, hashes[4..5].l, hashes[0..3].l)
             )
             assertThat(tree.pathTo(balances[7])).withMessage().isEqualTo(
-                listOf(hashes[6], hashes[4..5], hashes[0..3])
+                listOf(hashes[6].l, hashes[4..5].l, hashes[0..3].l)
             )
         }
 
@@ -448,40 +449,40 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1], hashes[2..3], hashes[4..7], hashes[8..11] + NilNode.hash)
+                listOf(hashes[1].r, hashes[2..3].r, hashes[4..7].r, (hashes[8..11] + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0], hashes[2..3], hashes[4..7], hashes[8..11] + NilNode.hash)
+                listOf(hashes[0].l, hashes[2..3].r, hashes[4..7].r, (hashes[8..11] + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
-                listOf(hashes[3], hashes[0..1], hashes[4..7], hashes[8..11] + NilNode.hash)
+                listOf(hashes[3].r, hashes[0..1].l, hashes[4..7].r, (hashes[8..11] + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[3])).withMessage().isEqualTo(
-                listOf(hashes[2], hashes[0..1], hashes[4..7], hashes[8..11] + NilNode.hash)
+                listOf(hashes[2].l, hashes[0..1].l, hashes[4..7].r, (hashes[8..11] + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[4])).withMessage().isEqualTo(
-                listOf(hashes[5], hashes[6..7], hashes[0..3], hashes[8..11] + NilNode.hash)
+                listOf(hashes[5].r, hashes[6..7].r, hashes[0..3].l, (hashes[8..11] + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[5])).withMessage().isEqualTo(
-                listOf(hashes[4], hashes[6..7], hashes[0..3], hashes[8..11] + NilNode.hash)
+                listOf(hashes[4].l, hashes[6..7].r, hashes[0..3].l, (hashes[8..11] + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[6])).withMessage().isEqualTo(
-                listOf(hashes[7], hashes[4..5], hashes[0..3], hashes[8..11] + NilNode.hash)
+                listOf(hashes[7].r, hashes[4..5].l, hashes[0..3].l, (hashes[8..11] + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[7])).withMessage().isEqualTo(
-                listOf(hashes[6], hashes[4..5], hashes[0..3], hashes[8..11] + NilNode.hash)
+                listOf(hashes[6].l, hashes[4..5].l, hashes[0..3].l, (hashes[8..11] + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[8])).withMessage().isEqualTo(
-                listOf(hashes[9], hashes[10..11], NilNode.hash, hashes[0..7])
+                listOf(hashes[9].r, hashes[10..11].r, NilNode.hash.r, hashes[0..7].l)
             )
             assertThat(tree.pathTo(balances[9])).withMessage().isEqualTo(
-                listOf(hashes[8], hashes[10..11], NilNode.hash, hashes[0..7])
+                listOf(hashes[8].l, hashes[10..11].r, NilNode.hash.r, hashes[0..7].l)
             )
             assertThat(tree.pathTo(balances[10])).withMessage().isEqualTo(
-                listOf(hashes[11], hashes[8..9], NilNode.hash, hashes[0..7])
+                listOf(hashes[11].r, hashes[8..9].l, NilNode.hash.r, hashes[0..7].l)
             )
             assertThat(tree.pathTo(balances[11])).withMessage().isEqualTo(
-                listOf(hashes[10], hashes[8..9], NilNode.hash, hashes[0..7])
+                listOf(hashes[10].l, hashes[8..9].l, NilNode.hash.r, hashes[0..7].l)
             )
         }
 
@@ -592,43 +593,43 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1], hashes[2..3], hashes[4..7], hashes[8..12] + NilNode.hash + NilNode.hash)
+                listOf(hashes[1].r, hashes[2..3].r, hashes[4..7].r, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0], hashes[2..3], hashes[4..7], hashes[8..12] + NilNode.hash + NilNode.hash)
+                listOf(hashes[0].l, hashes[2..3].r, hashes[4..7].r, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
-                listOf(hashes[3], hashes[0..1], hashes[4..7], hashes[8..12] + NilNode.hash + NilNode.hash)
+                listOf(hashes[3].r, hashes[0..1].l, hashes[4..7].r, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[3])).withMessage().isEqualTo(
-                listOf(hashes[2], hashes[0..1], hashes[4..7], hashes[8..12] + NilNode.hash + NilNode.hash)
+                listOf(hashes[2].l, hashes[0..1].l, hashes[4..7].r, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[4])).withMessage().isEqualTo(
-                listOf(hashes[5], hashes[6..7], hashes[0..3], hashes[8..12] + NilNode.hash + NilNode.hash)
+                listOf(hashes[5].r, hashes[6..7].r, hashes[0..3].l, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[5])).withMessage().isEqualTo(
-                listOf(hashes[4], hashes[6..7], hashes[0..3], hashes[8..12] + NilNode.hash + NilNode.hash)
+                listOf(hashes[4].l, hashes[6..7].r, hashes[0..3].l, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[6])).withMessage().isEqualTo(
-                listOf(hashes[7], hashes[4..5], hashes[0..3], hashes[8..12] + NilNode.hash + NilNode.hash)
+                listOf(hashes[7].r, hashes[4..5].l, hashes[0..3].l, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[7])).withMessage().isEqualTo(
-                listOf(hashes[6], hashes[4..5], hashes[0..3], hashes[8..12] + NilNode.hash + NilNode.hash)
+                listOf(hashes[6].l, hashes[4..5].l, hashes[0..3].l, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
             )
             assertThat(tree.pathTo(balances[8])).withMessage().isEqualTo(
-                listOf(hashes[9], hashes[10..11], hashes[12] + NilNode.hash + NilNode.hash, hashes[0..7])
+                listOf(hashes[9].r, hashes[10..11].r, (hashes[12] + NilNode.hash + NilNode.hash).r, hashes[0..7].l)
             )
             assertThat(tree.pathTo(balances[9])).withMessage().isEqualTo(
-                listOf(hashes[8], hashes[10..11], hashes[12] + NilNode.hash + NilNode.hash, hashes[0..7])
+                listOf(hashes[8].l, hashes[10..11].r, (hashes[12] + NilNode.hash + NilNode.hash).r, hashes[0..7].l)
             )
             assertThat(tree.pathTo(balances[10])).withMessage().isEqualTo(
-                listOf(hashes[11], hashes[8..9], hashes[12] + NilNode.hash + NilNode.hash, hashes[0..7])
+                listOf(hashes[11].r, hashes[8..9].l, (hashes[12] + NilNode.hash + NilNode.hash).r, hashes[0..7].l)
             )
             assertThat(tree.pathTo(balances[11])).withMessage().isEqualTo(
-                listOf(hashes[10], hashes[8..9], hashes[12] + NilNode.hash + NilNode.hash, hashes[0..7])
+                listOf(hashes[10].l, hashes[8..9].l, (hashes[12] + NilNode.hash + NilNode.hash).r, hashes[0..7].l)
             )
             assertThat(tree.pathTo(balances[12])).withMessage().isEqualTo(
-                listOf(NilNode.hash, NilNode.hash, hashes[8..11], hashes[0..7])
+                listOf(NilNode.hash.r, NilNode.hash.r, hashes[8..11].l, hashes[0..7].l)
             )
         }
 
@@ -667,7 +668,7 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree path is correct") {
             assertThat(tree.pathTo(balance)).withMessage().isEqualTo(
-                listOf(NilNode.hash)
+                listOf(NilNode.hash.r)
             )
         }
 
@@ -729,13 +730,13 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1], HashFunction.SIMPLE((hashes[2] + NilNode.hash).value))
+                listOf(hashes[1].r, HashFunction.SIMPLE((hashes[2] + NilNode.hash).value).r)
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0], HashFunction.SIMPLE((hashes[2] + NilNode.hash).value))
+                listOf(hashes[0].l, HashFunction.SIMPLE((hashes[2] + NilNode.hash).value).r)
             )
             assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
-                listOf(NilNode.hash, HashFunction.SIMPLE((hashes[0] + hashes[1]).value))
+                listOf(NilNode.hash.r, HashFunction.SIMPLE((hashes[0] + hashes[1]).value).l)
             )
         }
 
@@ -755,4 +756,10 @@ class MerkleTreeTest : TestBase() {
 
     private operator fun List<Hash>.get(range: IntRange): Hash =
         Hash(range.joinToString(separator = "") { this[it].value })
+
+    private val Hash.l
+        get() = PathSegment(this, true)
+
+    private val Hash.r
+        get() = PathSegment(this, false)
 }

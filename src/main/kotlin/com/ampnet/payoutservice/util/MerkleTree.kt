@@ -29,6 +29,8 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
             override val hash: Hash,
             val depth: Int
         ) : PathNode
+
+        data class PathSegment(val hash: Hash, val isLeft: Boolean)
     }
 
     val leafNodes: Map<Hash, LeafNode>
@@ -48,16 +50,16 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
         root = buildTree(sortedNodes)
     }
 
-    fun pathTo(element: AccountBalance): List<Hash>? {
+    fun pathTo(element: AccountBalance): List<PathSegment>? {
         val index = leafNodes[element.hash]?.index ?: return null
         val moves = index.toString(2).padStart(root.depth, '0')
 
-        tailrec fun findPath(currentNode: Node, d: Int, path: LinkedList<Hash>): List<Hash> {
+        tailrec fun findPath(currentNode: Node, d: Int, path: LinkedList<PathSegment>): List<PathSegment> {
             return if (currentNode is PathNode) {
                 val isLeft = moves[d] == '0'
                 val nextNode = if (isLeft) currentNode.left else currentNode.right
                 val siblingNode = if (isLeft.not()) currentNode.left else currentNode.right
-                findPath(nextNode, d + 1, path.withFirst(siblingNode.hash))
+                findPath(nextNode, d + 1, path.withFirst(PathSegment(siblingNode.hash, isLeft.not())))
             } else {
                 path
             }
@@ -93,7 +95,7 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
     private fun Collection<Node>.pairwise(): List<Pair<Node, Node>> =
         this.chunked(2).map { Pair(it.first(), it.getOrNull(1) ?: NilNode) }
 
-    private fun LinkedList<Hash>.withFirst(first: Hash): LinkedList<Hash> {
+    private fun LinkedList<PathSegment>.withFirst(first: PathSegment): LinkedList<PathSegment> {
         addFirst(first)
         return this
     }
