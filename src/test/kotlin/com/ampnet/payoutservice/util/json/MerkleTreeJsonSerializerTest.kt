@@ -9,7 +9,7 @@ import com.ampnet.payoutservice.util.MerkleTree.Companion.NilNode
 import com.ampnet.payoutservice.util.WalletAddress
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.math.BigInteger
 
@@ -32,7 +32,7 @@ class MerkleTreeJsonSerializerTest : TestBase() {
         }
 
         verify("simple Merkle tree is correctly serialized") {
-            Assertions.assertThat(serializedTree).withMessage().isEqualTo(
+            assertThat(serializedTree).withMessage().isEqualTo(
                 objectMapper.readTree(
                     """
                     {
@@ -77,7 +77,7 @@ class MerkleTreeJsonSerializerTest : TestBase() {
         }
 
         verify("multi-node Merkle tree is correctly serialized") {
-            Assertions.assertThat(serializedTree).withMessage().isEqualTo(
+            assertThat(serializedTree).withMessage().isEqualTo(
                 objectMapper.readTree(
                     """
                     {

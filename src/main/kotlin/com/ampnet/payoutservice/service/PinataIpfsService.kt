@@ -34,15 +34,15 @@ class PinataIpfsService(
 
             if (response.statusCode.is2xxSuccessful) {
                 return response.body?.ipfsHash?.let { IpfsHash(it) } ?: run {
-                    logger.error { "IPFS hash is missing on upload response" }
+                    logger.warn { "IPFS hash is missing on upload response" }
                     throw InternalException(ErrorCode.IPFS_UPLOAD_FAILED, "IPFS upload failed")
                 }
             }
 
-            logger.error { "IPFS upload failed" }
+            logger.warn { "IPFS upload failed" }
             throw InternalException(ErrorCode.IPFS_UPLOAD_FAILED, "IPFS upload failed")
         } catch (ex: RestClientException) {
-            logger.error(ex) { "IPFS client call exception" }
+            logger.warn(ex) { "IPFS client call exception" }
             throw InternalException(ErrorCode.IPFS_UPLOAD_FAILED, "IPFS upload failed")
         }
     }
