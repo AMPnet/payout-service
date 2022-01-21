@@ -45,3 +45,6 @@ value class ContractAddress(val value: Address) {
     val rawValue: String
         get() = value.value
 }
+
+@JvmInline
+value class IpfsHash(val value: String)

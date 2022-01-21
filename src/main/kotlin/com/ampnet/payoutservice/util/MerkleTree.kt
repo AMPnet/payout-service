@@ -1,7 +1,10 @@
 package com.ampnet.payoutservice.util
 
+import com.ampnet.payoutservice.util.json.MerkleTreeJsonSerializer
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.util.LinkedList
 
+@JsonSerialize(using = MerkleTreeJsonSerializer::class)
 class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
 
     companion object {
