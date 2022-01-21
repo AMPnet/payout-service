@@ -1,4 +1,4 @@
-package com.ampnet.payoutservice.service
+package com.ampnet.payoutservice.util.json
 
 import com.ampnet.payoutservice.util.MerkleTree
 import com.ampnet.payoutservice.util.MerkleTree.Companion.LeafNode

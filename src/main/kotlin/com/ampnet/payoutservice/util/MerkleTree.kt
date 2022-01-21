@@ -1,6 +1,6 @@
 package com.ampnet.payoutservice.util
 
-import com.ampnet.payoutservice.service.MerkleTreeJsonSerializer
+import com.ampnet.payoutservice.util.json.MerkleTreeJsonSerializer
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.util.LinkedList
 
