@@ -111,15 +111,14 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito.kotlin:mockito-kotlin:${Versions.Dependencies.mockitoKotlin}")
     testImplementation("com.willowtreeapps.assertk:assertk-jvm:${Versions.Dependencies.assertk}")
+    testImplementation("org.testcontainers:testcontainers:${Versions.Dependencies.testContainers}")
+    testImplementation("org.testcontainers:postgresql:${Versions.Dependencies.testContainers}")
+    testImplementation("com.github.tomakehurst:wiremock:${Versions.Dependencies.wireMock}")
     testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 
-    integTestImplementation("org.testcontainers:testcontainers:${Versions.Dependencies.testContainers}")
-    integTestImplementation("org.testcontainers:postgresql:${Versions.Dependencies.testContainers}")
-    integTestImplementation("com.github.tomakehurst:wiremock:${Versions.Dependencies.wireMock}")
     integTestImplementation(sourceSets.test.get().output)
 
-    apiTestImplementation("com.github.tomakehurst:wiremock:${Versions.Dependencies.wireMock}")
     apiTestImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
     apiTestImplementation("org.springframework.security:spring-security-test")
     apiTestImplementation(sourceSets.test.get().output)
@@ -263,7 +262,6 @@ tasks.register<Copy>("copyDocs") {
     into(file("src/main/resources/static/docs"))
     dependsOn(tasks.asciidoctor)
 }
-
 
 task("qualityCheck") {
     dependsOn(tasks.ktlintCheck, tasks.detekt, tasks.jacocoTestReport, tasks.jacocoTestCoverageVerification)
