@@ -53,7 +53,7 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
 
         val insert = dslContext.insertQuery(MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE)
 
-        tree.leafNodes.values.forEach {
+        tree.leafNodesByHash.values.forEach {
             insert.addRecord(
                 MerkleTreeLeafNodeRecord(
                     id = uuidProvider.getUuid(),
@@ -72,7 +72,7 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
     override fun fetchTree(request: FetchMerkleTreeRequest): MerkleTree? {
         logger.info {
             "Fetching Merkle tree with root hash: ${request.rootHash} for chainId: ${request.chainId}," +
-                " contractAddress: ${request.contractAddress}, blockNumber: ${request.blockNumber}"
+                " contractAddress: ${request.contractAddress}"
         }
 
         val root = dslContext.selectFrom(MerkleTreeRoot.MERKLE_TREE_ROOT)
@@ -80,7 +80,6 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
                 DSL.and(
                     MerkleTreeRoot.MERKLE_TREE_ROOT.CHAIN_ID.eq(request.chainId.value),
                     MerkleTreeRoot.MERKLE_TREE_ROOT.CONTRACT_ADDRESS.eq(request.contractAddress.rawValue),
-                    MerkleTreeRoot.MERKLE_TREE_ROOT.BLOCK_NUMBER.eq(request.blockNumber.value),
                     MerkleTreeRoot.MERKLE_TREE_ROOT.HASH.eq(request.rootHash.value)
                 )
             )
@@ -94,25 +93,22 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
         return if (tree.root.hash == request.rootHash) {
             logger.info {
                 "Successfully fetched and reconstructed Merkle tree with root hash: ${request.rootHash} for" +
-                    " chainId: ${request.chainId}, contractAddress: ${request.contractAddress}," +
-                    " blockNumber: ${request.blockNumber}"
+                    " chainId: ${request.chainId}, contractAddress: ${request.contractAddress}"
             }
             tree
         } else {
             logger.error {
                 "Failed to reconstruct Merkle tree with root hash: ${request.rootHash} for" +
-                    " chainId: ${request.chainId}, contractAddress: ${request.contractAddress}," +
-                    " blockNumber: ${request.blockNumber}"
+                    " chainId: ${request.chainId}, contractAddress: ${request.contractAddress}"
             }
             null
         }
     }
 
-    override fun containsLeaf(request: FetchMerkleTreePathRequest): Boolean {
+    override fun containsAddress(request: FetchMerkleTreePathRequest): Boolean {
         logger.info {
             "Checking if Merkle tree with root hash: ${request.rootHash} for chainId: ${request.chainId}," +
-                " contractAddress: ${request.contractAddress}, blockNumber: ${request.blockNumber}" +
-                " contains leaf: ${request.leaf}"
+                " contractAddress: ${request.contractAddress}, contains address: ${request.walletAddress}"
         }
 
         val root = dslContext.selectFrom(MerkleTreeRoot.MERKLE_TREE_ROOT)
@@ -120,7 +116,6 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
                 DSL.and(
                     MerkleTreeRoot.MERKLE_TREE_ROOT.CHAIN_ID.eq(request.chainId.value),
                     MerkleTreeRoot.MERKLE_TREE_ROOT.CONTRACT_ADDRESS.eq(request.contractAddress.rawValue),
-                    MerkleTreeRoot.MERKLE_TREE_ROOT.BLOCK_NUMBER.eq(request.blockNumber.value),
                     MerkleTreeRoot.MERKLE_TREE_ROOT.HASH.eq(request.rootHash.value)
                 )
             )
@@ -131,8 +126,7 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
                 .where(
                     DSL.and(
                         MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE.MERKLE_ROOT.eq(root.id),
-                        MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE.ADDRESS.eq(request.leaf.address.rawValue),
-                        MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE.BALANCE.eq(request.leaf.balance.rawValue)
+                        MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE.ADDRESS.eq(request.walletAddress.rawValue)
                     )
                 )
         )

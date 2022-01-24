@@ -14,5 +14,5 @@ interface MerkleTreeRepository {
 
     fun fetchTree(request: FetchMerkleTreeRequest): MerkleTree?
 
-    fun containsLeaf(request: FetchMerkleTreePathRequest): Boolean
+    fun containsAddress(request: FetchMerkleTreePathRequest): Boolean
 }

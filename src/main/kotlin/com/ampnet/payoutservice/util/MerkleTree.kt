@@ -35,7 +35,8 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
         data class PathSegment(val hash: Hash, val isLeft: Boolean)
     }
 
-    val leafNodes: Map<Hash, LeafNode>
+    val leafNodesByHash: Map<Hash, LeafNode>
+    val leafNodesByAddress: Map<WalletAddress, LeafNode>
     val root: RootNode
 
     init {
@@ -43,17 +44,24 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
 
         val sortedNodes = nodes.toSortedSet()
 
-        leafNodes = sortedNodes.mapIndexed { index, node -> LeafNode(node, node.hash, index) }
+        require(sortedNodes.size == nodes.size) { "Address collision in input list" }
+
+        leafNodesByHash = sortedNodes.mapIndexed { index, node -> LeafNode(node, node.hash, index) }
             .groupBy { it.hash }
             .mapValues {
                 require(it.value.size == 1) { "Hash collision while constructing leaf nodes: ${it.key}" }
+                it.value.first()
+            }
+        leafNodesByAddress = leafNodesByHash.values.groupBy { it.data.address }
+            .mapValues {
+                require(it.value.size == 1) { "Address collision while constructing leaf nodes: ${it.key}" }
                 it.value.first()
             }
         root = buildTree(sortedNodes)
     }
 
     fun pathTo(element: AccountBalance): List<PathSegment>? {
-        val index = leafNodes[element.hash]?.index ?: return null
+        val index = leafNodesByHash[element.hash]?.index ?: return null
         val moves = index.toString(2).padStart(root.depth, '0')
 
         tailrec fun findPath(currentNode: Node, d: Int, path: LinkedList<PathSegment>): List<PathSegment> {

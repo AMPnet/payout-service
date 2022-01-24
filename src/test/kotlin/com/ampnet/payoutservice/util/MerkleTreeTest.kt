@@ -38,6 +38,21 @@ class MerkleTreeTest : TestBase() {
     }
 
     @Test
+    fun mustThrowExceptionForLeafNodeAddressCollision() {
+        verify("exception is thrown when address collision in leaf nodes occurs") {
+            assertThrows<IllegalArgumentException>(message) {
+                MerkleTree(
+                    listOf(
+                        AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0"))),
+                        AccountBalance(WalletAddress("0x0"), Balance(BigInteger("1")))
+                    ),
+                    HashFunction.IDENTITY
+                )
+            }
+        }
+    }
+
+    @Test
     fun mustCorrectlyBuildMerkleTreeForSingleElement() {
         val balance = AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0")))
         val tree = suppose("Merkle tree with single element is created") {
@@ -59,9 +74,14 @@ class MerkleTreeTest : TestBase() {
         }
 
         verify("Merkle tree has correct leaf nodes") {
-            assertThat(tree.leafNodes).withMessage().hasSize(1)
-            assertThat(tree.leafNodes).withMessage().containsEntry(
+            assertThat(tree.leafNodesByHash).withMessage().hasSize(1)
+            assertThat(tree.leafNodesByHash).withMessage().containsEntry(
                 Hash(balance.abiEncode()), LeafNode(balance, Hash(balance.abiEncode()), 0)
+            )
+
+            assertThat(tree.leafNodesByAddress).withMessage().hasSize(1)
+            assertThat(tree.leafNodesByAddress).withMessage().containsEntry(
+                balance.address, LeafNode(balance, Hash(balance.abiEncode()), 0)
             )
         }
 
@@ -102,11 +122,21 @@ class MerkleTreeTest : TestBase() {
         }
 
         verify("Merkle tree has correct leaf nodes") {
-            assertThat(tree.leafNodes).withMessage().hasSize(2)
-            assertThat(tree.leafNodes.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+            assertThat(tree.leafNodesByHash).withMessage().hasSize(2)
+            assertThat(tree.leafNodesByHash.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
                 balances.mapIndexed { index, node ->
                     Pair(
                         Hash(node.abiEncode()),
+                        LeafNode(node, Hash(node.abiEncode()), index)
+                    )
+                }
+            )
+
+            assertThat(tree.leafNodesByAddress).withMessage().hasSize(2)
+            assertThat(tree.leafNodesByAddress.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+                balances.mapIndexed { index, node ->
+                    Pair(
+                        node.address,
                         LeafNode(node, Hash(node.abiEncode()), index)
                     )
                 }
@@ -162,11 +192,21 @@ class MerkleTreeTest : TestBase() {
         }
 
         verify("Merkle tree has correct leaf nodes") {
-            assertThat(tree.leafNodes).withMessage().hasSize(3)
-            assertThat(tree.leafNodes.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+            assertThat(tree.leafNodesByHash).withMessage().hasSize(3)
+            assertThat(tree.leafNodesByHash.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
                 balances.mapIndexed { index, node ->
                     Pair(
                         Hash(node.abiEncode()),
+                        LeafNode(node, Hash(node.abiEncode()), index)
+                    )
+                }
+            )
+
+            assertThat(tree.leafNodesByAddress).withMessage().hasSize(3)
+            assertThat(tree.leafNodesByAddress.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+                balances.mapIndexed { index, node ->
+                    Pair(
+                        node.address,
                         LeafNode(node, Hash(node.abiEncode()), index)
                     )
                 }
@@ -226,11 +266,21 @@ class MerkleTreeTest : TestBase() {
         }
 
         verify("Merkle tree has correct leaf nodes") {
-            assertThat(tree.leafNodes).withMessage().hasSize(4)
-            assertThat(tree.leafNodes.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+            assertThat(tree.leafNodesByHash).withMessage().hasSize(4)
+            assertThat(tree.leafNodesByHash.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
                 balances.mapIndexed { index, node ->
                     Pair(
                         Hash(node.abiEncode()),
+                        LeafNode(node, Hash(node.abiEncode()), index)
+                    )
+                }
+            )
+
+            assertThat(tree.leafNodesByAddress).withMessage().hasSize(4)
+            assertThat(tree.leafNodesByAddress.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+                balances.mapIndexed { index, node ->
+                    Pair(
+                        node.address,
                         LeafNode(node, Hash(node.abiEncode()), index)
                     )
                 }
@@ -313,11 +363,21 @@ class MerkleTreeTest : TestBase() {
         }
 
         verify("Merkle tree has correct leaf nodes") {
-            assertThat(tree.leafNodes).withMessage().hasSize(8)
-            assertThat(tree.leafNodes.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+            assertThat(tree.leafNodesByHash).withMessage().hasSize(8)
+            assertThat(tree.leafNodesByHash.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
                 balances.mapIndexed { index, node ->
                     Pair(
                         Hash(node.abiEncode()),
+                        LeafNode(node, Hash(node.abiEncode()), index)
+                    )
+                }
+            )
+
+            assertThat(tree.leafNodesByAddress).withMessage().hasSize(8)
+            assertThat(tree.leafNodesByAddress.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+                balances.mapIndexed { index, node ->
+                    Pair(
+                        node.address,
                         LeafNode(node, Hash(node.abiEncode()), index)
                     )
                 }
@@ -436,11 +496,21 @@ class MerkleTreeTest : TestBase() {
         }
 
         verify("Merkle tree has correct leaf nodes") {
-            assertThat(tree.leafNodes).withMessage().hasSize(12)
-            assertThat(tree.leafNodes.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+            assertThat(tree.leafNodesByHash).withMessage().hasSize(12)
+            assertThat(tree.leafNodesByHash.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
                 balances.mapIndexed { index, node ->
                     Pair(
                         Hash(node.abiEncode()),
+                        LeafNode(node, Hash(node.abiEncode()), index)
+                    )
+                }
+            )
+
+            assertThat(tree.leafNodesByAddress).withMessage().hasSize(12)
+            assertThat(tree.leafNodesByAddress.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+                balances.mapIndexed { index, node ->
+                    Pair(
+                        node.address,
                         LeafNode(node, Hash(node.abiEncode()), index)
                     )
                 }
@@ -580,11 +650,21 @@ class MerkleTreeTest : TestBase() {
         }
 
         verify("Merkle tree has correct leaf nodes") {
-            assertThat(tree.leafNodes).withMessage().hasSize(13)
-            assertThat(tree.leafNodes.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+            assertThat(tree.leafNodesByHash).withMessage().hasSize(13)
+            assertThat(tree.leafNodesByHash.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
                 balances.mapIndexed { index, node ->
                     Pair(
                         Hash(node.abiEncode()),
+                        LeafNode(node, Hash(node.abiEncode()), index)
+                    )
+                }
+            )
+
+            assertThat(tree.leafNodesByAddress).withMessage().hasSize(13)
+            assertThat(tree.leafNodesByAddress.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+                balances.mapIndexed { index, node ->
+                    Pair(
+                        node.address,
                         LeafNode(node, Hash(node.abiEncode()), index)
                     )
                 }
@@ -660,9 +740,14 @@ class MerkleTreeTest : TestBase() {
         }
 
         verify("Merkle tree has correct leaf nodes") {
-            assertThat(tree.leafNodes).withMessage().hasSize(1)
-            assertThat(tree.leafNodes).withMessage().containsEntry(
+            assertThat(tree.leafNodesByHash).withMessage().hasSize(1)
+            assertThat(tree.leafNodesByHash).withMessage().containsEntry(
                 HashFunction.SIMPLE(balance.abiEncode()), LeafNode(balance, HashFunction.SIMPLE(balance.abiEncode()), 0)
+            )
+
+            assertThat(tree.leafNodesByAddress).withMessage().hasSize(1)
+            assertThat(tree.leafNodesByAddress).withMessage().containsEntry(
+                balance.address, LeafNode(balance, HashFunction.SIMPLE(balance.abiEncode()), 0)
             )
         }
 
@@ -717,11 +802,21 @@ class MerkleTreeTest : TestBase() {
         }
 
         verify("Merkle tree has correct leaf nodes") {
-            assertThat(tree.leafNodes).withMessage().hasSize(3)
-            assertThat(tree.leafNodes.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+            assertThat(tree.leafNodesByHash).withMessage().hasSize(3)
+            assertThat(tree.leafNodesByHash.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
                 balances.mapIndexed { index, node ->
                     Pair(
                         HashFunction.SIMPLE(node.abiEncode()),
+                        LeafNode(node, HashFunction.SIMPLE(node.abiEncode()), index)
+                    )
+                }
+            )
+
+            assertThat(tree.leafNodesByAddress).withMessage().hasSize(3)
+            assertThat(tree.leafNodesByAddress.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
+                balances.mapIndexed { index, node ->
+                    Pair(
+                        node.address,
                         LeafNode(node, HashFunction.SIMPLE(node.abiEncode()), index)
                     )
                 }

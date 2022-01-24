@@ -21,4 +21,3 @@ class InvalidRequestException(
         private const val serialVersionUID: Long = 959044880750168366L
     }
 }
-
