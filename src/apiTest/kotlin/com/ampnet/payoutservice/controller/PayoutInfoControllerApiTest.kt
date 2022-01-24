@@ -1,7 +1,6 @@
 package com.ampnet.payoutservice.controller
 
 import com.ampnet.payoutservice.ControllerTestBase
-import com.ampnet.payoutservice.blockchain.properties.Chain
 import com.ampnet.payoutservice.controller.response.FetchMerkleTreePathResponse
 import com.ampnet.payoutservice.controller.response.FetchMerkleTreeResponse
 import com.ampnet.payoutservice.exception.ErrorCode
@@ -11,10 +10,8 @@ import com.ampnet.payoutservice.repository.MerkleTreeRepository
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
-import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.HashFunction
 import com.ampnet.payoutservice.util.MerkleTree
-import com.ampnet.payoutservice.util.WalletAddress
 import org.assertj.core.api.Assertions.assertThat
 import org.jooq.DSLContext
 import org.junit.jupiter.api.BeforeEach
@@ -40,10 +37,8 @@ class PayoutInfoControllerApiTest : ControllerTestBase() {
 
     @Test
     fun mustCorrectlyFetchPayoutTree() {
-        val accountBalance = AccountBalance(WalletAddress("a"), Balance(BigInteger.ONE))
-        val tree = MerkleTree(listOf(accountBalance), HashFunction.IDENTITY)
-        val chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id
-        val contractAddress = ContractAddress("b")
+        val accountBalance = AccountBalance(userAddress, Balance(BigInteger.ONE))
+        val tree = MerkleTree(listOf(accountBalance), HashFunction.KECCAK_256)
         val blockNumber = BlockNumber(BigInteger.TEN)
 
         suppose("some Merkle tree is stored in the database") {
@@ -80,10 +75,8 @@ class PayoutInfoControllerApiTest : ControllerTestBase() {
 
     @Test
     fun mustCorrectlyFetchPayoutPathForSomeAccount() {
-        val accountBalance = AccountBalance(WalletAddress("a"), Balance(BigInteger.ONE))
-        val tree = MerkleTree(listOf(accountBalance), HashFunction.IDENTITY)
-        val chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id
-        val contractAddress = ContractAddress("b")
+        val accountBalance = AccountBalance(userAddress, Balance(BigInteger.ONE))
+        val tree = MerkleTree(listOf(accountBalance), HashFunction.KECCAK_256)
         val blockNumber = BlockNumber(BigInteger.TEN)
 
         suppose("some Merkle tree is stored in the database") {
@@ -130,17 +123,15 @@ class PayoutInfoControllerApiTest : ControllerTestBase() {
 
     @Test
     fun mustReturnCorrectErrorWhenFetchingPayoutPathForAccountNotIncludedInPayout() {
-        val payoutAccountBalance = AccountBalance(WalletAddress("c"), Balance(BigInteger.TEN))
-        val tree = MerkleTree(listOf(payoutAccountBalance), HashFunction.IDENTITY)
-        val chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id
-        val contractAddress = ContractAddress("b")
+        val payoutAccountBalance = AccountBalance(secondUserAddress, Balance(BigInteger.TEN))
+        val tree = MerkleTree(listOf(payoutAccountBalance), HashFunction.KECCAK_256)
         val blockNumber = BlockNumber(BigInteger.TEN)
 
         suppose("some Merkle tree is stored in the database") {
             merkleTreeRepository.storeTree(tree, chainId, contractAddress, blockNumber)
         }
 
-        val requestAccountBalance = AccountBalance(WalletAddress("a"), Balance(BigInteger.ONE))
+        val requestAccountBalance = AccountBalance(userAddress, Balance(BigInteger.ONE))
 
         verify("correct Merkle tree path is returned") {
             val response = mockMvc.perform(

@@ -1,10 +1,12 @@
 package com.ampnet.payoutservice
 
 import com.ampnet.payoutservice.TestBase.Companion.VerifyMessage
+import com.ampnet.payoutservice.blockchain.properties.Chain
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.ErrorResponse
-import com.ampnet.payoutservice.testcontainers.HardhatTestContainer
 import com.ampnet.payoutservice.testcontainers.PostgresTestContainer
+import com.ampnet.payoutservice.util.ContractAddress
+import com.ampnet.payoutservice.util.WalletAddress
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions
@@ -30,11 +32,13 @@ import org.springframework.web.context.WebApplicationContext
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ControllerTestBase : TestBase() {
 
-    @Suppress("unused")
-    protected val postgresContainer = PostgresTestContainer()
+    protected final val userAddress = WalletAddress("0x8f52B0cC50967fc59C6289f8FDB3E356EdeEBD23")
+    protected final val secondUserAddress = WalletAddress("0xd43e088622404A5A21267033EC200383d39C22ca")
+    protected final val contractAddress = ContractAddress("0x5BF28A1E60Eb56107FAd2dE1F2AA51FC7A60C690")
+    protected final val chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id
 
     @Suppress("unused")
-    protected val hardhatContainer = HardhatTestContainer()
+    protected val postgresContainer = PostgresTestContainer()
 
     @Autowired
     protected lateinit var objectMapper: ObjectMapper
