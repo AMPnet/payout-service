@@ -11,7 +11,7 @@ class GlobalExceptionHandler {
 
     companion object : KLogging()
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(ResourceNotFoundException::class)
     fun handleResourceDoesNotExists(exception: ResourceNotFoundException): ErrorResponse {
         logger.info("ResourceNotFoundException", exception)

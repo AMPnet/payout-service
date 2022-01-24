@@ -184,7 +184,10 @@ tasks.withType<Test> {
 }
 
 task("fullTest") {
-    val allTests = listOf(tasks.test) + Configurations.Tests.testSets.map { tasks[it] }
+    val allTests = listOf(tasks.test.get()) + Configurations.Tests.testSets.map { tasks[it] }
+    for (i in 0 until (allTests.size - 1)) {
+        allTests[i + 1].mustRunAfter(allTests[i])
+    }
     dependsOn(*allTests.toTypedArray())
 }
 

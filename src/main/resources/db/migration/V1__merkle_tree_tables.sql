@@ -19,4 +19,4 @@ CREATE TABLE payout_service.merkle_tree_leaf_node (
 );
 
 CREATE INDEX merkle_tree_leaf_node_root_idx ON payout_service.merkle_tree_leaf_node(merkle_root);
-CREATE INDEX merkle_tree_leaf_node_exists_idx ON payout_service.merkle_tree_leaf_node(merkle_root, address);
+CREATE UNIQUE INDEX merkle_tree_leaf_node_exists_idx ON payout_service.merkle_tree_leaf_node(merkle_root, address);

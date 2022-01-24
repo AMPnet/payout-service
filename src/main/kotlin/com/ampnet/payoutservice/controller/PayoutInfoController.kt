@@ -72,16 +72,24 @@ class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepositor
 
         val tree = merkleTreeRepository.fetchTree(request.toFetchMerkleTreeRequest)
             ?: throw ResourceNotFoundException(
-                ErrorCode.PAYOUT_MERKLE_TREE_NOT_FOUND,
+                ErrorCode.PAYOUT_NOT_FOUND_FOR_ACCOUNT,
                 "Payout does not exist for specified parameters"
             )
 
-        val path = tree.leafNodesByAddress[request.walletAddress]?.let { tree.pathTo(it.data) }
+        val (path, accountBalance) = tree.leafNodesByAddress[request.walletAddress]?.let {
+            tree.pathTo(it.data)?.let { path -> Pair(path, it.data) }
+        }
             ?: throw ResourceNotFoundException(
                 ErrorCode.PAYOUT_NOT_FOUND_FOR_ACCOUNT,
                 "Account is not included in payout"
             )
 
-        return ResponseEntity.ok(FetchMerkleTreePathResponse(path))
+        return ResponseEntity.ok(
+            FetchMerkleTreePathResponse(
+                accountBalance.address.rawValue,
+                accountBalance.balance.rawValue.toString(),
+                path
+            )
+        )
     }
 }
