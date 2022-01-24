@@ -1,6 +1,7 @@
 package com.ampnet.payoutservice.util
 
 import com.ampnet.payoutservice.util.json.MerkleTreeJsonSerializer
+import com.ampnet.payoutservice.util.json.PathSegmentJsonSerializer
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.util.LinkedList
 
@@ -30,6 +31,7 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
             val depth: Int
         ) : PathNode
 
+        @JsonSerialize(using = PathSegmentJsonSerializer::class)
         data class PathSegment(val hash: Hash, val isLeft: Boolean)
     }
 
