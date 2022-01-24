@@ -6,8 +6,13 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ConfigurationProperties(prefix = "payoutservice")
 class ApplicationProperties {
+    val jwt = JwtProperties()
     val ipfs = IpfsProperties()
     var infuraId: String = ""
+}
+
+class JwtProperties {
+    lateinit var publicKey: String
 }
 
 class IpfsProperties {

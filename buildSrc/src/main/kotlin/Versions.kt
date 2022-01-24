@@ -39,5 +39,6 @@ object Versions {
         const val wireMock = "2.27.2"
         const val testContainers = "1.16.2"
         const val postgresDriver = "42.3.1"
+        const val jwt = "1.0.1"
     }
 }
