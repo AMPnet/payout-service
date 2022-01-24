@@ -21,6 +21,7 @@ object Versions {
         const val flyway = "8.4.1"
         const val jooq = "6.0.1"
         const val jib = "3.1.4"
+        const val asciiDoctor = "3.3.2"
     }
 
     object Tools {
