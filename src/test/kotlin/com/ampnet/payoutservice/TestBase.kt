@@ -7,16 +7,18 @@ import org.springframework.test.context.ActiveProfiles
 abstract class TestBase {
 
     companion object {
-        data class Message(val message: String) {
+        data class SupposeMessage(val message: String)
+
+        data class VerifyMessage(val message: String) {
             fun <A : Assert<A, B>, B> Assert<A, B>.withMessage(): A = this.`as`(message)
         }
     }
 
-    protected fun <R> suppose(description: String, function: Message.() -> R): R {
-        return function.invoke(Message(description))
+    protected fun <R> suppose(description: String, function: SupposeMessage.() -> R): R {
+        return function.invoke(SupposeMessage(description))
     }
 
-    protected fun verify(description: String, function: Message.() -> Unit) {
-        function.invoke(Message(description))
+    protected fun verify(description: String, function: VerifyMessage.() -> Unit) {
+        function.invoke(VerifyMessage(description))
     }
 }

@@ -50,6 +50,8 @@ jobs:
           ${{ runner.os }}-gradle-
     - name: Build
       run: ./gradlew clean build -x test -x integTest -x apiTest --stacktrace
+    - name: Copy docs
+      run: ./gradlew copyDocs
     - name: Push docker image
       env:
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}

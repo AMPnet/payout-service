@@ -6,7 +6,9 @@ enum class HashFunction(val toDbEnum: DbHashFunction, private val hashFn: (Strin
     IDENTITY(DbHashFunction.IDENTITY, { Hash(it) }),
     FIXED(DbHashFunction.FIXED, { Hash("0") }),
     SIMPLE(DbHashFunction.SIMPLE, { Hash("--" + it.hashCode().toString() + "//") }),
-    KECCAK_256(DbHashFunction.KECCAK_256, { TODO("implement keccak256 hashing") });
+    KECCAK_256(DbHashFunction.KECCAK_256, {
+        Hash(it) // TODO implement keccak256 hashing
+    });
 
     override operator fun invoke(arg: String) = hashFn(arg)
 

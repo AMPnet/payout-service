@@ -6,13 +6,21 @@ import org.web3j.abi.datatypes.Uint
 import java.math.BigInteger
 
 @JvmInline
-value class Hash(val value: String) {
+value class Hash private constructor(val value: String) {
+    companion object {
+        operator fun invoke(value: String) = Hash(value.lowercase())
+    }
+
     operator fun plus(other: Hash): Hash = Hash(value + other.value)
 }
 
 @JvmInline
-value class WalletAddress(val value: Address) : Comparable<WalletAddress> {
-    constructor(value: String) : this(Address(value))
+value class WalletAddress private constructor(val value: Address) : Comparable<WalletAddress> {
+    companion object {
+        operator fun invoke(value: Address) = WalletAddress(value.toString())
+    }
+
+    constructor(value: String) : this(Address(value.lowercase()))
 
     val rawValue: String
         get() = value.value
@@ -39,8 +47,12 @@ value class ChainId(val value: Long)
 value class BlockNumber(val value: BigInteger)
 
 @JvmInline
-value class ContractAddress(val value: Address) {
-    constructor(value: String) : this(Address(value))
+value class ContractAddress private constructor(val value: Address) {
+    companion object {
+        operator fun invoke(value: Address) = ContractAddress(value.toString())
+    }
+
+    constructor(value: String) : this(Address(value.lowercase()))
 
     val rawValue: String
         get() = value.value

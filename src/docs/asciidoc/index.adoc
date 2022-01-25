@@ -1,0 +1,36 @@
+= AMPnet Payout Service API Documentation
+Version {version}, {date}
+:doctype: book
+:toc: left
+:sectnums:
+:toclevels: 2
+:source-highlighter: prettify
+:docinfo: shared
+:icons: font
+
+== Introduction
+This document contains generated documentation for `AMPnet payout-service`. Payout service contains all endpoints
+for managing payouts to asset holders.
+Source code is available on https://github.com/AMPnet/payout-service[Github].
+
+== Payout Info API
+All endpoints are public and do not require `Authorization: Bearer JWT` header.
+Chain ID (e.g. 80001) and asset contract address must be provided in the request path.
+
+=== Get payout Merkle tree
+Fetches the entire Merkle tree for the payout with specified parameters. Path arguments in order are: chain ID,
+asset contract address, Merkle tree root hash.
+
+.Request
+include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutTree/http-request.adoc[]
+.Response
+include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutTree/http-response.adoc[]
+
+=== Get payout Merkle tree path for account
+Fetches the Merkle tree path for the payout with specified parameters for specified wallet address. Path arguments in
+order are: chain ID, asset contract address, Merkle tree root hash, wallet address.
+
+.Request
+include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutPathForSomeAccount/http-request.adoc[]
+.Response
+include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutPathForSomeAccount/http-response.adoc[]

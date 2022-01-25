@@ -21,6 +21,7 @@ object Versions {
         const val flyway = "8.4.1"
         const val jooq = "6.0.1"
         const val jib = "3.1.4"
+        const val asciiDoctor = "3.3.2"
     }
 
     object Tools {
@@ -39,5 +40,6 @@ object Versions {
         const val wireMock = "2.27.2"
         const val testContainers = "1.16.2"
         const val postgresDriver = "42.3.1"
+        const val jwt = "1.0.1"
     }
 }

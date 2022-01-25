@@ -3,12 +3,14 @@ package com.ampnet.payoutservice.testcontainers
 import com.ampnet.payoutservice.blockchain.properties.Chain
 import com.ampnet.payoutservice.util.BlockNumber
 import org.testcontainers.containers.GenericContainer
+import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy
 import org.web3j.crypto.Credentials
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.core.Request
 import org.web3j.protocol.core.methods.response.VoidResponse
 import org.web3j.protocol.http.HttpService
-import java.io.IOException
+import java.time.Duration
+import java.time.temporal.ChronoUnit
 
 class HardhatTestContainer : GenericContainer<HardhatTestContainer>("gluwa/hardhat-dev:1.0.0") {
 
@@ -28,31 +30,12 @@ class HardhatTestContainer : GenericContainer<HardhatTestContainer>("gluwa/hardh
     )
 
     init {
+        waitStrategy = LogMessageWaitStrategy()
+            .withRegEx("Started HTTP and WebSocket JSON-RPC server at .*")
+            .withTimes(1)
+            .withStartupTimeout(Duration.of(60, ChronoUnit.SECONDS))
         addFixedExposedPort(8545, 8545)
         start()
-        waitForHardhatStartup()
-    }
-
-    private fun waitForHardhatStartup() {
-        val log = logger()
-        log.info("Waiting for Hardhat service to start up...")
-
-        var success = false
-        var attempt = 0
-        val maxAttempts = 10
-
-        while (attempt < maxAttempts && success.not()) {
-            attempt += 1
-
-            try {
-                web3j.ethBlockNumber().send()
-                success = true
-                log.info("Hardhat service is up and running")
-            } catch (e: IOException) {
-                log.info("Hardhat service is not yet up, waiting... [$attempt/$maxAttempts]")
-                Thread.sleep(2500L)
-            }
-        }
     }
 
     private fun mine() {

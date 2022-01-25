@@ -1,6 +1,7 @@
 package com.ampnet.payoutservice.repository
 
-import com.ampnet.payoutservice.util.AccountBalance
+import com.ampnet.payoutservice.controller.request.FetchMerkleTreePathRequest
+import com.ampnet.payoutservice.controller.request.FetchMerkleTreeRequest
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
@@ -11,18 +12,7 @@ interface MerkleTreeRepository {
 
     fun storeTree(tree: MerkleTree, chainId: ChainId, contractAddress: ContractAddress, blockNumber: BlockNumber): Hash
 
-    fun fetchTree(
-        rootHash: Hash,
-        chainId: ChainId,
-        contractAddress: ContractAddress,
-        blockNumber: BlockNumber
-    ): MerkleTree?
+    fun fetchTree(request: FetchMerkleTreeRequest): MerkleTree?
 
-    fun containsLeaf(
-        rootHash: Hash,
-        chainId: ChainId,
-        contractAddress: ContractAddress,
-        blockNumber: BlockNumber,
-        leaf: AccountBalance
-    ): Boolean
+    fun containsAddress(request: FetchMerkleTreePathRequest): Boolean
 }

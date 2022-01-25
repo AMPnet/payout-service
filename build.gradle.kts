@@ -2,6 +2,8 @@ import io.gitlab.arturbosch.detekt.Detekt
 import nu.studer.gradle.jooq.JooqGenerate
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jlleitschuh.gradle.ktlint.KtlintExtension
+import java.text.SimpleDateFormat
+import java.util.Date
 
 plugins {
     kotlin("jvm").version(Versions.Compile.kotlin)
@@ -14,6 +16,7 @@ plugins {
     id("org.springframework.boot").version(Versions.Plugins.springBoot)
     id("io.spring.dependency-management").version(Versions.Plugins.springDependencyManagement)
     id("com.google.cloud.tools.jib").version(Versions.Plugins.jib)
+    id("org.asciidoctor.jvm.convert").version(Versions.Plugins.asciiDoctor)
     id("org.flywaydb.flyway").version(Versions.Plugins.flyway)
     id("nu.studer.jooq").version(Versions.Plugins.jooq)
     id("application")
@@ -89,6 +92,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
     implementation("org.springframework.boot:spring-boot-starter-jooq")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.flywaydb:flyway-core")
     runtimeOnly("ch.qos.logback:logback-classic")
@@ -100,20 +105,22 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:${Versions.Dependencies.okHttp}")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.Dependencies.kotlinCoroutines}")
     implementation("io.github.microutils:kotlin-logging-jvm:${Versions.Dependencies.kotlinLogging}")
+    implementation("com.github.AMPnet:jwt:${Versions.Dependencies.jwt}")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation("org.mockito.kotlin:mockito-kotlin:${Versions.Dependencies.mockitoKotlin}")
     testImplementation("com.willowtreeapps.assertk:assertk-jvm:${Versions.Dependencies.assertk}")
+    testImplementation("org.testcontainers:testcontainers:${Versions.Dependencies.testContainers}")
+    testImplementation("org.testcontainers:postgresql:${Versions.Dependencies.testContainers}")
+    testImplementation("com.github.tomakehurst:wiremock:${Versions.Dependencies.wireMock}")
     testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 
-    integTestImplementation("org.testcontainers:testcontainers:${Versions.Dependencies.testContainers}")
-    integTestImplementation("org.testcontainers:postgresql:${Versions.Dependencies.testContainers}")
-    integTestImplementation("com.github.tomakehurst:wiremock:${Versions.Dependencies.wireMock}")
     integTestImplementation(sourceSets.test.get().output)
 
-    apiTestImplementation("com.github.tomakehurst:wiremock:${Versions.Dependencies.wireMock}")
+    apiTestImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
+    apiTestImplementation("org.springframework.security:spring-security-test")
     apiTestImplementation(sourceSets.test.get().output)
 }
 
@@ -177,7 +184,10 @@ tasks.withType<Test> {
 }
 
 task("fullTest") {
-    val allTests = listOf(tasks.test) + Configurations.Tests.testSets.map { tasks[it] }
+    val allTests = listOf(tasks.test.get()) + Configurations.Tests.testSets.map { tasks[it] }
+    for (i in 0 until (allTests.size - 1)) {
+        allTests[i + 1].mustRunAfter(allTests[i])
+    }
     dependsOn(*allTests.toTypedArray())
 }
 
@@ -225,7 +235,7 @@ tasks.withType<JacocoCoverageVerification> {
 }
 
 detekt {
-    input = files("src/main/kotlin")
+    source = files("src/main/kotlin")
     config = files("detekt-config.yml")
 }
 
@@ -237,6 +247,23 @@ ktlint {
     filter {
         exclude("com/ampnet/payoutservice/generated/**")
     }
+}
+
+tasks.asciidoctor {
+    attributes(
+        mapOf(
+            "snippets" to file("build/generated-snippets"),
+            "version" to version,
+            "date" to SimpleDateFormat("yyyy-MM-dd").format(Date())
+        )
+    )
+    dependsOn(tasks["fullTest"])
+}
+
+tasks.register<Copy>("copyDocs") {
+    from(file("$buildDir/docs/asciidoc"))
+    into(file("src/main/resources/static/docs"))
+    dependsOn(tasks.asciidoctor)
 }
 
 task("qualityCheck") {
