@@ -32,7 +32,7 @@ enum class Chain(val id: ChainId, val rpcUrl: String, val infura: String?) {
     HARDHAT_TESTNET_LOCALHOST(
         ChainId(31337),
         "http://localhost:8545",
-        null
+        "http://localhost:" // used in tests to inject HARDHAT_PORT via infuraId
     );
 
     companion object {

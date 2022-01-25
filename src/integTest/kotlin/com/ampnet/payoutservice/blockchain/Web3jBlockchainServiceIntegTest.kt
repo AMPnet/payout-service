@@ -62,7 +62,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
         }
 
         verify("correct balances are fetched for first end block") {
-            val service = Web3jBlockchainService(ApplicationProperties().apply { infuraId = "" })
+            val service = Web3jBlockchainService(hardhatProperties())
             val balances = service.fetchErc20AccountBalances(
                 chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
                 erc20ContractAddress = ContractAddress(contract.contractAddress),
@@ -82,7 +82,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
         val endBlock2 = hardhatContainer.blockNumber()
 
         verify("correct balances are fetched for second end block") {
-            val service = Web3jBlockchainService(ApplicationProperties().apply { infuraId = "" })
+            val service = Web3jBlockchainService(hardhatProperties())
             val balances = service.fetchErc20AccountBalances(
                 chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
                 erc20ContractAddress = ContractAddress(contract.contractAddress),
@@ -138,7 +138,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
         }
 
         verify("correct balances are fetched for first end block") {
-            val service = Web3jBlockchainService(ApplicationProperties().apply { infuraId = "" })
+            val service = Web3jBlockchainService(hardhatProperties())
             val balances = service.fetchErc20AccountBalances(
                 chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
                 erc20ContractAddress = ContractAddress(contract.contractAddress),
@@ -158,7 +158,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
         val endBlock2 = hardhatContainer.blockNumber()
 
         verify("correct balances are fetched for second end block") {
-            val service = Web3jBlockchainService(ApplicationProperties().apply { infuraId = "" })
+            val service = Web3jBlockchainService(hardhatProperties())
             val balances = service.fetchErc20AccountBalances(
                 chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
                 erc20ContractAddress = ContractAddress(contract.contractAddress),
@@ -182,7 +182,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
     fun mustThrowExceptionForNonExistentContract() {
         verify("exception is thrown for non-existent contract") {
             assertThrows<InternalException>(message) {
-                val service = Web3jBlockchainService(ApplicationProperties().apply { infuraId = "" })
+                val service = Web3jBlockchainService(hardhatProperties())
                 service.fetchErc20AccountBalances(
                     chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
                     erc20ContractAddress = ContractAddress(accounts[0].address),
@@ -211,7 +211,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
         }
 
         verify("correct asset owner is fetched") {
-            val service = Web3jBlockchainService(ApplicationProperties().apply { infuraId = "" })
+            val service = Web3jBlockchainService(hardhatProperties())
             val assetOwner = service.getAssetOwner(
                 chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
                 assetAddress = ContractAddress(contract.contractAddress)
@@ -227,7 +227,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
         val mainAccount = accounts[0]
 
         verify("exception is thrown when fetching asset owner") {
-            val service = Web3jBlockchainService(ApplicationProperties().apply { infuraId = "" })
+            val service = Web3jBlockchainService(hardhatProperties())
 
             assertThrows<InternalException>(message) {
                 service.getAssetOwner(
@@ -257,4 +257,6 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
             ).send()
         }
     }
+
+    private fun hardhatProperties() = ApplicationProperties().apply { infuraId = hardhatContainer.mappedPort }
 }

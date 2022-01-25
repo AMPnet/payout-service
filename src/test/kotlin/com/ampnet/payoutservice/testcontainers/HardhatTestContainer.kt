@@ -1,11 +1,11 @@
 package com.ampnet.payoutservice.testcontainers
 
-import com.ampnet.payoutservice.blockchain.properties.Chain
 import com.ampnet.payoutservice.util.BlockNumber
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy
 import org.web3j.crypto.Credentials
 import org.web3j.protocol.Web3j
+import org.web3j.protocol.Web3jService
 import org.web3j.protocol.core.Request
 import org.web3j.protocol.core.methods.response.VoidResponse
 import org.web3j.protocol.http.HttpService
@@ -14,8 +14,12 @@ import java.time.temporal.ChronoUnit
 
 class HardhatTestContainer : GenericContainer<HardhatTestContainer>("gluwa/hardhat-dev:1.0.0") {
 
-    private val web3jService = HttpService(Chain.HARDHAT_TESTNET_LOCALHOST.rpcUrl)
-    val web3j = Web3j.build(web3jService)
+    companion object {
+        private const val hardhatPort = 8545
+    }
+
+    private val web3jService: Web3jService
+    val web3j: Web3j
     val accounts: List<Credentials> = listOf(
         Credentials.create("0xabf82ff96b463e9d82b83cb9bb450fe87e6166d4db6d7021d0c71d7e960d5abe"),
         Credentials.create("0xdcb7118c9946a39cd40b661e0d368e4afcc3cc48d21aa750d8164ca2e44961c4"),
@@ -28,14 +32,23 @@ class HardhatTestContainer : GenericContainer<HardhatTestContainer>("gluwa/hardh
         Credentials.create("0xccfb970ed6f3bb68a15d87a67071da16544c918cf978dc41906e686326bb953d"),
         Credentials.create("0x27a3706e23375353aabc8da00d59db6795abae3036dee967103088c8f15e5335")
     )
+    val mappedPort: String
 
     init {
         waitStrategy = LogMessageWaitStrategy()
             .withRegEx("Started HTTP and WebSocket JSON-RPC server at .*")
             .withTimes(1)
             .withStartupTimeout(Duration.of(60, ChronoUnit.SECONDS))
-        addFixedExposedPort(8545, 8545)
+
+        addExposedPort(hardhatPort)
         start()
+
+        mappedPort = getMappedPort(hardhatPort).toString()
+
+        System.setProperty("HARDHAT_PORT", mappedPort)
+
+        web3jService = HttpService("http://localhost:$mappedPort")
+        web3j = Web3j.build(web3jService)
     }
 
     private fun mine() {

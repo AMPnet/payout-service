@@ -4,6 +4,7 @@ import com.ampnet.payoutservice.TestBase.Companion.VerifyMessage
 import com.ampnet.payoutservice.blockchain.properties.Chain
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.ErrorResponse
+import com.ampnet.payoutservice.testcontainers.HardhatTestContainer
 import com.ampnet.payoutservice.testcontainers.PostgresTestContainer
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.WalletAddress
@@ -39,6 +40,9 @@ class ControllerTestBase : TestBase() {
 
     @Suppress("unused")
     protected val postgresContainer = PostgresTestContainer()
+
+    @Suppress("unused")
+    protected val hardhatContainer = HardhatTestContainer()
 
     @Autowired
     protected lateinit var objectMapper: ObjectMapper
