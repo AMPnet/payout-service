@@ -19,7 +19,7 @@ import org.web3j.tx.ReadonlyTransactionManager
 import org.web3j.tx.gas.DefaultGasProvider
 
 @Service
-class BlockchainServiceImpl(applicationProperties: ApplicationProperties) : BlockchainService {
+class Web3jBlockchainService(applicationProperties: ApplicationProperties) : BlockchainService {
 
     companion object : KLogging()
 
