@@ -61,6 +61,24 @@ class BlockchainServiceImpl(applicationProperties: ApplicationProperties) : Bloc
         }
     }
 
+    @Throws(InternalException::class)
+    override fun getAssetOwner(chainId: ChainId, assetAddress: ContractAddress): WalletAddress {
+        logger.debug { "Get owner of asset: $assetAddress on chain: $chainId" }
+        val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
+        val contract = IAssetCommon.load(
+            assetAddress.rawValue,
+            blockchainProperties.web3j,
+            ReadonlyTransactionManager(blockchainProperties.web3j, assetAddress.rawValue),
+            DefaultGasProvider()
+        )
+
+        return contract.commonState().sendSafely()?.owner?.let { WalletAddress(it) }
+            ?: throw InternalException(
+                ErrorCode.BLOCKCHAIN_CONTRACT_READ_ERROR,
+                "Failed to fetch asset owner address for contract address: $assetAddress"
+            )
+    }
+
     private fun IERC20.findAccounts(
         startBlockParameter: DefaultBlockParameter,
         endBlockParameter: DefaultBlockParameter
