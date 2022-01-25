@@ -12,6 +12,8 @@ interface MerkleTreeRepository {
 
     fun storeTree(tree: MerkleTree, chainId: ChainId, contractAddress: ContractAddress, blockNumber: BlockNumber): Hash
 
+    fun treeExists(rootHash: Hash, chainId: ChainId, contractAddress: ContractAddress): Boolean
+
     fun fetchTree(request: FetchMerkleTreeRequest): MerkleTree?
 
     fun containsAddress(request: FetchMerkleTreePathRequest): Boolean

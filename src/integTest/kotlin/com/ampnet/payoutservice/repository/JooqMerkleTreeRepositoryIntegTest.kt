@@ -61,11 +61,13 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
         val leafNode = AccountBalance(WalletAddress("a"), Balance(BigInteger.ZERO))
         val merkleTree = MerkleTree(listOf(leafNode), HashFunction.IDENTITY)
 
+        val chainId = ChainId(1L)
+        val contractAddress = ContractAddress("b")
         val storedRootHash = suppose("simple Merkle tree is stored into database") {
             repository.storeTree(
                 merkleTree,
-                ChainId(1L),
-                ContractAddress("b"),
+                chainId,
+                contractAddress,
                 BlockNumber(BigInteger("123"))
             )
         }
@@ -83,8 +85,8 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                 .isEqualTo(
                     MerkleTreeRootRecord(
                         id = treeRootUuid,
-                        chainId = 1L,
-                        contractAddress = ContractAddress("b").rawValue,
+                        chainId = chainId.value,
+                        contractAddress = contractAddress.rawValue,
                         blockNumber = BigInteger("123"),
                         hash = merkleTree.root.hash.value,
                         hashFn = DbHashFunction.IDENTITY
@@ -113,6 +115,11 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                     )
                 )
         }
+
+        verify("checking if Merkle tree exists will return true") {
+            assertThat(repository.treeExists(storedRootHash, chainId, contractAddress)).withMessage()
+                .isTrue()
+        }
     }
 
     @Test
@@ -133,11 +140,13 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
         val leafNode4 = AccountBalance(WalletAddress("d"), Balance(BigInteger("300")))
         val merkleTree = MerkleTree(listOf(leafNode1, leafNode2, leafNode3, leafNode4), HashFunction.IDENTITY)
 
+        val chainId = ChainId(1L)
+        val contractAddress = ContractAddress("b")
         val storedRootHash = suppose("multi-node Merkle tree is stored into database") {
             repository.storeTree(
                 merkleTree,
-                ChainId(1L),
-                ContractAddress("b"),
+                chainId,
+                contractAddress,
                 BlockNumber(BigInteger("123"))
             )
         }
@@ -155,8 +164,8 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                 .isEqualTo(
                     MerkleTreeRootRecord(
                         id = treeRootUuid,
-                        chainId = 1L,
-                        contractAddress = ContractAddress("b").rawValue,
+                        chainId = chainId.value,
+                        contractAddress = contractAddress.rawValue,
                         blockNumber = BigInteger("123"),
                         hash = merkleTree.root.hash.value,
                         hashFn = DbHashFunction.IDENTITY
@@ -224,6 +233,11 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                     )
                 )
         }
+
+        verify("checking if Merkle tree exists will return true") {
+            assertThat(repository.treeExists(storedRootHash, chainId, contractAddress)).withMessage()
+                .isTrue()
+        }
     }
 
     @Test
@@ -238,6 +252,11 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
             )
             assertThat(result).withMessage()
                 .isNull()
+        }
+
+        verify("checking if Merkle tree exists will return false") {
+            assertThat(repository.treeExists(Hash("a"), ChainId(1L), ContractAddress("1"))).withMessage()
+                .isFalse()
         }
     }
 
