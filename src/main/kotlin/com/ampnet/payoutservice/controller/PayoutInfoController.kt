@@ -86,7 +86,7 @@ class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepositor
         return ResponseEntity.ok(
             FetchMerkleTreePathResponse(
                 accountBalance.address.rawValue,
-                accountBalance.balance.rawValue.toString(),
+                accountBalance.balance.rawValue,
                 path
             )
         )

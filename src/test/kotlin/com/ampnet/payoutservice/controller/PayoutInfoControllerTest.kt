@@ -124,7 +124,7 @@ class PayoutInfoControllerTest : TestBase() {
                     ResponseEntity.ok(
                         FetchMerkleTreePathResponse(
                             accountBalance.address.rawValue,
-                            accountBalance.balance.rawValue.toString(),
+                            accountBalance.balance.rawValue,
                             tree.pathTo(accountBalance)!!
                         )
                     )

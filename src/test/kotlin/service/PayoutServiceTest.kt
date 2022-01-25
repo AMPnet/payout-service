@@ -4,7 +4,7 @@ import com.ampnet.payoutservice.TestBase
 import com.ampnet.payoutservice.blockchain.BlockchainService
 import com.ampnet.payoutservice.exception.InvalidRequestException
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
-import com.ampnet.payoutservice.service.PayoutService
+import com.ampnet.payoutservice.service.PayoutServiceImpl
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
@@ -67,7 +67,7 @@ class PayoutServiceTest : TestBase() {
                 .willReturn(tree.root.hash)
         }
 
-        val service = PayoutService(repository, blockchainService)
+        val service = PayoutServiceImpl(repository, blockchainService)
 
         verify("payout is correctly created and Merkle tree root hash is returned") {
             val rootHash = service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock)
@@ -133,7 +133,7 @@ class PayoutServiceTest : TestBase() {
                 .willReturn(true)
         }
 
-        val service = PayoutService(repository, blockchainService)
+        val service = PayoutServiceImpl(repository, blockchainService)
 
         verify("payout is correctly created and Merkle tree root hash is returned") {
             val rootHash = service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock)
@@ -174,7 +174,7 @@ class PayoutServiceTest : TestBase() {
 
         val payoutBlock = BlockNumber(BigInteger.TEN)
         val repository = mock<MerkleTreeRepository>()
-        val service = PayoutService(repository, blockchainService)
+        val service = PayoutServiceImpl(repository, blockchainService)
 
         verify("InvalidRequestException exception is thrown") {
             assertThrows<InvalidRequestException>(message) {
