@@ -1,6 +1,9 @@
 package com.ampnet.payoutservice.exception
 
 enum class ErrorCode(val categoryCode: String, var specificCode: String, var message: String) {
+    // User: 03
+    USER_NOT_ASSET_OWNER("03", "03", "User is not asset owner"),
+
     // Blockchain: 04
     BLOCKCHAIN_ID("04", "01", "Blockchain id not supported"),
     BLOCKCHAIN_CONTRACT_READ_ERROR("04", "04", "Blockchain contract read error"),
