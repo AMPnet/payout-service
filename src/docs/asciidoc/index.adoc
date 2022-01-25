@@ -17,8 +17,9 @@ Source code is available on https://github.com/AMPnet/payout-service[Github].
 All endpoints are public and do not require `Authorization: Bearer JWT` header.
 Chain ID (e.g. 80001) and asset contract address must be provided in the request path.
 
-=== Get gayout Merkle tree
-Fetches the entire Merkle tree for the payout with specified parameters. All query parameters are mandatory.
+=== Get payout Merkle tree
+Fetches the entire Merkle tree for the payout with specified parameters. Path arguments in order are: chain ID,
+asset contract address, Merkle tree root hash.
 
 .Request
 include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutTree/http-request.adoc[]
@@ -26,8 +27,8 @@ include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutTree/htt
 include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutTree/http-response.adoc[]
 
 === Get payout Merkle tree path for account
-Fetches the Merkle tree path for the payout with specified parameters for specified wallet address. All query parameters
-are mandatory.
+Fetches the Merkle tree path for the payout with specified parameters for specified wallet address. Path arguments in
+order are: chain ID, asset contract address, Merkle tree root hash, wallet address.
 
 .Request
 include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutPathForSomeAccount/http-request.adoc[]

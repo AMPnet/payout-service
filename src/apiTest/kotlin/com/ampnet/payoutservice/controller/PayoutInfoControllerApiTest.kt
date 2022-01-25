@@ -47,8 +47,9 @@ class PayoutInfoControllerApiTest : ControllerTestBase() {
 
         verify("correct Merkle tree is returned") {
             val response = mockMvc.perform(
-                MockMvcRequestBuilders.get("/payout_info/${chainId.value}/${contractAddress.rawValue}/tree")
-                    .param("rootHash", tree.root.hash.value)
+                MockMvcRequestBuilders.get(
+                    "/payout_info/${chainId.value}/${contractAddress.rawValue}/tree/${tree.root.hash.value}"
+                )
             )
                 .andExpect(MockMvcResultMatchers.status().isOk)
                 .andReturn()
@@ -63,8 +64,7 @@ class PayoutInfoControllerApiTest : ControllerTestBase() {
     fun mustReturnCorrectErrorWhenFetchingNonExistentPayoutTree() {
         verify("error is returned for non-existent Merkle tree") {
             val response = mockMvc.perform(
-                MockMvcRequestBuilders.get("/payout_info/123/0x1/tree")
-                    .param("rootHash", "unknownHash")
+                MockMvcRequestBuilders.get("/payout_info/123/0x1/tree/unknownHash")
             )
                 .andExpect(MockMvcResultMatchers.status().isNotFound)
                 .andReturn()
@@ -85,9 +85,10 @@ class PayoutInfoControllerApiTest : ControllerTestBase() {
 
         verify("correct Merkle tree path is returned") {
             val response = mockMvc.perform(
-                MockMvcRequestBuilders.get("/payout_info/${chainId.value}/${contractAddress.rawValue}/path")
-                    .param("rootHash", tree.root.hash.value)
-                    .param("walletAddress", accountBalance.address.rawValue)
+                MockMvcRequestBuilders.get(
+                    "/payout_info/${chainId.value}/${contractAddress.rawValue}/tree/${tree.root.hash.value}" +
+                        "/path/${accountBalance.address.rawValue}"
+                )
             )
                 .andExpect(MockMvcResultMatchers.status().isOk)
                 .andReturn()
@@ -110,9 +111,7 @@ class PayoutInfoControllerApiTest : ControllerTestBase() {
     fun mustReturnCorrectErrorWhenFetchingPayoutPathForNonExistentPayout() {
         verify("error is returned for non-existent payout") {
             val response = mockMvc.perform(
-                MockMvcRequestBuilders.get("/payout_info/123/0x1/path")
-                    .param("rootHash", "unknownHash")
-                    .param("walletAddress", "0x2")
+                MockMvcRequestBuilders.get("/payout_info/123/0x1/tree/unknownHash/path/0x2")
             )
                 .andExpect(MockMvcResultMatchers.status().isNotFound)
                 .andReturn()
@@ -133,11 +132,12 @@ class PayoutInfoControllerApiTest : ControllerTestBase() {
 
         val requestAccountBalance = AccountBalance(userAddress, Balance(BigInteger.ONE))
 
-        verify("correct Merkle tree path is returned") {
+        verify("error is returned for account not included in the payout") {
             val response = mockMvc.perform(
-                MockMvcRequestBuilders.get("/payout_info/${chainId.value}/${contractAddress.rawValue}/path")
-                    .param("rootHash", tree.root.hash.value)
-                    .param("walletAddress", requestAccountBalance.address.rawValue)
+                MockMvcRequestBuilders.get(
+                    "/payout_info/${chainId.value}/${contractAddress.rawValue}/tree/${tree.root.hash.value}" +
+                        "/path/${requestAccountBalance.address.rawValue}"
+                )
             )
                 .andExpect(MockMvcResultMatchers.status().isNotFound)
                 .andReturn()
