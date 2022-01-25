@@ -1,13 +1,13 @@
 package com.ampnet.payoutservice.service
 
 import com.ampnet.payoutservice.blockchain.BlockchainService
+import com.ampnet.payoutservice.controller.response.CreatePayoutResponse
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.InvalidRequestException
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
-import com.ampnet.payoutservice.util.Hash
 import com.ampnet.payoutservice.util.HashFunction
 import com.ampnet.payoutservice.util.MerkleTree
 import com.ampnet.payoutservice.util.WalletAddress
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service
 @Service
 class PayoutServiceImpl(
     private val merkleTreeRepository: MerkleTreeRepository,
+    private val ipfsService: IpfsService,
     private val blockchainService: BlockchainService
 ) : PayoutService {
 
@@ -27,7 +28,7 @@ class PayoutServiceImpl(
         assetAddress: ContractAddress,
         requesterAddress: WalletAddress,
         payoutBlock: BlockNumber
-    ): Hash {
+    ): CreatePayoutResponse {
         logger.info {
             "Payout request for chain ID: $chainId, asset address: $assetAddress," +
                 " requester address: $requesterAddress, payout block: $payoutBlock"
@@ -50,13 +51,20 @@ class PayoutServiceImpl(
         )
 
         val tree = MerkleTree(balances, HashFunction.KECCAK_256)
+        val ipfsHash = ipfsService.pinJsonToIpfs(tree)
 
-        return if (merkleTreeRepository.treeExists(tree.root.hash, chainId, assetAddress)) {
+        val rootHash = if (merkleTreeRepository.treeExists(tree.root.hash, chainId, assetAddress)) {
             logger.debug { "Merkle tree already exists, returning root hash" }
             tree.root.hash
         } else {
             logger.debug { "Storing Merkle tree into the database" }
             merkleTreeRepository.storeTree(tree, chainId, assetAddress, payoutBlock)
         }
+
+        return CreatePayoutResponse(
+            payoutBlockNumber = payoutBlock.value,
+            merkleRootHash = rootHash.value,
+            merkleTreeIpfsHash = ipfsHash.value
+        )
     }
 }

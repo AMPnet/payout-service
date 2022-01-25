@@ -24,7 +24,7 @@ import java.math.BigInteger
 class Web3jBlockchainServiceIntegTest : TestBase() {
 
     private val hardhatContainer = HardhatTestContainer()
-    private val accounts = hardhatContainer.accounts
+    private val accounts = HardhatTestContainer.accounts
 
     @Test
     fun mustCorrectlyFetchBalancesBasedOnBlockRange() {

@@ -2,8 +2,10 @@ package service
 
 import com.ampnet.payoutservice.TestBase
 import com.ampnet.payoutservice.blockchain.BlockchainService
+import com.ampnet.payoutservice.controller.response.CreatePayoutResponse
 import com.ampnet.payoutservice.exception.InvalidRequestException
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
+import com.ampnet.payoutservice.service.IpfsService
 import com.ampnet.payoutservice.service.PayoutServiceImpl
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
@@ -11,6 +13,7 @@ import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.HashFunction
+import com.ampnet.payoutservice.util.IpfsHash
 import com.ampnet.payoutservice.util.MerkleTree
 import com.ampnet.payoutservice.util.WalletAddress
 import org.assertj.core.api.Assertions.assertThat
@@ -55,6 +58,14 @@ class PayoutServiceTest : TestBase() {
         }
 
         val tree = MerkleTree(accountBalances, HashFunction.KECCAK_256)
+        val ipfsService = mock<IpfsService>()
+        val ipfsHash = IpfsHash("testIpfsHash")
+
+        suppose("Merkle tree is stored to IPFS") {
+            given(ipfsService.pinJsonToIpfs(tree))
+                .willReturn(ipfsHash)
+        }
+
         val repository = mock<MerkleTreeRepository>()
 
         suppose("Merkle tree does not exist in the database") {
@@ -67,13 +78,19 @@ class PayoutServiceTest : TestBase() {
                 .willReturn(tree.root.hash)
         }
 
-        val service = PayoutServiceImpl(repository, blockchainService)
+        val service = PayoutServiceImpl(repository, ipfsService, blockchainService)
 
         verify("payout is correctly created and Merkle tree root hash is returned") {
-            val rootHash = service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock)
+            val response = service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock)
 
-            assertThat(rootHash).withMessage()
-                .isEqualTo(tree.root.hash)
+            assertThat(response).withMessage()
+                .isEqualTo(
+                    CreatePayoutResponse(
+                        payoutBlockNumber = payoutBlock.value,
+                        merkleRootHash = tree.root.hash.value,
+                        merkleTreeIpfsHash = ipfsHash.value
+                    )
+                )
         }
 
         verify("correct service and repository calls are made") {
@@ -87,6 +104,9 @@ class PayoutServiceTest : TestBase() {
                     endBlock = payoutBlock
                 )
             verifyNoMoreInteractions(blockchainService)
+
+            verifyMock(ipfsService).pinJsonToIpfs(tree)
+            verifyNoMoreInteractions(ipfsService)
 
             verifyMock(repository)
                 .treeExists(tree.root.hash, chainId, assetAddress)
@@ -126,6 +146,14 @@ class PayoutServiceTest : TestBase() {
         }
 
         val tree = MerkleTree(accountBalances, HashFunction.KECCAK_256)
+        val ipfsService = mock<IpfsService>()
+        val ipfsHash = IpfsHash("testIpfsHash")
+
+        suppose("Merkle tree is stored to IPFS") {
+            given(ipfsService.pinJsonToIpfs(tree))
+                .willReturn(ipfsHash)
+        }
+
         val repository = mock<MerkleTreeRepository>()
 
         suppose("Merkle tree already exists in the database") {
@@ -133,13 +161,19 @@ class PayoutServiceTest : TestBase() {
                 .willReturn(true)
         }
 
-        val service = PayoutServiceImpl(repository, blockchainService)
+        val service = PayoutServiceImpl(repository, ipfsService, blockchainService)
 
         verify("payout is correctly created and Merkle tree root hash is returned") {
-            val rootHash = service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock)
+            val response = service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock)
 
-            assertThat(rootHash).withMessage()
-                .isEqualTo(tree.root.hash)
+            assertThat(response).withMessage()
+                .isEqualTo(
+                    CreatePayoutResponse(
+                        payoutBlockNumber = payoutBlock.value,
+                        merkleRootHash = tree.root.hash.value,
+                        merkleTreeIpfsHash = ipfsHash.value
+                    )
+                )
         }
 
         verify("correct service and repository calls are made") {
@@ -153,6 +187,9 @@ class PayoutServiceTest : TestBase() {
                     endBlock = payoutBlock
                 )
             verifyNoMoreInteractions(blockchainService)
+
+            verifyMock(ipfsService).pinJsonToIpfs(tree)
+            verifyNoMoreInteractions(ipfsService)
 
             verifyMock(repository)
                 .treeExists(tree.root.hash, chainId, assetAddress)
@@ -173,8 +210,9 @@ class PayoutServiceTest : TestBase() {
         }
 
         val payoutBlock = BlockNumber(BigInteger.TEN)
+        val ipfsService = mock<IpfsService>()
         val repository = mock<MerkleTreeRepository>()
-        val service = PayoutServiceImpl(repository, blockchainService)
+        val service = PayoutServiceImpl(repository, ipfsService, blockchainService)
 
         verify("InvalidRequestException exception is thrown") {
             assertThrows<InvalidRequestException>(message) {
@@ -187,6 +225,7 @@ class PayoutServiceTest : TestBase() {
                 .getAssetOwner(chainId, assetAddress)
             verifyNoMoreInteractions(blockchainService)
 
+            verifyNoInteractions(ipfsService)
             verifyNoInteractions(repository)
         }
     }

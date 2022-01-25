@@ -24,18 +24,13 @@ class PayoutController(private val payoutService: PayoutService) {
         @RequestBody requestBody: CreatePayoutRequest,
         @AuthenticationPrincipal requesterAddress: String
     ): ResponseEntity<CreatePayoutResponse> {
-        val rootHash = payoutService.createPayout(
+        val response = payoutService.createPayout(
             chainId = ChainId(chainId),
             assetAddress = ContractAddress(assetAddress),
             requesterAddress = WalletAddress(requesterAddress),
             payoutBlock = BlockNumber(requestBody.payoutBlockNumber)
         )
 
-        return ResponseEntity.ok(
-            CreatePayoutResponse(
-                payoutBlockNumber = requestBody.payoutBlockNumber,
-                merkleRootHash = rootHash.value
-            )
-        )
+        return ResponseEntity.ok(response)
     }
 }

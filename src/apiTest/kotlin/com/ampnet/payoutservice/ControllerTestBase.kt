@@ -21,6 +21,7 @@ import org.springframework.restdocs.RestDocumentationExtension
 import org.springframework.restdocs.mockmvc.MockMvcRestDocumentation
 import org.springframework.restdocs.operation.preprocess.Preprocessors
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
@@ -31,6 +32,7 @@ import org.springframework.web.context.WebApplicationContext
 @ExtendWith(value = [SpringExtension::class, RestDocumentationExtension::class])
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class ControllerTestBase : TestBase() {
 
     protected final val userAddress = WalletAddress("0x8f52B0cC50967fc59C6289f8FDB3E356EdeEBD23")

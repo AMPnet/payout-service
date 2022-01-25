@@ -26,6 +26,11 @@ class PayoutControllerTest : TestBase() {
         val requesterAddress = WalletAddress("b")
         val requestBody = CreatePayoutRequest(payoutBlockNumber = BigInteger.TEN)
         val rootHash = Hash("test")
+        val serviceResponse = CreatePayoutResponse(
+            requestBody.payoutBlockNumber,
+            rootHash.value,
+            "testIpfsHash"
+        )
 
         suppose("some Merkle tree hash is returned") {
             given(
@@ -36,21 +41,21 @@ class PayoutControllerTest : TestBase() {
                     payoutBlock = BlockNumber(requestBody.payoutBlockNumber)
                 )
             )
-                .willReturn(rootHash)
+                .willReturn(serviceResponse)
         }
 
         val controller = PayoutController(service)
 
         verify("correct response is returned") {
-            val response = controller.createPayout(
+            val controllerResponse = controller.createPayout(
                 chainId = chainId.value,
                 assetAddress = assetAddress.rawValue,
                 requestBody = requestBody,
                 requesterAddress = requesterAddress.rawValue
             )
 
-            assertThat(response).withMessage()
-                .isEqualTo(ResponseEntity.ok(CreatePayoutResponse(requestBody.payoutBlockNumber, rootHash.value)))
+            assertThat(controllerResponse).withMessage()
+                .isEqualTo(ResponseEntity.ok(serviceResponse))
         }
     }
 }
