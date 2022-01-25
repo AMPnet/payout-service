@@ -78,6 +78,22 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
         return findPath(root, 0, LinkedList())
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) {
+            return true
+        }
+
+        if (other !is MerkleTree) {
+            return false
+        }
+
+        return other.root == root
+    }
+
+    override fun hashCode(): Int {
+        return root.hashCode()
+    }
+
     private fun buildTree(sortedNodes: Set<AccountBalance>): RootNode {
         val leafNodes = sortedNodes.mapIndexed { index, node -> LeafNode(node, node.hash, index) }
 

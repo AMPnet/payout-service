@@ -71,8 +71,8 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
 
     override fun treeExists(rootHash: Hash, chainId: ChainId, contractAddress: ContractAddress): Boolean {
         logger.info {
-            "Checking if Merkle tree already exists with root hash: ${rootHash} for chainId: ${chainId}," +
-                " contractAddress: ${contractAddress}"
+            "Checking if Merkle tree already exists with root hash: $rootHash for chainId: $chainId," +
+                " contractAddress: $contractAddress"
         }
 
         return dslContext.fetchExists(

@@ -28,9 +28,14 @@ class PayoutService(
         requesterAddress: WalletAddress,
         payoutBlock: BlockNumber
     ): Hash {
+        logger.info {
+            "Payout request for chain ID: $chainId, asset address: $assetAddress," +
+                " requester address: $requesterAddress, payout block: $payoutBlock"
+        }
         val assetOwner = blockchainService.getAssetOwner(chainId, assetAddress)
 
         if (assetOwner != requesterAddress) {
+            logger.warn { "Requester is not asset owner" }
             throw InvalidRequestException(
                 ErrorCode.USER_NOT_ASSET_OWNER,
                 "User with wallet address: $requesterAddress is not the owner of asset contract: $assetAddress"
@@ -47,8 +52,10 @@ class PayoutService(
         val tree = MerkleTree(balances, HashFunction.KECCAK_256)
 
         return if (merkleTreeRepository.treeExists(tree.root.hash, chainId, assetAddress)) {
+            logger.debug { "Merkle tree already exists, returning root hash" }
             tree.root.hash
         } else {
+            logger.debug { "Storing Merkle tree into the database" }
             merkleTreeRepository.storeTree(tree, chainId, assetAddress, payoutBlock)
         }
     }
