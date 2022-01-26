@@ -26,7 +26,7 @@ class PathSegmentJsonSerializerTest : TestBase() {
                     """
                     {
                         "hash": "${pathSegment.hash.value}",
-                        "isLeft": ${pathSegment.isLeft}
+                        "is_left": ${pathSegment.isLeft}
                     }
                     """.trimIndent()
                 )

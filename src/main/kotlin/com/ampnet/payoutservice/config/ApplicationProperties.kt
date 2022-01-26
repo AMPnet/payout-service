@@ -2,12 +2,19 @@ package com.ampnet.payoutservice.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
+import java.math.BigInteger
 
 @Configuration
 @ConfigurationProperties(prefix = "payoutservice")
 class ApplicationProperties {
     val jwt = JwtProperties()
     val ipfs = IpfsProperties()
+    val payout = PayoutProperties()
+    val chainEthereum = ChainProperties()
+    val chainGoerli = ChainProperties()
+    val chainMatic = ChainProperties()
+    val chainMumbai = ChainProperties()
+    val chainHardhatTestnet = ChainProperties()
     var infuraId: String = ""
 }
 
@@ -19,4 +26,12 @@ class IpfsProperties {
     var url = "https://api.pinata.cloud/"
     var apiKey = ""
     var secretApiKey = ""
+}
+
+class PayoutProperties {
+    var checkAssetOwner = true
+}
+
+class ChainProperties {
+    var startBlockNumber: BigInteger? = null
 }

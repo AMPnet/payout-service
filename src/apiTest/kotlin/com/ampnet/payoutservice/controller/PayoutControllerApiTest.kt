@@ -127,7 +127,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                     "/payout/${chainId.value}/${contract.contractAddress}/create"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\n    \"payoutBlockNumber\": \"${payoutBlock.value}\"\n}")
+                    .content("{\n    \"payout_block_number\": \"${payoutBlock.value}\"\n}")
             )
                 .andExpect(MockMvcResultMatchers.status().isOk)
                 .andReturn()
@@ -247,7 +247,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                     "/payout/${chainId.value}/${contract.contractAddress}/create"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\n    \"payoutBlockNumber\": \"${payoutBlock.value}\"\n}")
+                    .content("{\n    \"payout_block_number\": \"${payoutBlock.value}\"\n}")
             )
                 .andExpect(MockMvcResultMatchers.status().isOk)
                 .andReturn()
@@ -305,7 +305,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                     "/payout/${chainId.value}/${contract.contractAddress}/create"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\n    \"payoutBlockNumber\": \"${payoutBlock.value}\"\n}")
+                    .content("{\n    \"payout_block_number\": \"${payoutBlock.value}\"\n}")
             )
                 .andExpect(MockMvcResultMatchers.status().isOk)
                 .andReturn()
@@ -347,7 +347,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                     "/payout/${chainId.value}/${contract.contractAddress}/create"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\n    \"payoutBlockNumber\": \"${payoutBlock.value}\"\n}")
+                    .content("{\n    \"payout_block_number\": \"${payoutBlock.value}\"\n}")
             )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest)
                 .andReturn()
@@ -368,7 +368,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                     "/payout/${chainId.value}/${accounts[1].address}/create"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\n    \"payoutBlockNumber\": \"${payoutBlock.value}\"\n}")
+                    .content("{\n    \"payout_block_number\": \"${payoutBlock.value}\"\n}")
             )
                 .andExpect(MockMvcResultMatchers.status().isBadGateway)
                 .andReturn()

@@ -1,6 +1,8 @@
 package com.ampnet.payoutservice.service
 
 import com.ampnet.payoutservice.blockchain.BlockchainService
+import com.ampnet.payoutservice.blockchain.properties.ChainPropertiesHandler
+import com.ampnet.payoutservice.config.ApplicationProperties
 import com.ampnet.payoutservice.controller.response.CreatePayoutResponse
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.InvalidRequestException
@@ -18,10 +20,13 @@ import org.springframework.stereotype.Service
 class PayoutServiceImpl(
     private val merkleTreeRepository: MerkleTreeRepository,
     private val ipfsService: IpfsService,
-    private val blockchainService: BlockchainService
+    private val blockchainService: BlockchainService,
+    private val applicationProperties: ApplicationProperties
 ) : PayoutService {
 
     companion object : KLogging()
+
+    private val chainHandler = ChainPropertiesHandler(applicationProperties)
 
     override fun createPayout(
         chainId: ChainId,
@@ -33,20 +38,13 @@ class PayoutServiceImpl(
             "Payout request for chain ID: $chainId, asset address: $assetAddress," +
                 " requester address: $requesterAddress, payout block: $payoutBlock"
         }
-        val assetOwner = blockchainService.getAssetOwner(chainId, assetAddress)
 
-        if (assetOwner != requesterAddress) {
-            logger.warn { "Requester is not asset owner" }
-            throw InvalidRequestException(
-                ErrorCode.USER_NOT_ASSET_OWNER,
-                "User with wallet address: $requesterAddress is not the owner of asset contract: $assetAddress"
-            )
-        }
+        checkAssetOwnerIfNeeded(chainId, assetAddress, requesterAddress)
 
         val balances = blockchainService.fetchErc20AccountBalances(
             chainId = chainId,
             erc20ContractAddress = assetAddress,
-            startBlock = null, // TODO provide some default values per chain ID
+            startBlock = chainHandler.getChainProperties(chainId)?.startBlockNumber?.let { BlockNumber(it) },
             endBlock = payoutBlock
         )
 
@@ -66,5 +64,23 @@ class PayoutServiceImpl(
             merkleRootHash = rootHash.value,
             merkleTreeIpfsHash = ipfsHash.value
         )
+    }
+
+    private fun checkAssetOwnerIfNeeded(
+        chainId: ChainId,
+        assetAddress: ContractAddress,
+        requesterAddress: WalletAddress
+    ) {
+        if (applicationProperties.payout.checkAssetOwner) {
+            val assetOwner = blockchainService.getAssetOwner(chainId, assetAddress)
+
+            if (assetOwner != requesterAddress) {
+                logger.warn { "Requester is not asset owner" }
+                throw InvalidRequestException(
+                    ErrorCode.USER_NOT_ASSET_OWNER,
+                    "User with wallet address: $requesterAddress is not the owner of asset contract: $assetAddress"
+                )
+            }
+        }
     }
 }
