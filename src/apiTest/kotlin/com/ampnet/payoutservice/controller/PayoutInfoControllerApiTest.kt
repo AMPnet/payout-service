@@ -99,7 +99,7 @@ class PayoutInfoControllerApiTest : ControllerTestBase() {
                     objectMapper.valueToTree(
                         FetchMerkleTreePathResponse(
                             accountBalance.address.rawValue,
-                            accountBalance.balance.rawValue.toString(),
+                            accountBalance.balance.rawValue,
                             tree.pathTo(accountBalance)!!
                         )
                     )

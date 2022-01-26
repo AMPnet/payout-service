@@ -69,6 +69,24 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
         return tree.root.hash
     }
 
+    override fun treeExists(rootHash: Hash, chainId: ChainId, contractAddress: ContractAddress): Boolean {
+        logger.info {
+            "Checking if Merkle tree already exists with root hash: $rootHash for chainId: $chainId," +
+                " contractAddress: $contractAddress"
+        }
+
+        return dslContext.fetchExists(
+            dslContext.selectFrom(MerkleTreeRoot.MERKLE_TREE_ROOT)
+                .where(
+                    DSL.and(
+                        MerkleTreeRoot.MERKLE_TREE_ROOT.CHAIN_ID.eq(chainId.value),
+                        MerkleTreeRoot.MERKLE_TREE_ROOT.CONTRACT_ADDRESS.eq(contractAddress.rawValue),
+                        MerkleTreeRoot.MERKLE_TREE_ROOT.HASH.eq(rootHash.value)
+                    )
+                )
+        )
+    }
+
     override fun fetchTree(request: FetchMerkleTreeRequest): MerkleTree? {
         logger.info {
             "Fetching Merkle tree with root hash: ${request.rootHash} for chainId: ${request.chainId}," +

@@ -34,3 +34,15 @@ order are: chain ID, asset contract address, Merkle tree root hash, wallet addre
 include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutPathForSomeAccount/http-request.adoc[]
 .Response
 include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutPathForSomeAccount/http-response.adoc[]
+
+== Payout API
+All endpoint require `Authorization: Bearer JWT` header.
+Chain ID (e.g. 80001) and asset contract address must be provided in the request path.
+
+=== Create payout
+Creates payout Merkle tree for the specified parameters. Path arguments in order are: chain ID, asset contract address.
+
+.Request
+include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreatePayoutForSomeAsset/http-request.adoc[]
+.Response
+include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreatePayoutForSomeAsset/http-response.adoc[]

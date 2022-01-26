@@ -38,7 +38,7 @@ class MerkleTreeJsonSerializerTest : TestBase() {
                     {
                         "depth": ${tree.root.depth},
                         "hash": "${tree.root.hash.value}",
-                        "hashFn": "${tree.hashFn.name}",
+                        "hash_fn": "${tree.hashFn.name}",
                         "left": {
                             "hash": "${accountBalance.abiEncode()}",
                             "index": 0,
@@ -83,7 +83,7 @@ class MerkleTreeJsonSerializerTest : TestBase() {
                     {
                         "depth": ${tree.root.depth},
                         "hash": "${tree.root.hash.value}",
-                        "hashFn": "${tree.hashFn.name}",
+                        "hash_fn": "${tree.hashFn.name}",
                         "left": {
                             "hash": "${accountBalances[0].abiEncode() + accountBalances[1].abiEncode()}",
                             "left": {

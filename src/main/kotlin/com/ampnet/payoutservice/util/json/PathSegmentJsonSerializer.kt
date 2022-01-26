@@ -12,7 +12,7 @@ class PathSegmentJsonSerializer : JsonSerializer<PathSegment>() {
             writeStartObject()
 
             writeStringField("hash", value.hash.value)
-            writeBooleanField("isLeft", value.isLeft)
+            writeBooleanField("is_left", value.isLeft)
 
             writeEndObject()
         }

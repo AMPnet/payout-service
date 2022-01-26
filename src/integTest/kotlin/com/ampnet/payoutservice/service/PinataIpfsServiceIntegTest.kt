@@ -70,6 +70,7 @@ class PinataIpfsServiceIntegTest : TestBase() {
 
         verify("correct IPFS hash is returned for JSON upload") {
             val result = service.pinJsonToIpfs(mapOf("test" to 1))
+
             assertThat(result).withMessage()
                 .isEqualTo(ipfsHash)
         }

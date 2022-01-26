@@ -17,7 +17,7 @@ class MerkleTreeJsonSerializer : JsonSerializer<MerkleTree>() {
 
             writeNumberField("depth", value.root.depth)
             writeStringField("hash", value.root.hash.value)
-            writeStringField("hashFn", value.hashFn.name)
+            writeStringField("hash_fn", value.hashFn.name)
 
             writeBranch("left", value.root.left)
             writeBranch("right", value.root.right)
