@@ -32,7 +32,7 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
         ) : PathNode
 
         @JsonSerialize(using = PathSegmentJsonSerializer::class)
-        data class PathSegment(val hash: Hash, val isLeft: Boolean)
+        data class PathSegment(val siblingHash: Hash, val isLeft: Boolean)
     }
 
     val leafNodesByHash: Map<Hash, LeafNode>
