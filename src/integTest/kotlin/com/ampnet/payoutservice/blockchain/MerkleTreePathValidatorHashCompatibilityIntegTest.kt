@@ -77,42 +77,9 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             )
         }
 
-        val mainAccount = accounts[0]
+        val contract = supposeContractIsDeployed(tree)
 
-        val contract = suppose("Merkle tree path validator is deployed for created tree root") {
-            val future = MerkleTreePathValidator.deploy(
-                hardhatContainer.web3j,
-                mainAccount,
-                DefaultGasProvider(),
-                Numeric.hexStringToByteArray(tree.root.hash.value)
-            ).sendAsync()
-            hardhatContainer.waitAndMine()
-            future.get()
-        }
-
-        verify("contract call will return true for account balances contained in Merkle tree") {
-            accountBalances.withIndex().forEach {
-                assertThat(
-                    contract.containsNode(
-                        it.value.address.rawValue,
-                        it.value.balance.rawValue,
-                        it.value.treePath(tree)
-                    ).send()
-                ).withIndexedMessage(it.index).isTrue()
-            }
-        }
-
-        verify("contract call will return false for account balances not contained in Merkle tree") {
-            accountBalances.withIndex().forEach {
-                assertThat(
-                    contract.containsNode(
-                        it.value.address.rawValue,
-                        it.value.balance.rawValue + BigInteger.ONE,
-                        it.value.treePath(tree)
-                    ).send()
-                ).withIndexedMessage(it.index).isFalse()
-            }
-        }
+        contract.verifyContractCalls(accountBalances, tree)
     }
 
     @Test
@@ -129,42 +96,9 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             )
         }
 
-        val mainAccount = accounts[0]
+        val contract = supposeContractIsDeployed(tree)
 
-        val contract = suppose("Merkle tree path validator is deployed for created tree root") {
-            val future = MerkleTreePathValidator.deploy(
-                hardhatContainer.web3j,
-                mainAccount,
-                DefaultGasProvider(),
-                Numeric.hexStringToByteArray(tree.root.hash.value)
-            ).sendAsync()
-            hardhatContainer.waitAndMine()
-            future.get()
-        }
-
-        verify("contract call will return true for account balances contained in Merkle tree") {
-            accountBalances.withIndex().forEach {
-                assertThat(
-                    contract.containsNode(
-                        it.value.address.rawValue,
-                        it.value.balance.rawValue,
-                        it.value.treePath(tree)
-                    ).send()
-                ).withIndexedMessage(it.index).isTrue()
-            }
-        }
-
-        verify("contract call will return false for account balances not contained in Merkle tree") {
-            accountBalances.withIndex().forEach {
-                assertThat(
-                    contract.containsNode(
-                        it.value.address.rawValue,
-                        it.value.balance.rawValue + BigInteger.ONE,
-                        it.value.treePath(tree)
-                    ).send()
-                ).withIndexedMessage(it.index).isFalse()
-            }
-        }
+        contract.verifyContractCalls(accountBalances, tree)
     }
 
     @Test
@@ -182,42 +116,9 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             )
         }
 
-        val mainAccount = accounts[0]
+        val contract = supposeContractIsDeployed(tree)
 
-        val contract = suppose("Merkle tree path validator is deployed for created tree root") {
-            val future = MerkleTreePathValidator.deploy(
-                hardhatContainer.web3j,
-                mainAccount,
-                DefaultGasProvider(),
-                Numeric.hexStringToByteArray(tree.root.hash.value)
-            ).sendAsync()
-            hardhatContainer.waitAndMine()
-            future.get()
-        }
-
-        verify("contract call will return true for account balances contained in Merkle tree") {
-            accountBalances.withIndex().forEach {
-                assertThat(
-                    contract.containsNode(
-                        it.value.address.rawValue,
-                        it.value.balance.rawValue,
-                        it.value.treePath(tree)
-                    ).send()
-                ).withIndexedMessage(it.index).isTrue()
-            }
-        }
-
-        verify("contract call will return false for account balances not contained in Merkle tree") {
-            accountBalances.withIndex().forEach {
-                assertThat(
-                    contract.containsNode(
-                        it.value.address.rawValue,
-                        it.value.balance.rawValue + BigInteger.ONE,
-                        it.value.treePath(tree)
-                    ).send()
-                ).withIndexedMessage(it.index).isFalse()
-            }
-        }
+        contract.verifyContractCalls(accountBalances, tree)
     }
 
     @Test
@@ -239,42 +140,9 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             )
         }
 
-        val mainAccount = accounts[0]
+        val contract = supposeContractIsDeployed(tree)
 
-        val contract = suppose("Merkle tree path validator is deployed for created tree root") {
-            val future = MerkleTreePathValidator.deploy(
-                hardhatContainer.web3j,
-                mainAccount,
-                DefaultGasProvider(),
-                Numeric.hexStringToByteArray(tree.root.hash.value)
-            ).sendAsync()
-            hardhatContainer.waitAndMine()
-            future.get()
-        }
-
-        verify("contract call will return true for account balances contained in Merkle tree") {
-            accountBalances.withIndex().forEach {
-                assertThat(
-                    contract.containsNode(
-                        it.value.address.rawValue,
-                        it.value.balance.rawValue,
-                        it.value.treePath(tree)
-                    ).send()
-                ).withIndexedMessage(it.index).isTrue()
-            }
-        }
-
-        verify("contract call will return false for account balances not contained in Merkle tree") {
-            accountBalances.withIndex().forEach {
-                assertThat(
-                    contract.containsNode(
-                        it.value.address.rawValue,
-                        it.value.balance.rawValue + BigInteger.ONE,
-                        it.value.treePath(tree)
-                    ).send()
-                ).withIndexedMessage(it.index).isFalse()
-            }
-        }
+        contract.verifyContractCalls(accountBalances, tree)
     }
 
     @Test
@@ -300,42 +168,9 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             )
         }
 
-        val mainAccount = accounts[0]
+        val contract = supposeContractIsDeployed(tree)
 
-        val contract = suppose("Merkle tree path validator is deployed for created tree root") {
-            val future = MerkleTreePathValidator.deploy(
-                hardhatContainer.web3j,
-                mainAccount,
-                DefaultGasProvider(),
-                Numeric.hexStringToByteArray(tree.root.hash.value)
-            ).sendAsync()
-            hardhatContainer.waitAndMine()
-            future.get()
-        }
-
-        verify("contract call will return true for account balances contained in Merkle tree") {
-            accountBalances.withIndex().forEach {
-                assertThat(
-                    contract.containsNode(
-                        it.value.address.rawValue,
-                        it.value.balance.rawValue,
-                        it.value.treePath(tree)
-                    ).send()
-                ).withIndexedMessage(it.index).isTrue()
-            }
-        }
-
-        verify("contract call will return false for account balances not contained in Merkle tree") {
-            accountBalances.withIndex().forEach {
-                assertThat(
-                    contract.containsNode(
-                        it.value.address.rawValue,
-                        it.value.balance.rawValue + BigInteger.ONE,
-                        it.value.treePath(tree)
-                    ).send()
-                ).withIndexedMessage(it.index).isFalse()
-            }
-        }
+        contract.verifyContractCalls(accountBalances, tree)
     }
 
     @Test
@@ -362,18 +197,26 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             )
         }
 
-        val mainAccount = accounts[0]
+        val contract = supposeContractIsDeployed(tree)
 
-        val contract = suppose("Merkle tree path validator is deployed for created tree root") {
+        contract.verifyContractCalls(accountBalances, tree)
+    }
+
+    private fun supposeContractIsDeployed(tree: MerkleTree): MerkleTreePathValidator {
+        return suppose("Merkle tree path validator is deployed for created tree root") {
             val future = MerkleTreePathValidator.deploy(
                 hardhatContainer.web3j,
-                mainAccount,
+                accounts[0],
                 DefaultGasProvider(),
                 Numeric.hexStringToByteArray(tree.root.hash.value)
             ).sendAsync()
             hardhatContainer.waitAndMine()
             future.get()
         }
+    }
+
+    private fun MerkleTreePathValidator.verifyContractCalls(accountBalances: List<AccountBalance>, tree: MerkleTree) {
+        val contract = this
 
         verify("contract call will return true for account balances contained in Merkle tree") {
             accountBalances.withIndex().forEach {
