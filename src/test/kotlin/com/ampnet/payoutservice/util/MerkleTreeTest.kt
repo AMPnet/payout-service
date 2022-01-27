@@ -724,16 +724,16 @@ class MerkleTreeTest : TestBase() {
         val tree = suppose("Merkle tree with single element is created") {
             MerkleTree(
                 listOf(balance),
-                HashFunction.SIMPLE
+                HashFunction.KECCAK_256
             )
         }
 
         verify("Merkle tree has correct structure") {
             assertThat(tree.root).withMessage().isEqualTo(
                 RootNode(
-                    left = LeafNode(balance, HashFunction.SIMPLE(balance.abiEncode()), 0),
+                    left = LeafNode(balance, HashFunction.KECCAK_256(balance.abiEncode()), 0),
                     right = NilNode,
-                    hash = HashFunction.SIMPLE((HashFunction.SIMPLE(balance.abiEncode()) + NilNode.hash).value),
+                    hash = HashFunction.KECCAK_256((HashFunction.KECCAK_256(balance.abiEncode()) + NilNode.hash).value),
                     depth = 1
                 )
             )
@@ -742,12 +742,13 @@ class MerkleTreeTest : TestBase() {
         verify("Merkle tree has correct leaf nodes") {
             assertThat(tree.leafNodesByHash).withMessage().hasSize(1)
             assertThat(tree.leafNodesByHash).withMessage().containsEntry(
-                HashFunction.SIMPLE(balance.abiEncode()), LeafNode(balance, HashFunction.SIMPLE(balance.abiEncode()), 0)
+                HashFunction.KECCAK_256(balance.abiEncode()),
+                LeafNode(balance, HashFunction.KECCAK_256(balance.abiEncode()), 0)
             )
 
             assertThat(tree.leafNodesByAddress).withMessage().hasSize(1)
             assertThat(tree.leafNodesByAddress).withMessage().containsEntry(
-                balance.address, LeafNode(balance, HashFunction.SIMPLE(balance.abiEncode()), 0)
+                balance.address, LeafNode(balance, HashFunction.KECCAK_256(balance.abiEncode()), 0)
             )
         }
 
@@ -769,11 +770,11 @@ class MerkleTreeTest : TestBase() {
             AccountBalance(WalletAddress("0x1"), Balance(BigInteger("1"))),
             AccountBalance(WalletAddress("0x2"), Balance(BigInteger("2")))
         )
-        val hashes = balances.hashes(HashFunction.SIMPLE)
+        val hashes = balances.hashes(HashFunction.KECCAK_256)
         val tree = suppose("Merkle tree with multiple elements is created") {
             MerkleTree(
                 balances.shuffled(),
-                HashFunction.SIMPLE
+                HashFunction.KECCAK_256
             )
         }
 
@@ -781,19 +782,19 @@ class MerkleTreeTest : TestBase() {
             assertThat(tree.root).withMessage().isEqualTo(
                 RootNode(
                     left = MiddleNode(
-                        left = balances.leafNode(0, HashFunction.SIMPLE),
-                        right = balances.leafNode(1, HashFunction.SIMPLE),
-                        hash = HashFunction.SIMPLE((hashes[0] + hashes[1]).value)
+                        left = balances.leafNode(0, HashFunction.KECCAK_256),
+                        right = balances.leafNode(1, HashFunction.KECCAK_256),
+                        hash = HashFunction.KECCAK_256((hashes[0] + hashes[1]).value)
                     ),
                     right = MiddleNode(
-                        left = balances.leafNode(2, HashFunction.SIMPLE),
+                        left = balances.leafNode(2, HashFunction.KECCAK_256),
                         right = NilNode,
-                        hash = HashFunction.SIMPLE((hashes[2] + NilNode.hash).value)
+                        hash = HashFunction.KECCAK_256((hashes[2] + NilNode.hash).value)
                     ),
-                    hash = HashFunction.SIMPLE(
+                    hash = HashFunction.KECCAK_256(
                         (
-                            HashFunction.SIMPLE((hashes[0] + hashes[1]).value) +
-                                HashFunction.SIMPLE((hashes[2] + NilNode.hash).value)
+                            HashFunction.KECCAK_256((hashes[0] + hashes[1]).value) +
+                                HashFunction.KECCAK_256((hashes[2] + NilNode.hash).value)
                             ).value
                     ),
                     depth = 2
@@ -806,8 +807,8 @@ class MerkleTreeTest : TestBase() {
             assertThat(tree.leafNodesByHash.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
                 balances.mapIndexed { index, node ->
                     Pair(
-                        HashFunction.SIMPLE(node.abiEncode()),
-                        LeafNode(node, HashFunction.SIMPLE(node.abiEncode()), index)
+                        HashFunction.KECCAK_256(node.abiEncode()),
+                        LeafNode(node, HashFunction.KECCAK_256(node.abiEncode()), index)
                     )
                 }
             )
@@ -817,7 +818,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         node.address,
-                        LeafNode(node, HashFunction.SIMPLE(node.abiEncode()), index)
+                        LeafNode(node, HashFunction.KECCAK_256(node.abiEncode()), index)
                     )
                 }
             )
@@ -825,13 +826,13 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1].r, HashFunction.SIMPLE((hashes[2] + NilNode.hash).value).r)
+                listOf(hashes[1].r, HashFunction.KECCAK_256((hashes[2] + NilNode.hash).value).r)
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0].l, HashFunction.SIMPLE((hashes[2] + NilNode.hash).value).r)
+                listOf(hashes[0].l, HashFunction.KECCAK_256((hashes[2] + NilNode.hash).value).r)
             )
             assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
-                listOf(NilNode.hash.r, HashFunction.SIMPLE((hashes[0] + hashes[1]).value).l)
+                listOf(NilNode.hash.r, HashFunction.KECCAK_256((hashes[0] + hashes[1]).value).l)
             )
         }
 

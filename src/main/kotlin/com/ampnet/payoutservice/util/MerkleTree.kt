@@ -19,7 +19,7 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
         }
 
         object NilNode : Node {
-            override val hash: Hash = Hash("0")
+            override val hash: Hash = Hash("0x0000000000000000000000000000000000000000000000000000000000000000")
         }
 
         data class LeafNode(val data: AccountBalance, override val hash: Hash, val index: Int) : Node

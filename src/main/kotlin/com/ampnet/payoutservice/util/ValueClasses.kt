@@ -11,7 +11,7 @@ value class Hash private constructor(val value: String) {
         operator fun invoke(value: String) = Hash(value.lowercase())
     }
 
-    operator fun plus(other: Hash): Hash = Hash(value + other.value)
+    operator fun plus(other: Hash): Hash = Hash(value + other.value.replaceFirst("0x", ""))
 }
 
 @JvmInline
