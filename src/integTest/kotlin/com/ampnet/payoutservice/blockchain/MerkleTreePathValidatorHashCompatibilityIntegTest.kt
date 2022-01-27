@@ -4,10 +4,12 @@ import com.ampnet.payoutservice.TestBase
 import com.ampnet.payoutservice.testcontainers.HardhatTestContainer
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
+import com.ampnet.payoutservice.util.Hash
 import com.ampnet.payoutservice.util.HashFunction
 import com.ampnet.payoutservice.util.MerkleTree
 import com.ampnet.payoutservice.util.WalletAddress
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.web3j.tx.gas.DefaultGasProvider
@@ -18,7 +20,20 @@ import java.math.BigInteger
 class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
 
     private val hardhatContainer = HardhatTestContainer()
-    private val accounts = HardhatTestContainer.accounts
+    private lateinit var contract: MerkleTreePathValidator
+
+    @BeforeAll
+    fun beforeAll() {
+        contract = suppose("Merkle tree path validator is deployed") {
+            val future = MerkleTreePathValidator.deploy(
+                hardhatContainer.web3j,
+                HardhatTestContainer.accounts[0],
+                DefaultGasProvider()
+            ).sendAsync()
+            hardhatContainer.waitAndMine()
+            future.get()
+        }
+    }
 
     @Test
     fun mustBeCompatibleWithMerkleTreeWithSingleElement() {
@@ -30,22 +45,10 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             )
         }
 
-        val mainAccount = accounts[0]
-
-        val contract = suppose("Merkle tree path validator is deployed for created tree root") {
-            val future = MerkleTreePathValidator.deploy(
-                hardhatContainer.web3j,
-                mainAccount,
-                DefaultGasProvider(),
-                Numeric.hexStringToByteArray(tree.root.hash.value)
-            ).sendAsync()
-            hardhatContainer.waitAndMine()
-            future.get()
-        }
-
         verify("contract call will return true for account balance contained in Merkle tree") {
             assertThat(
                 contract.containsNode(
+                    tree.root.hash.asEthByteArray(),
                     accountBalance.address.rawValue,
                     accountBalance.balance.rawValue,
                     accountBalance.treePath(tree)
@@ -56,6 +59,7 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
         verify("contract call will return false for account balance not contained in Merkle tree") {
             assertThat(
                 contract.containsNode(
+                    tree.root.hash.asEthByteArray(),
                     accountBalance.address.rawValue,
                     accountBalance.balance.rawValue + BigInteger.ONE,
                     accountBalance.treePath(tree)
@@ -77,8 +81,6 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             )
         }
 
-        val contract = supposeContractIsDeployed(tree)
-
         contract.verifyContractCalls(accountBalances, tree)
     }
 
@@ -95,8 +97,6 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
                 HashFunction.KECCAK_256
             )
         }
-
-        val contract = supposeContractIsDeployed(tree)
 
         contract.verifyContractCalls(accountBalances, tree)
     }
@@ -115,8 +115,6 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
                 HashFunction.KECCAK_256
             )
         }
-
-        val contract = supposeContractIsDeployed(tree)
 
         contract.verifyContractCalls(accountBalances, tree)
     }
@@ -139,8 +137,6 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
                 HashFunction.KECCAK_256
             )
         }
-
-        val contract = supposeContractIsDeployed(tree)
 
         contract.verifyContractCalls(accountBalances, tree)
     }
@@ -167,8 +163,6 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
                 HashFunction.KECCAK_256
             )
         }
-
-        val contract = supposeContractIsDeployed(tree)
 
         contract.verifyContractCalls(accountBalances, tree)
     }
@@ -197,22 +191,7 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             )
         }
 
-        val contract = supposeContractIsDeployed(tree)
-
         contract.verifyContractCalls(accountBalances, tree)
-    }
-
-    private fun supposeContractIsDeployed(tree: MerkleTree): MerkleTreePathValidator {
-        return suppose("Merkle tree path validator is deployed for created tree root") {
-            val future = MerkleTreePathValidator.deploy(
-                hardhatContainer.web3j,
-                accounts[0],
-                DefaultGasProvider(),
-                Numeric.hexStringToByteArray(tree.root.hash.value)
-            ).sendAsync()
-            hardhatContainer.waitAndMine()
-            future.get()
-        }
     }
 
     private fun MerkleTreePathValidator.verifyContractCalls(accountBalances: List<AccountBalance>, tree: MerkleTree) {
@@ -222,6 +201,7 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             accountBalances.withIndex().forEach {
                 assertThat(
                     contract.containsNode(
+                        tree.root.hash.asEthByteArray(),
                         it.value.address.rawValue,
                         it.value.balance.rawValue,
                         it.value.treePath(tree)
@@ -234,6 +214,7 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             accountBalances.withIndex().forEach {
                 assertThat(
                     contract.containsNode(
+                        tree.root.hash.asEthByteArray(),
                         it.value.address.rawValue,
                         it.value.balance.rawValue + BigInteger.ONE,
                         it.value.treePath(tree)
@@ -246,8 +227,10 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
     private fun AccountBalance.treePath(tree: MerkleTree): List<MerkleTreePathValidator.PathSegment> =
         tree.pathTo(this)?.map {
             MerkleTreePathValidator.PathSegment(
-                Numeric.hexStringToByteArray(it.siblingHash.value),
+                it.siblingHash.asEthByteArray(),
                 it.isLeft
             )
         }!!
+
+    private fun Hash.asEthByteArray() = Numeric.hexStringToByteArray(this.value)
 }
