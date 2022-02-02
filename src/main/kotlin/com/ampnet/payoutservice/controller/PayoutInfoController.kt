@@ -76,7 +76,7 @@ class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepositor
             )
 
         val (path, accountBalance) = tree.leafNodesByAddress[request.walletAddress]?.let {
-            tree.pathTo(it.data)?.let { path -> Pair(path, it.data) }
+            tree.pathTo(it.value.data)?.let { path -> Pair(path, it.value.data) }
         }
             ?: throw ResourceNotFoundException(
                 ErrorCode.PAYOUT_NOT_FOUND_FOR_ACCOUNT,

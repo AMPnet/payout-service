@@ -49,9 +49,10 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             assertThat(
                 contract.containsNode(
                     tree.root.hash.asEthByteArray(),
+                    BigInteger.valueOf(tree.root.depth.toLong()),
                     accountBalance.address.rawValue,
                     accountBalance.balance.rawValue,
-                    accountBalance.treePath(tree)
+                    accountBalance.proof(tree)
                 ).send()
             ).withMessage().isTrue()
         }
@@ -60,9 +61,10 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
             assertThat(
                 contract.containsNode(
                     tree.root.hash.asEthByteArray(),
+                    BigInteger.valueOf(tree.root.depth.toLong()),
                     accountBalance.address.rawValue,
                     accountBalance.balance.rawValue + BigInteger.ONE,
-                    accountBalance.treePath(tree)
+                    accountBalance.proof(tree)
                 ).send()
             ).withMessage().isFalse()
         }
@@ -202,9 +204,10 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
                 assertThat(
                     contract.containsNode(
                         tree.root.hash.asEthByteArray(),
+                        BigInteger.valueOf(tree.root.depth.toLong()),
                         it.value.address.rawValue,
                         it.value.balance.rawValue,
-                        it.value.treePath(tree)
+                        it.value.proof(tree)
                     ).send()
                 ).withIndexedMessage(it.index).isTrue()
             }
@@ -215,22 +218,18 @@ class MerkleTreePathValidatorHashCompatibilityIntegTest : TestBase() {
                 assertThat(
                     contract.containsNode(
                         tree.root.hash.asEthByteArray(),
+                        BigInteger.valueOf(tree.root.depth.toLong()),
                         it.value.address.rawValue,
                         it.value.balance.rawValue + BigInteger.ONE,
-                        it.value.treePath(tree)
+                        it.value.proof(tree)
                     ).send()
                 ).withIndexedMessage(it.index).isFalse()
             }
         }
     }
 
-    private fun AccountBalance.treePath(tree: MerkleTree): List<MerkleTreePathValidator.PathSegment> =
-        tree.pathTo(this)?.map {
-            MerkleTreePathValidator.PathSegment(
-                it.siblingHash.asEthByteArray(),
-                it.isLeft
-            )
-        }!!
+    private fun AccountBalance.proof(tree: MerkleTree): List<ByteArray> =
+        tree.pathTo(this)?.map { it.siblingHash.asEthByteArray() }!!
 
     private fun Hash.asEthByteArray() = Numeric.hexStringToByteArray(this.value)
 }

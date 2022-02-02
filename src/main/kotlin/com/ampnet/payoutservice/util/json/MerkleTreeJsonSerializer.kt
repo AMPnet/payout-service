@@ -33,7 +33,6 @@ class MerkleTreeJsonSerializer : JsonSerializer<MerkleTree>() {
         when (branch) {
             is NilNode -> {}
             is LeafNode -> {
-                writeNumberField("index", branch.index)
                 writeObjectFieldStart("data")
                 writeStringField("address", branch.data.address.rawValue)
                 writeStringField("balance", branch.data.balance.rawValue.toString())
