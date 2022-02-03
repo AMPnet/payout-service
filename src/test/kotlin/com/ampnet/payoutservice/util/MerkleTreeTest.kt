@@ -18,7 +18,9 @@ class MerkleTreeTest : TestBase() {
     @Test
     fun mustThrowExceptionForEmptyNodeList() {
         verify("exception is thrown when building Merkle tree from empty list") {
-            assertThrows<IllegalArgumentException>(message) { MerkleTree(emptyList(), HashFunction.IDENTITY) }
+            assertThrows<IllegalArgumentException>(message) {
+                MerkleTree(emptyList(), HashFunction.IDENTITY)
+            }
         }
     }
 
@@ -28,8 +30,8 @@ class MerkleTreeTest : TestBase() {
             assertThrows<IllegalArgumentException>(message) {
                 MerkleTree(
                     listOf(
-                        AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0"))),
-                        AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0")))
+                        AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0"))),
+                        AccountBalance(WalletAddress("0x2"), Balance(BigInteger("0")))
                     ),
                     HashFunction.FIXED
                 )
@@ -43,8 +45,8 @@ class MerkleTreeTest : TestBase() {
             assertThrows<IllegalArgumentException>(message) {
                 MerkleTree(
                     listOf(
-                        AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0"))),
-                        AccountBalance(WalletAddress("0x0"), Balance(BigInteger("1")))
+                        AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0"))),
+                        AccountBalance(WalletAddress("0x1"), Balance(BigInteger("1")))
                     ),
                     HashFunction.IDENTITY
                 )
@@ -54,7 +56,7 @@ class MerkleTreeTest : TestBase() {
 
     @Test
     fun mustCorrectlyBuildMerkleTreeForSingleElement() {
-        val balance = AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0")))
+        val balance = AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0")))
         val tree = suppose("Merkle tree with single element is created") {
             MerkleTree(
                 listOf(balance),
@@ -65,9 +67,9 @@ class MerkleTreeTest : TestBase() {
         verify("Merkle tree has correct structure") {
             assertThat(tree.root).withMessage().isEqualTo(
                 RootNode(
-                    left = LeafNode(balance, Hash(balance.abiEncode()), 0),
-                    right = NilNode,
-                    hash = Hash(balance.abiEncode()) + NilNode.hash,
+                    left = NilNode,
+                    right = LeafNode(balance, Hash(balance.abiEncode())),
+                    hash = NilNode.hash + Hash(balance.abiEncode()),
                     depth = 1
                 )
             )
@@ -76,18 +78,18 @@ class MerkleTreeTest : TestBase() {
         verify("Merkle tree has correct leaf nodes") {
             assertThat(tree.leafNodesByHash).withMessage().hasSize(1)
             assertThat(tree.leafNodesByHash).withMessage().containsEntry(
-                Hash(balance.abiEncode()), LeafNode(balance, Hash(balance.abiEncode()), 0)
+                Hash(balance.abiEncode()), indexedLeafNode(balance, Hash(balance.abiEncode()), 1)
             )
 
             assertThat(tree.leafNodesByAddress).withMessage().hasSize(1)
             assertThat(tree.leafNodesByAddress).withMessage().containsEntry(
-                balance.address, LeafNode(balance, Hash(balance.abiEncode()), 0)
+                balance.address, indexedLeafNode(balance, Hash(balance.abiEncode()), 1)
             )
         }
 
         verify("Merkle tree path is correct") {
             assertThat(tree.pathTo(balance)).withMessage().isEqualTo(
-                listOf(NilNode.hash.r)
+                listOf(NilNode.hash.l)
             )
         }
 
@@ -99,8 +101,8 @@ class MerkleTreeTest : TestBase() {
     @Test
     fun mustCorrectlyBuildMerkleTreeForTwoElements() {
         val balances = listOf(
-            AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0"))),
-            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("1")))
+            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0"))),
+            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("1")))
         )
         val hashes = balances.hashes()
         val tree = suppose("Merkle tree with two elements is created") {
@@ -127,7 +129,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         Hash(node.abiEncode()),
-                        LeafNode(node, Hash(node.abiEncode()), index)
+                        indexedLeafNode(node, Hash(node.abiEncode()), index)
                     )
                 }
             )
@@ -137,7 +139,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         node.address,
-                        LeafNode(node, Hash(node.abiEncode()), index)
+                        indexedLeafNode(node, Hash(node.abiEncode()), index)
                     )
                 }
             )
@@ -160,9 +162,9 @@ class MerkleTreeTest : TestBase() {
     @Test
     fun mustCorrectlyBuildMerkleTreeForThreeElements() {
         val balances = listOf(
-            AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0"))),
-            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("1"))),
-            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("2")))
+            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0"))),
+            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("1"))),
+            AccountBalance(WalletAddress("0x3"), Balance(BigInteger("2")))
         )
         val hashes = balances.hashes()
         val tree = suppose("Merkle tree with three elements is created") {
@@ -176,20 +178,27 @@ class MerkleTreeTest : TestBase() {
             assertThat(tree.root).withMessage().isEqualTo(
                 RootNode(
                     left = MiddleNode(
-                        left = balances.leafNode(0),
-                        right = balances.leafNode(1),
-                        hash = hashes[0..1]
+                        left = NilNode, // node[nil] to index[0]
+                        right = balances.leafNode(2), // node[2] to index[1]
+                        hash = NilNode.hash + hashes[2]
                     ),
                     right = MiddleNode(
-                        left = balances.leafNode(2),
-                        right = NilNode,
-                        hash = hashes[2] + NilNode.hash
+                        left = balances.leafNode(0), // node[0] to index[2]
+                        right = balances.leafNode(1), // node[1] to index[3]
+                        hash = hashes[0..1]
                     ),
-                    hash = hashes.all() + NilNode.hash,
+                    hash = NilNode.hash + hashes[2] + hashes[0..1],
                     depth = 2
                 )
             )
         }
+
+        // node[*] to index[*] mapping
+        val indexMap = mapOf(
+            2 to 1,
+            0 to 2,
+            1 to 3
+        )
 
         verify("Merkle tree has correct leaf nodes") {
             assertThat(tree.leafNodesByHash).withMessage().hasSize(3)
@@ -197,7 +206,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         Hash(node.abiEncode()),
-                        LeafNode(node, Hash(node.abiEncode()), index)
+                        indexedLeafNode(node, Hash(node.abiEncode()), indexMap[index]!!)
                     )
                 }
             )
@@ -207,7 +216,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         node.address,
-                        LeafNode(node, Hash(node.abiEncode()), index)
+                        indexedLeafNode(node, Hash(node.abiEncode()), indexMap[index]!!)
                     )
                 }
             )
@@ -215,13 +224,13 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1].r, (hashes[2] + NilNode.hash).r)
+                listOf(hashes[1].r, (NilNode.hash + hashes[2]).l)
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0].l, (hashes[2] + NilNode.hash).r)
+                listOf(hashes[0].l, (NilNode.hash + hashes[2]).l)
             )
             assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
-                listOf(NilNode.hash.r, hashes[0..1].l)
+                listOf(NilNode.hash.l, hashes[0..1].r)
             )
         }
 
@@ -233,10 +242,10 @@ class MerkleTreeTest : TestBase() {
     @Test
     fun mustCorrectlyBuildMerkleTreeForFourElements() {
         val balances = listOf(
-            AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0"))),
-            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("1"))),
-            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("2"))),
-            AccountBalance(WalletAddress("0x3"), Balance(BigInteger("3")))
+            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0"))),
+            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("1"))),
+            AccountBalance(WalletAddress("0x3"), Balance(BigInteger("2"))),
+            AccountBalance(WalletAddress("0x4"), Balance(BigInteger("3")))
         )
         val hashes = balances.hashes()
         val tree = suppose("Merkle tree with four elements is created") {
@@ -271,7 +280,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         Hash(node.abiEncode()),
-                        LeafNode(node, Hash(node.abiEncode()), index)
+                        indexedLeafNode(node, Hash(node.abiEncode()), index)
                     )
                 }
             )
@@ -281,7 +290,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         node.address,
-                        LeafNode(node, Hash(node.abiEncode()), index)
+                        indexedLeafNode(node, Hash(node.abiEncode()), index)
                     )
                 }
             )
@@ -310,14 +319,14 @@ class MerkleTreeTest : TestBase() {
     @Test
     fun mustCorrectlyBuildBalancedMerkleTree() {
         val balances = listOf(
-            AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0"))),
-            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("1"))),
-            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("2"))),
-            AccountBalance(WalletAddress("0x3"), Balance(BigInteger("3"))),
-            AccountBalance(WalletAddress("0x4"), Balance(BigInteger("4"))),
-            AccountBalance(WalletAddress("0x5"), Balance(BigInteger("5"))),
-            AccountBalance(WalletAddress("0x6"), Balance(BigInteger("6"))),
-            AccountBalance(WalletAddress("0x7"), Balance(BigInteger("7")))
+            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0"))),
+            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("1"))),
+            AccountBalance(WalletAddress("0x3"), Balance(BigInteger("2"))),
+            AccountBalance(WalletAddress("0x4"), Balance(BigInteger("3"))),
+            AccountBalance(WalletAddress("0x5"), Balance(BigInteger("4"))),
+            AccountBalance(WalletAddress("0x6"), Balance(BigInteger("5"))),
+            AccountBalance(WalletAddress("0x7"), Balance(BigInteger("6"))),
+            AccountBalance(WalletAddress("0x8"), Balance(BigInteger("7")))
         )
         val hashes = balances.hashes()
         val tree = suppose("Merkle tree with 8 elements is created") {
@@ -368,7 +377,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         Hash(node.abiEncode()),
-                        LeafNode(node, Hash(node.abiEncode()), index)
+                        indexedLeafNode(node, Hash(node.abiEncode()), index)
                     )
                 }
             )
@@ -378,7 +387,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         node.address,
-                        LeafNode(node, Hash(node.abiEncode()), index)
+                        indexedLeafNode(node, Hash(node.abiEncode()), index)
                     )
                 }
             )
@@ -419,18 +428,18 @@ class MerkleTreeTest : TestBase() {
     @Test
     fun mustCorrectlyBuildUnbalancedMerkleTreeForEvenNumberOfElements() {
         val balances = listOf(
-            AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0"))),
-            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("1"))),
-            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("2"))),
-            AccountBalance(WalletAddress("0x3"), Balance(BigInteger("3"))),
-            AccountBalance(WalletAddress("0x4"), Balance(BigInteger("4"))),
-            AccountBalance(WalletAddress("0x5"), Balance(BigInteger("5"))),
-            AccountBalance(WalletAddress("0x6"), Balance(BigInteger("6"))),
-            AccountBalance(WalletAddress("0x7"), Balance(BigInteger("7"))),
-            AccountBalance(WalletAddress("0x8"), Balance(BigInteger("8"))),
-            AccountBalance(WalletAddress("0x9"), Balance(BigInteger("9"))),
-            AccountBalance(WalletAddress("0xa"), Balance(BigInteger("10"))),
-            AccountBalance(WalletAddress("0xb"), Balance(BigInteger("11")))
+            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0"))),
+            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("1"))),
+            AccountBalance(WalletAddress("0x3"), Balance(BigInteger("2"))),
+            AccountBalance(WalletAddress("0x4"), Balance(BigInteger("3"))),
+            AccountBalance(WalletAddress("0x5"), Balance(BigInteger("4"))),
+            AccountBalance(WalletAddress("0x6"), Balance(BigInteger("5"))),
+            AccountBalance(WalletAddress("0x7"), Balance(BigInteger("6"))),
+            AccountBalance(WalletAddress("0x8"), Balance(BigInteger("7"))),
+            AccountBalance(WalletAddress("0x9"), Balance(BigInteger("8"))),
+            AccountBalance(WalletAddress("0xa"), Balance(BigInteger("9"))),
+            AccountBalance(WalletAddress("0xb"), Balance(BigInteger("10"))),
+            AccountBalance(WalletAddress("0xc"), Balance(BigInteger("11")))
         )
         val hashes = balances.hashes()
         val tree = suppose("Merkle tree with 12 elements is created") {
@@ -444,56 +453,72 @@ class MerkleTreeTest : TestBase() {
             assertThat(tree.root).withMessage().isEqualTo(
                 RootNode(
                     left = MiddleNode(
+                        left = NilNode, // node[nil] to index[0..3]
+                        right = MiddleNode(
+                            left = MiddleNode(
+                                left = balances.leafNode(8), // node[8] to index[4]
+                                right = balances.leafNode(9), // node[9] to index[5]
+                                hash = hashes[8..9]
+                            ),
+                            right = MiddleNode(
+                                left = balances.leafNode(10), // node[10] to index[6]
+                                right = balances.leafNode(11), // node[11] to index[7]
+                                hash = hashes[10..11]
+                            ),
+                            hash = hashes[8..11]
+                        ),
+                        hash = NilNode.hash + hashes[8..11]
+                    ),
+                    right = MiddleNode(
                         left = MiddleNode(
                             left = MiddleNode(
-                                left = balances.leafNode(0),
-                                right = balances.leafNode(1),
+                                left = balances.leafNode(0), // node[0] to index[8]
+                                right = balances.leafNode(1), // node[1] to index[9]
                                 hash = hashes[0..1]
                             ),
                             right = MiddleNode(
-                                left = balances.leafNode(2),
-                                right = balances.leafNode(3),
+                                left = balances.leafNode(2), // node[2] to index[10]
+                                right = balances.leafNode(3), // node[3] to index[11]
                                 hash = hashes[2..3]
                             ),
                             hash = hashes[0..3]
                         ),
                         right = MiddleNode(
                             left = MiddleNode(
-                                left = balances.leafNode(4),
-                                right = balances.leafNode(5),
+                                left = balances.leafNode(4), // node[4] to index[12]
+                                right = balances.leafNode(5), // node[5] to index[13]
                                 hash = hashes[4..5]
                             ),
                             right = MiddleNode(
-                                left = balances.leafNode(6),
-                                right = balances.leafNode(7),
+                                left = balances.leafNode(6), // node[6] to index[14]
+                                right = balances.leafNode(7), // node[7] to index[15]
                                 hash = hashes[6..7]
                             ),
                             hash = hashes[4..7]
                         ),
                         hash = hashes[0..7]
                     ),
-                    right = MiddleNode(
-                        left = MiddleNode(
-                            left = MiddleNode(
-                                left = balances.leafNode(8),
-                                right = balances.leafNode(9),
-                                hash = hashes[8..9]
-                            ),
-                            right = MiddleNode(
-                                left = balances.leafNode(10),
-                                right = balances.leafNode(11),
-                                hash = hashes[10..11]
-                            ),
-                            hash = hashes[8..11]
-                        ),
-                        right = NilNode,
-                        hash = hashes[8..11] + NilNode.hash
-                    ),
-                    hash = hashes.all() + NilNode.hash,
+                    hash = NilNode.hash + hashes[8..11] + hashes[0..7],
                     depth = 4
                 )
             )
         }
+
+        // node[*] to index[*] mapping
+        val indexMap = mapOf(
+            8 to 4,
+            9 to 5,
+            10 to 6,
+            11 to 7,
+            0 to 8,
+            1 to 9,
+            2 to 10,
+            3 to 11,
+            4 to 12,
+            5 to 13,
+            6 to 14,
+            7 to 15
+        )
 
         verify("Merkle tree has correct leaf nodes") {
             assertThat(tree.leafNodesByHash).withMessage().hasSize(12)
@@ -501,7 +526,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         Hash(node.abiEncode()),
-                        LeafNode(node, Hash(node.abiEncode()), index)
+                        indexedLeafNode(node, Hash(node.abiEncode()), indexMap[index]!!)
                     )
                 }
             )
@@ -511,7 +536,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         node.address,
-                        LeafNode(node, Hash(node.abiEncode()), index)
+                        indexedLeafNode(node, Hash(node.abiEncode()), indexMap[index]!!)
                     )
                 }
             )
@@ -519,40 +544,40 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1].r, hashes[2..3].r, hashes[4..7].r, (hashes[8..11] + NilNode.hash).r)
+                listOf(hashes[1].r, hashes[2..3].r, hashes[4..7].r, (NilNode.hash + hashes[8..11]).l)
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0].l, hashes[2..3].r, hashes[4..7].r, (hashes[8..11] + NilNode.hash).r)
+                listOf(hashes[0].l, hashes[2..3].r, hashes[4..7].r, (NilNode.hash + hashes[8..11]).l)
             )
             assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
-                listOf(hashes[3].r, hashes[0..1].l, hashes[4..7].r, (hashes[8..11] + NilNode.hash).r)
+                listOf(hashes[3].r, hashes[0..1].l, hashes[4..7].r, (NilNode.hash + hashes[8..11]).l)
             )
             assertThat(tree.pathTo(balances[3])).withMessage().isEqualTo(
-                listOf(hashes[2].l, hashes[0..1].l, hashes[4..7].r, (hashes[8..11] + NilNode.hash).r)
+                listOf(hashes[2].l, hashes[0..1].l, hashes[4..7].r, (NilNode.hash + hashes[8..11]).l)
             )
             assertThat(tree.pathTo(balances[4])).withMessage().isEqualTo(
-                listOf(hashes[5].r, hashes[6..7].r, hashes[0..3].l, (hashes[8..11] + NilNode.hash).r)
+                listOf(hashes[5].r, hashes[6..7].r, hashes[0..3].l, (NilNode.hash + hashes[8..11]).l)
             )
             assertThat(tree.pathTo(balances[5])).withMessage().isEqualTo(
-                listOf(hashes[4].l, hashes[6..7].r, hashes[0..3].l, (hashes[8..11] + NilNode.hash).r)
+                listOf(hashes[4].l, hashes[6..7].r, hashes[0..3].l, (NilNode.hash + hashes[8..11]).l)
             )
             assertThat(tree.pathTo(balances[6])).withMessage().isEqualTo(
-                listOf(hashes[7].r, hashes[4..5].l, hashes[0..3].l, (hashes[8..11] + NilNode.hash).r)
+                listOf(hashes[7].r, hashes[4..5].l, hashes[0..3].l, (NilNode.hash + hashes[8..11]).l)
             )
             assertThat(tree.pathTo(balances[7])).withMessage().isEqualTo(
-                listOf(hashes[6].l, hashes[4..5].l, hashes[0..3].l, (hashes[8..11] + NilNode.hash).r)
+                listOf(hashes[6].l, hashes[4..5].l, hashes[0..3].l, (NilNode.hash + hashes[8..11]).l)
             )
             assertThat(tree.pathTo(balances[8])).withMessage().isEqualTo(
-                listOf(hashes[9].r, hashes[10..11].r, NilNode.hash.r, hashes[0..7].l)
+                listOf(hashes[9].r, hashes[10..11].r, NilNode.hash.l, hashes[0..7].r)
             )
             assertThat(tree.pathTo(balances[9])).withMessage().isEqualTo(
-                listOf(hashes[8].l, hashes[10..11].r, NilNode.hash.r, hashes[0..7].l)
+                listOf(hashes[8].l, hashes[10..11].r, NilNode.hash.l, hashes[0..7].r)
             )
             assertThat(tree.pathTo(balances[10])).withMessage().isEqualTo(
-                listOf(hashes[11].r, hashes[8..9].l, NilNode.hash.r, hashes[0..7].l)
+                listOf(hashes[11].r, hashes[8..9].l, NilNode.hash.l, hashes[0..7].r)
             )
             assertThat(tree.pathTo(balances[11])).withMessage().isEqualTo(
-                listOf(hashes[10].l, hashes[8..9].l, NilNode.hash.r, hashes[0..7].l)
+                listOf(hashes[10].l, hashes[8..9].l, NilNode.hash.l, hashes[0..7].r)
             )
         }
 
@@ -564,19 +589,19 @@ class MerkleTreeTest : TestBase() {
     @Test
     fun mustCorrectlyBuildUnbalancedMerkleTreeForOddNumberOfElements() {
         val balances = listOf(
-            AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0"))),
-            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("1"))),
-            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("2"))),
-            AccountBalance(WalletAddress("0x3"), Balance(BigInteger("3"))),
-            AccountBalance(WalletAddress("0x4"), Balance(BigInteger("4"))),
-            AccountBalance(WalletAddress("0x5"), Balance(BigInteger("5"))),
-            AccountBalance(WalletAddress("0x6"), Balance(BigInteger("6"))),
-            AccountBalance(WalletAddress("0x7"), Balance(BigInteger("7"))),
-            AccountBalance(WalletAddress("0x8"), Balance(BigInteger("8"))),
-            AccountBalance(WalletAddress("0x9"), Balance(BigInteger("9"))),
-            AccountBalance(WalletAddress("0xa"), Balance(BigInteger("10"))),
-            AccountBalance(WalletAddress("0xb"), Balance(BigInteger("11"))),
-            AccountBalance(WalletAddress("0xc"), Balance(BigInteger("12")))
+            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0"))),
+            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("1"))),
+            AccountBalance(WalletAddress("0x3"), Balance(BigInteger("2"))),
+            AccountBalance(WalletAddress("0x4"), Balance(BigInteger("3"))),
+            AccountBalance(WalletAddress("0x5"), Balance(BigInteger("4"))),
+            AccountBalance(WalletAddress("0x6"), Balance(BigInteger("5"))),
+            AccountBalance(WalletAddress("0x7"), Balance(BigInteger("6"))),
+            AccountBalance(WalletAddress("0x8"), Balance(BigInteger("7"))),
+            AccountBalance(WalletAddress("0x9"), Balance(BigInteger("8"))),
+            AccountBalance(WalletAddress("0xa"), Balance(BigInteger("9"))),
+            AccountBalance(WalletAddress("0xb"), Balance(BigInteger("10"))),
+            AccountBalance(WalletAddress("0xc"), Balance(BigInteger("11"))),
+            AccountBalance(WalletAddress("0xd"), Balance(BigInteger("12")))
         )
         val hashes = balances.hashes()
         val tree = suppose("Merkle tree with 13 elements is created") {
@@ -591,63 +616,80 @@ class MerkleTreeTest : TestBase() {
                 RootNode(
                     left = MiddleNode(
                         left = MiddleNode(
+                            left = NilNode, // node[nil] to index[0..1]
+                            right = MiddleNode(
+                                left = NilNode, // node[nil] to index[2]
+                                right = balances.leafNode(12), // node[12] to index[3]
+                                hash = NilNode.hash + hashes[12]
+                            ),
+                            hash = NilNode.hash + NilNode.hash + hashes[12]
+                        ),
+                        right = MiddleNode(
                             left = MiddleNode(
-                                left = balances.leafNode(0),
-                                right = balances.leafNode(1),
+                                left = balances.leafNode(8), // node[8] to index[4]
+                                right = balances.leafNode(9), // node[9] to index[5]
+                                hash = hashes[8..9]
+                            ),
+                            right = MiddleNode(
+                                left = balances.leafNode(10), // node[10] to index[6]
+                                right = balances.leafNode(11), // node[11] to index[7]
+                                hash = hashes[10..11]
+                            ),
+                            hash = hashes[8..11]
+                        ),
+                        hash = NilNode.hash + NilNode.hash + hashes[12] + hashes[8..11]
+                    ),
+                    right = MiddleNode(
+                        left = MiddleNode(
+                            left = MiddleNode(
+                                left = balances.leafNode(0), // node[0] to index[8]
+                                right = balances.leafNode(1), // node[1] to index[9]
                                 hash = hashes[0..1]
                             ),
                             right = MiddleNode(
-                                left = balances.leafNode(2),
-                                right = balances.leafNode(3),
+                                left = balances.leafNode(2), // node[2] to index[10]
+                                right = balances.leafNode(3), // node[3] to index[11]
                                 hash = hashes[2..3]
                             ),
                             hash = hashes[0..3]
                         ),
                         right = MiddleNode(
                             left = MiddleNode(
-                                left = balances.leafNode(4),
-                                right = balances.leafNode(5),
+                                left = balances.leafNode(4), // node[4] to index[12]
+                                right = balances.leafNode(5), // node[5] to index[13]
                                 hash = hashes[4..5]
                             ),
                             right = MiddleNode(
-                                left = balances.leafNode(6),
-                                right = balances.leafNode(7),
+                                left = balances.leafNode(6), // node[6] to index[14]
+                                right = balances.leafNode(7), // node[7] to index[15]
                                 hash = hashes[6..7]
                             ),
                             hash = hashes[4..7]
                         ),
                         hash = hashes[0..7]
                     ),
-                    right = MiddleNode(
-                        left = MiddleNode(
-                            left = MiddleNode(
-                                left = balances.leafNode(8),
-                                right = balances.leafNode(9),
-                                hash = hashes[8..9]
-                            ),
-                            right = MiddleNode(
-                                left = balances.leafNode(10),
-                                right = balances.leafNode(11),
-                                hash = hashes[10..11]
-                            ),
-                            hash = hashes[8..11]
-                        ),
-                        right = MiddleNode(
-                            left = MiddleNode(
-                                left = balances.leafNode(12),
-                                right = NilNode,
-                                hash = hashes[12] + NilNode.hash
-                            ),
-                            right = NilNode,
-                            hash = hashes[12] + NilNode.hash + NilNode.hash
-                        ),
-                        hash = hashes[8..12] + NilNode.hash + NilNode.hash
-                    ),
-                    hash = hashes.all() + NilNode.hash + NilNode.hash,
+                    hash = NilNode.hash + NilNode.hash + hashes[12] + hashes[8..11] + hashes[0..7],
                     depth = 4
                 )
             )
         }
+
+        // node[*] to index[*] mapping
+        val indexMap = mapOf(
+            12 to 3,
+            8 to 4,
+            9 to 5,
+            10 to 6,
+            11 to 7,
+            0 to 8,
+            1 to 9,
+            2 to 10,
+            3 to 11,
+            4 to 12,
+            5 to 13,
+            6 to 14,
+            7 to 15
+        )
 
         verify("Merkle tree has correct leaf nodes") {
             assertThat(tree.leafNodesByHash).withMessage().hasSize(13)
@@ -655,7 +697,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         Hash(node.abiEncode()),
-                        LeafNode(node, Hash(node.abiEncode()), index)
+                        indexedLeafNode(node, Hash(node.abiEncode()), indexMap[index]!!)
                     )
                 }
             )
@@ -665,7 +707,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         node.address,
-                        LeafNode(node, Hash(node.abiEncode()), index)
+                        indexedLeafNode(node, Hash(node.abiEncode()), indexMap[index]!!)
                     )
                 }
             )
@@ -673,43 +715,83 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1].r, hashes[2..3].r, hashes[4..7].r, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
+                listOf(
+                    hashes[1].r,
+                    hashes[2..3].r,
+                    hashes[4..7].r,
+                    (NilNode.hash + NilNode.hash + hashes[12] + hashes[8..11]).l
+                )
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0].l, hashes[2..3].r, hashes[4..7].r, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
+                listOf(
+                    hashes[0].l,
+                    hashes[2..3].r,
+                    hashes[4..7].r,
+                    (NilNode.hash + NilNode.hash + hashes[12] + hashes[8..11]).l
+                )
             )
             assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
-                listOf(hashes[3].r, hashes[0..1].l, hashes[4..7].r, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
+                listOf(
+                    hashes[3].r,
+                    hashes[0..1].l,
+                    hashes[4..7].r,
+                    (NilNode.hash + NilNode.hash + hashes[12] + hashes[8..11]).l
+                )
             )
             assertThat(tree.pathTo(balances[3])).withMessage().isEqualTo(
-                listOf(hashes[2].l, hashes[0..1].l, hashes[4..7].r, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
+                listOf(
+                    hashes[2].l,
+                    hashes[0..1].l,
+                    hashes[4..7].r,
+                    (NilNode.hash + NilNode.hash + hashes[12] + hashes[8..11]).l
+                )
             )
             assertThat(tree.pathTo(balances[4])).withMessage().isEqualTo(
-                listOf(hashes[5].r, hashes[6..7].r, hashes[0..3].l, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
+                listOf(
+                    hashes[5].r,
+                    hashes[6..7].r,
+                    hashes[0..3].l,
+                    (NilNode.hash + NilNode.hash + hashes[12] + hashes[8..11]).l
+                )
             )
             assertThat(tree.pathTo(balances[5])).withMessage().isEqualTo(
-                listOf(hashes[4].l, hashes[6..7].r, hashes[0..3].l, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
+                listOf(
+                    hashes[4].l,
+                    hashes[6..7].r,
+                    hashes[0..3].l,
+                    (NilNode.hash + NilNode.hash + hashes[12] + hashes[8..11]).l
+                )
             )
             assertThat(tree.pathTo(balances[6])).withMessage().isEqualTo(
-                listOf(hashes[7].r, hashes[4..5].l, hashes[0..3].l, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
+                listOf(
+                    hashes[7].r,
+                    hashes[4..5].l,
+                    hashes[0..3].l,
+                    (NilNode.hash + NilNode.hash + hashes[12] + hashes[8..11]).l
+                )
             )
             assertThat(tree.pathTo(balances[7])).withMessage().isEqualTo(
-                listOf(hashes[6].l, hashes[4..5].l, hashes[0..3].l, (hashes[8..12] + NilNode.hash + NilNode.hash).r)
+                listOf(
+                    hashes[6].l,
+                    hashes[4..5].l,
+                    hashes[0..3].l,
+                    (NilNode.hash + NilNode.hash + hashes[12] + hashes[8..11]).l
+                )
             )
             assertThat(tree.pathTo(balances[8])).withMessage().isEqualTo(
-                listOf(hashes[9].r, hashes[10..11].r, (hashes[12] + NilNode.hash + NilNode.hash).r, hashes[0..7].l)
+                listOf(hashes[9].r, hashes[10..11].r, (NilNode.hash + NilNode.hash + hashes[12]).l, hashes[0..7].r)
             )
             assertThat(tree.pathTo(balances[9])).withMessage().isEqualTo(
-                listOf(hashes[8].l, hashes[10..11].r, (hashes[12] + NilNode.hash + NilNode.hash).r, hashes[0..7].l)
+                listOf(hashes[8].l, hashes[10..11].r, (NilNode.hash + NilNode.hash + hashes[12]).l, hashes[0..7].r)
             )
             assertThat(tree.pathTo(balances[10])).withMessage().isEqualTo(
-                listOf(hashes[11].r, hashes[8..9].l, (hashes[12] + NilNode.hash + NilNode.hash).r, hashes[0..7].l)
+                listOf(hashes[11].r, hashes[8..9].l, (NilNode.hash + NilNode.hash + hashes[12]).l, hashes[0..7].r)
             )
             assertThat(tree.pathTo(balances[11])).withMessage().isEqualTo(
-                listOf(hashes[10].l, hashes[8..9].l, (hashes[12] + NilNode.hash + NilNode.hash).r, hashes[0..7].l)
+                listOf(hashes[10].l, hashes[8..9].l, (NilNode.hash + NilNode.hash + hashes[12]).l, hashes[0..7].r)
             )
             assertThat(tree.pathTo(balances[12])).withMessage().isEqualTo(
-                listOf(NilNode.hash.r, NilNode.hash.r, hashes[8..11].l, hashes[0..7].l)
+                listOf(NilNode.hash.l, NilNode.hash.l, hashes[8..11].r, hashes[0..7].r)
             )
         }
 
@@ -720,20 +802,20 @@ class MerkleTreeTest : TestBase() {
 
     @Test
     fun mustCorrectlyWorkWithNonTrivialHashFunctionForSingleElement() {
-        val balance = AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0")))
+        val balance = AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0")))
         val tree = suppose("Merkle tree with single element is created") {
             MerkleTree(
                 listOf(balance),
-                HashFunction.SIMPLE
+                HashFunction.KECCAK_256
             )
         }
 
         verify("Merkle tree has correct structure") {
             assertThat(tree.root).withMessage().isEqualTo(
                 RootNode(
-                    left = LeafNode(balance, HashFunction.SIMPLE(balance.abiEncode()), 0),
-                    right = NilNode,
-                    hash = HashFunction.SIMPLE((HashFunction.SIMPLE(balance.abiEncode()) + NilNode.hash).value),
+                    left = NilNode,
+                    right = LeafNode(balance, HashFunction.KECCAK_256(balance.abiEncode())),
+                    hash = HashFunction.KECCAK_256((NilNode.hash + HashFunction.KECCAK_256(balance.abiEncode())).value),
                     depth = 1
                 )
             )
@@ -742,18 +824,19 @@ class MerkleTreeTest : TestBase() {
         verify("Merkle tree has correct leaf nodes") {
             assertThat(tree.leafNodesByHash).withMessage().hasSize(1)
             assertThat(tree.leafNodesByHash).withMessage().containsEntry(
-                HashFunction.SIMPLE(balance.abiEncode()), LeafNode(balance, HashFunction.SIMPLE(balance.abiEncode()), 0)
+                HashFunction.KECCAK_256(balance.abiEncode()),
+                indexedLeafNode(balance, HashFunction.KECCAK_256(balance.abiEncode()), 1)
             )
 
             assertThat(tree.leafNodesByAddress).withMessage().hasSize(1)
             assertThat(tree.leafNodesByAddress).withMessage().containsEntry(
-                balance.address, LeafNode(balance, HashFunction.SIMPLE(balance.abiEncode()), 0)
+                balance.address, indexedLeafNode(balance, HashFunction.KECCAK_256(balance.abiEncode()), 1)
             )
         }
 
         verify("Merkle tree path is correct") {
             assertThat(tree.pathTo(balance)).withMessage().isEqualTo(
-                listOf(NilNode.hash.r)
+                listOf(NilNode.hash.l)
             )
         }
 
@@ -765,35 +848,36 @@ class MerkleTreeTest : TestBase() {
     @Test
     fun mustCorrectlyWorkWithNonTrivialHashFunctionForMultipleElements() {
         val balances = listOf(
-            AccountBalance(WalletAddress("0x0"), Balance(BigInteger("0"))),
-            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("1"))),
-            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("2")))
+            AccountBalance(WalletAddress("0x1"), Balance(BigInteger("0"))),
+            AccountBalance(WalletAddress("0x2"), Balance(BigInteger("1"))),
+            AccountBalance(WalletAddress("0x3"), Balance(BigInteger("2")))
         )
-        val hashes = balances.hashes(HashFunction.SIMPLE)
+        val hashes = balances.hashes(HashFunction.KECCAK_256)
         val tree = suppose("Merkle tree with multiple elements is created") {
             MerkleTree(
                 balances.shuffled(),
-                HashFunction.SIMPLE
+                HashFunction.KECCAK_256
             )
         }
 
         verify("Merkle tree has correct structure") {
+            // ordering is according to keccak256 hashes
             assertThat(tree.root).withMessage().isEqualTo(
                 RootNode(
                     left = MiddleNode(
-                        left = balances.leafNode(0, HashFunction.SIMPLE),
-                        right = balances.leafNode(1, HashFunction.SIMPLE),
-                        hash = HashFunction.SIMPLE((hashes[0] + hashes[1]).value)
+                        left = balances.leafNode(2, HashFunction.KECCAK_256), // node[2] to index[0]
+                        right = balances.leafNode(0, HashFunction.KECCAK_256), // node[0] to index[1]
+                        hash = HashFunction.KECCAK_256((hashes[2] + hashes[0]).value)
                     ),
                     right = MiddleNode(
-                        left = balances.leafNode(2, HashFunction.SIMPLE),
-                        right = NilNode,
-                        hash = HashFunction.SIMPLE((hashes[2] + NilNode.hash).value)
+                        left = NilNode, // node[nil] to index[2]
+                        right = balances.leafNode(1, HashFunction.KECCAK_256), // node[1] to index[3]
+                        hash = HashFunction.KECCAK_256((NilNode.hash + hashes[1]).value)
                     ),
-                    hash = HashFunction.SIMPLE(
+                    hash = HashFunction.KECCAK_256(
                         (
-                            HashFunction.SIMPLE((hashes[0] + hashes[1]).value) +
-                                HashFunction.SIMPLE((hashes[2] + NilNode.hash).value)
+                            HashFunction.KECCAK_256((hashes[2] + hashes[0]).value) +
+                                HashFunction.KECCAK_256((NilNode.hash + hashes[1]).value)
                             ).value
                     ),
                     depth = 2
@@ -801,13 +885,20 @@ class MerkleTreeTest : TestBase() {
             )
         }
 
+        // node[*] to index[*] mapping
+        val indexMap = mapOf(
+            2 to 0,
+            0 to 1,
+            1 to 3
+        )
+
         verify("Merkle tree has correct leaf nodes") {
             assertThat(tree.leafNodesByHash).withMessage().hasSize(3)
             assertThat(tree.leafNodesByHash.toList()).withMessage().containsExactlyInAnyOrderElementsOf(
                 balances.mapIndexed { index, node ->
                     Pair(
-                        HashFunction.SIMPLE(node.abiEncode()),
-                        LeafNode(node, HashFunction.SIMPLE(node.abiEncode()), index)
+                        HashFunction.KECCAK_256(node.abiEncode()),
+                        indexedLeafNode(node, HashFunction.KECCAK_256(node.abiEncode()), indexMap[index]!!)
                     )
                 }
             )
@@ -817,7 +908,7 @@ class MerkleTreeTest : TestBase() {
                 balances.mapIndexed { index, node ->
                     Pair(
                         node.address,
-                        LeafNode(node, HashFunction.SIMPLE(node.abiEncode()), index)
+                        indexedLeafNode(node, HashFunction.KECCAK_256(node.abiEncode()), indexMap[index]!!)
                     )
                 }
             )
@@ -825,13 +916,13 @@ class MerkleTreeTest : TestBase() {
 
         verify("Merkle tree paths are correct") {
             assertThat(tree.pathTo(balances[0])).withMessage().isEqualTo(
-                listOf(hashes[1].r, HashFunction.SIMPLE((hashes[2] + NilNode.hash).value).r)
+                listOf(hashes[2].l, HashFunction.KECCAK_256((NilNode.hash + hashes[1]).value).r)
             )
             assertThat(tree.pathTo(balances[1])).withMessage().isEqualTo(
-                listOf(hashes[0].l, HashFunction.SIMPLE((hashes[2] + NilNode.hash).value).r)
+                listOf(NilNode.hash.l, HashFunction.KECCAK_256((hashes[2] + hashes[0]).value).l)
             )
             assertThat(tree.pathTo(balances[2])).withMessage().isEqualTo(
-                listOf(NilNode.hash.r, HashFunction.SIMPLE((hashes[0] + hashes[1]).value).l)
+                listOf(hashes[0].r, HashFunction.KECCAK_256((NilNode.hash + hashes[1]).value).r)
             )
         }
 
@@ -840,8 +931,11 @@ class MerkleTreeTest : TestBase() {
         }
     }
 
+    private fun indexedLeafNode(node: AccountBalance, hash: Hash, index: Int): IndexedValue<LeafNode> =
+        IndexedValue(index, LeafNode(node, hash))
+
     private fun List<AccountBalance>.leafNode(index: Int, hashFn: HashFunction = HashFunction.IDENTITY): LeafNode =
-        LeafNode(this[index], hashFn(this[index].abiEncode()), index)
+        LeafNode(this[index], hashFn(this[index].abiEncode()))
 
     private fun List<AccountBalance>.hashes(hashFn: HashFunction = HashFunction.IDENTITY): List<Hash> =
         this.map { hashFn(it.abiEncode()) }

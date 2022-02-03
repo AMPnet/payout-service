@@ -11,6 +11,7 @@ abstract class TestBase {
 
         data class VerifyMessage(val message: String) {
             fun <A : Assert<A, B>, B> Assert<A, B>.withMessage(): A = this.`as`(message)
+            fun <A : Assert<A, B>, B> Assert<A, B>.withIndexedMessage(index: Int): A = this.`as`("[$index] $message")
         }
     }
 

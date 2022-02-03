@@ -58,8 +58,8 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
                 MerkleTreeLeafNodeRecord(
                     id = uuidProvider.getUuid(),
                     merkleRoot = rootId,
-                    address = it.data.address.rawValue,
-                    balance = it.data.balance.rawValue
+                    address = it.value.data.address.rawValue,
+                    balance = it.value.data.balance.rawValue
                 )
             )
         }

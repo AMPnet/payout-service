@@ -41,7 +41,6 @@ class MerkleTreeJsonSerializerTest : TestBase() {
                         "hash_fn": "${tree.hashFn.name}",
                         "left": {
                             "hash": "${accountBalance.abiEncode()}",
-                            "index": 0,
                             "data": {
                                 "address": "${accountBalance.address.rawValue}",
                                 "balance": "${accountBalance.balance.rawValue}"
@@ -88,7 +87,6 @@ class MerkleTreeJsonSerializerTest : TestBase() {
                             "hash": "${accountBalances[0].abiEncode() + accountBalances[1].abiEncode()}",
                             "left": {
                                 "hash": "${accountBalances[0].abiEncode()}",
-                                "index": 0,
                                 "data": {
                                     "address": "${accountBalances[0].address.rawValue}",
                                     "balance": "${accountBalances[0].balance.rawValue}"
@@ -96,7 +94,6 @@ class MerkleTreeJsonSerializerTest : TestBase() {
                             },
                             "right": {
                                 "hash": "${accountBalances[1].abiEncode()}",
-                                "index": 1,
                                 "data": {
                                     "address": "${accountBalances[1].address.rawValue}",
                                     "balance": "${accountBalances[1].balance.rawValue}"
@@ -107,7 +104,6 @@ class MerkleTreeJsonSerializerTest : TestBase() {
                             "hash": "${accountBalances[2].abiEncode() + accountBalances[3].abiEncode()}",
                             "left": {
                                 "hash": "${accountBalances[2].abiEncode()}",
-                                "index": 2,
                                 "data": {
                                     "address": "${accountBalances[2].address.rawValue}",
                                     "balance": "${accountBalances[2].balance.rawValue}"
@@ -115,7 +111,6 @@ class MerkleTreeJsonSerializerTest : TestBase() {
                             },
                             "right": {
                                 "hash": "${accountBalances[3].abiEncode()}",
-                                "index": 3,
                                 "data": {
                                     "address": "${accountBalances[3].address.rawValue}",
                                     "balance": "${accountBalances[3].balance.rawValue}"

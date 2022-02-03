@@ -2,7 +2,6 @@ package com.ampnet.payoutservice.controller
 
 import com.ampnet.payoutservice.ControllerTestBase
 import com.ampnet.payoutservice.blockchain.SimpleERC20
-import com.ampnet.payoutservice.blockchain.properties.Chain
 import com.ampnet.payoutservice.controller.request.FetchMerkleTreeRequest
 import com.ampnet.payoutservice.controller.response.CreatePayoutResponse
 import com.ampnet.payoutservice.exception.ErrorCode
@@ -119,8 +118,6 @@ class PayoutControllerApiTest : ControllerTestBase() {
             )
         }
 
-        val chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id
-
         val createPayoutResponse = suppose("create payout request is made") {
             val response = mockMvc.perform(
                 MockMvcRequestBuilders.post(
@@ -167,15 +164,20 @@ class PayoutControllerApiTest : ControllerTestBase() {
                     WalletAddress(accounts[3].address),
                     WalletAddress(accounts[4].address)
                 )
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[0].address))?.data?.balance).withMessage()
+            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[0].address))?.value?.data?.balance)
+                .withMessage()
                 .isEqualTo(Balance(BigInteger("9000")))
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[1].address))?.data?.balance).withMessage()
+            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[1].address))?.value?.data?.balance)
+                .withMessage()
                 .isEqualTo(Balance(BigInteger("100")))
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[2].address))?.data?.balance).withMessage()
+            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[2].address))?.value?.data?.balance)
+                .withMessage()
                 .isEqualTo(Balance(BigInteger("200")))
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[3].address))?.data?.balance).withMessage()
+            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[3].address))?.value?.data?.balance)
+                .withMessage()
                 .isEqualTo(Balance(BigInteger("300")))
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[4].address))?.data?.balance).withMessage()
+            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[4].address))?.value?.data?.balance)
+                .withMessage()
                 .isEqualTo(Balance(BigInteger("400")))
         }
     }
@@ -239,8 +241,6 @@ class PayoutControllerApiTest : ControllerTestBase() {
             )
         }
 
-        val chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id
-
         val createPayoutResponse = suppose("create payout request is made") {
             val response = mockMvc.perform(
                 MockMvcRequestBuilders.post(
@@ -287,15 +287,20 @@ class PayoutControllerApiTest : ControllerTestBase() {
                     WalletAddress(accounts[3].address),
                     WalletAddress(accounts[4].address)
                 )
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[0].address))?.data?.balance).withMessage()
+            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[0].address))?.value?.data?.balance)
+                .withMessage()
                 .isEqualTo(Balance(BigInteger("9000")))
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[1].address))?.data?.balance).withMessage()
+            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[1].address))?.value?.data?.balance)
+                .withMessage()
                 .isEqualTo(Balance(BigInteger("100")))
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[2].address))?.data?.balance).withMessage()
+            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[2].address))?.value?.data?.balance)
+                .withMessage()
                 .isEqualTo(Balance(BigInteger("200")))
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[3].address))?.data?.balance).withMessage()
+            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[3].address))?.value?.data?.balance)
+                .withMessage()
                 .isEqualTo(Balance(BigInteger("300")))
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[4].address))?.data?.balance).withMessage()
+            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[4].address))?.value?.data?.balance)
+                .withMessage()
                 .isEqualTo(Balance(BigInteger("400")))
         }
 
@@ -339,7 +344,6 @@ class PayoutControllerApiTest : ControllerTestBase() {
         }
 
         val payoutBlock = hardhatContainer.blockNumber()
-        val chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id
 
         verify("error is returned when non-owner account attempts to create payout") {
             val response = mockMvc.perform(
@@ -360,7 +364,6 @@ class PayoutControllerApiTest : ControllerTestBase() {
     @WithMockUser
     fun mustReturnCorrectErrorWhenRequestedAssetAddressIsNotAContract() {
         val payoutBlock = hardhatContainer.blockNumber()
-        val chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id
 
         verify("error is returned when payout is requested for non-contract address") {
             val response = mockMvc.perform(

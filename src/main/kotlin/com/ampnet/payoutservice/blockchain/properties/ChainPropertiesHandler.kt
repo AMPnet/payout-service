@@ -7,7 +7,6 @@ import com.ampnet.payoutservice.exception.InternalException
 import com.ampnet.payoutservice.util.ChainId
 import org.web3j.protocol.Web3j
 import org.web3j.protocol.http.HttpService
-import kotlin.jvm.Throws
 
 class ChainPropertiesHandler(private val applicationProperties: ApplicationProperties) {
 
@@ -27,7 +26,6 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
             Chain.ETHEREUM_MAIN.id -> applicationProperties.chainEthereum
             Chain.GOERLI_TESTNET.id -> applicationProperties.chainGoerli
             Chain.HARDHAT_TESTNET.id -> applicationProperties.chainHardhatTestnet
-            Chain.HARDHAT_TESTNET_LOCALHOST.id -> applicationProperties.chainHardhatTestnet
             else -> null
         }
     }

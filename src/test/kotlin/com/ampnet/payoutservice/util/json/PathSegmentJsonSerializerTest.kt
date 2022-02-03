@@ -25,7 +25,7 @@ class PathSegmentJsonSerializerTest : TestBase() {
                 objectMapper.readTree(
                     """
                     {
-                        "hash": "${pathSegment.hash.value}",
+                        "sibling_hash": "${pathSegment.siblingHash.value}",
                         "is_left": ${pathSegment.isLeft}
                     }
                     """.trimIndent()

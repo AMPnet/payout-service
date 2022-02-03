@@ -2,8 +2,13 @@ package com.ampnet.payoutservice.util
 
 import com.ampnet.payoutservice.util.json.MerkleTreeJsonSerializer
 import com.ampnet.payoutservice.util.json.PathSegmentJsonSerializer
+import com.ampnet.payoutservice.util.recursion.FlatMap
+import com.ampnet.payoutservice.util.recursion.Return
+import com.ampnet.payoutservice.util.recursion.Suspend
+import com.ampnet.payoutservice.util.recursion.Trampoline
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.util.LinkedList
+import java.util.SortedMap
 
 @JsonSerialize(using = MerkleTreeJsonSerializer::class)
 class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
@@ -19,10 +24,10 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
         }
 
         object NilNode : Node {
-            override val hash: Hash = Hash("0")
+            override val hash: Hash = Hash("0x0000000000000000000000000000000000000000000000000000000000000000")
         }
 
-        data class LeafNode(val data: AccountBalance, override val hash: Hash, val index: Int) : Node
+        data class LeafNode(val data: AccountBalance, override val hash: Hash) : Node
         data class MiddleNode(override val left: Node, override val right: Node, override val hash: Hash) : PathNode
         data class RootNode(
             override val left: Node,
@@ -32,32 +37,35 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
         ) : PathNode
 
         @JsonSerialize(using = PathSegmentJsonSerializer::class)
-        data class PathSegment(val hash: Hash, val isLeft: Boolean)
+        data class PathSegment(val siblingHash: Hash, val isLeft: Boolean)
     }
 
-    val leafNodesByHash: Map<Hash, LeafNode>
-    val leafNodesByAddress: Map<WalletAddress, LeafNode>
+    val leafNodesByHash: Map<Hash, IndexedValue<LeafNode>>
+    val leafNodesByAddress: Map<WalletAddress, IndexedValue<LeafNode>>
     val root: RootNode
 
     init {
         require(nodes.isNotEmpty()) { "Cannot build Merkle tree from empty list" }
 
-        val sortedNodes = nodes.toSortedSet()
-
-        require(sortedNodes.size == nodes.size) { "Address collision in input list" }
-
-        leafNodesByHash = sortedNodes.mapIndexed { index, node -> LeafNode(node, node.hash, index) }
-            .groupBy { it.hash }
-            .mapValues {
-                require(it.value.size == 1) { "Hash collision while constructing leaf nodes: ${it.key}" }
-                it.value.first()
-            }
-        leafNodesByAddress = leafNodesByHash.values.groupBy { it.data.address }
+        val byAddress: Map<WalletAddress, LeafNode> = nodes.map { LeafNode(it, it.hash) }
+            .groupBy { it.data.address }
             .mapValues {
                 require(it.value.size == 1) { "Address collision while constructing leaf nodes: ${it.key}" }
                 it.value.first()
             }
-        root = buildTree(sortedNodes)
+        val bySortedHash: SortedMap<Hash, LeafNode> = byAddress.values
+            .groupBy { it.hash }
+            .mapValues {
+                require(it.value.size == 1) { "Hash collision while constructing leaf nodes: ${it.key}" }
+                it.value.first()
+            }.toSortedMap()
+
+        root = buildTree(bySortedHash.values.toList())
+
+        val indexedLeafNodes = indexLeafNodes()
+
+        leafNodesByHash = indexedLeafNodes.associateBy { it.value.hash }
+        leafNodesByAddress = indexedLeafNodes.associateBy { it.value.data.address }
     }
 
     fun pathTo(element: AccountBalance): List<PathSegment>? {
@@ -94,17 +102,15 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
         return root.hashCode()
     }
 
-    private fun buildTree(sortedNodes: Set<AccountBalance>): RootNode {
-        val leafNodes = sortedNodes.mapIndexed { index, node -> LeafNode(node, node.hash, index) }
-
+    private fun buildTree(leafNodes: List<LeafNode>): RootNode {
         tailrec fun buildLayer(nodes: Collection<Node>, depth: Int): RootNode {
             val pairs = nodes.pairwise()
 
             return if (pairs.size == 1) {
                 val pair = pairs[0]
-                RootNode(pair.first, pair.second, pair.hash, depth)
+                RootNode(pair.left, pair.right, pair.hash, depth)
             } else {
-                val parentLayer = pairs.map { MiddleNode(it.first, it.second, it.hash) }
+                val parentLayer = pairs.map { MiddleNode(it.left, it.right, it.hash) }
                 buildLayer(parentLayer, depth + 1)
             }
         }
@@ -112,11 +118,45 @@ class MerkleTree(nodes: List<AccountBalance>, val hashFn: HashFunction) {
         return buildLayer(leafNodes, 1)
     }
 
+    private fun indexLeafNodes(): List<IndexedValue<LeafNode>> {
+
+        fun indexPath(currentNode: Node, currentIndex: String): Trampoline<List<IndexedValue<LeafNode>>> {
+            return when (currentNode) {
+                is PathNode -> {
+                    val left = Suspend { indexPath(currentNode.left, currentIndex + "0") }
+                    val right = Suspend { indexPath(currentNode.right, currentIndex + "1") }
+
+                    FlatMap(left) { leftList ->
+                        FlatMap(right) { rightList ->
+                            Return(leftList + rightList)
+                        }
+                    }
+                }
+
+                is LeafNode -> {
+                    Return(listOf(IndexedValue(currentIndex.toInt(2), currentNode)))
+                }
+
+                else -> {
+                    Return(emptyList())
+                }
+            }
+        }
+
+        return Trampoline.run(indexPath(root, "0"))
+    }
+
     private val AccountBalance.hash: Hash
         get() = hashFn(abiEncode())
 
+    private val Pair<Node, Node>.left: Node
+        get() = if (first.hash <= second.hash) first else second
+
+    private val Pair<Node, Node>.right: Node
+        get() = if (first.hash <= second.hash) second else first
+
     private val Pair<Node, Node>.hash: Hash
-        get() = hashFn((first.hash + second.hash).value)
+        get() = hashFn((left.hash + right.hash).value)
 
     private fun Collection<Node>.pairwise(): List<Pair<Node, Node>> =
         this.chunked(2).map { Pair(it.first(), it.getOrNull(1) ?: NilNode) }

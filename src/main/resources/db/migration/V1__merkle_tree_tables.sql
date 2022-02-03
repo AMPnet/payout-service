@@ -1,4 +1,4 @@
-CREATE TYPE payout_service.HASH_FUNCTION AS ENUM ('IDENTITY', 'FIXED', 'SIMPLE', 'KECCAK_256');
+CREATE TYPE payout_service.HASH_FUNCTION AS ENUM ('IDENTITY', 'FIXED', 'KECCAK_256');
 
 CREATE TABLE payout_service.merkle_tree_root (
     id               UUID                         PRIMARY KEY,

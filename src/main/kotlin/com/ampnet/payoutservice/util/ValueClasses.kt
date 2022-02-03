@@ -6,12 +6,19 @@ import org.web3j.abi.datatypes.Uint
 import java.math.BigInteger
 
 @JvmInline
-value class Hash private constructor(val value: String) {
+value class Hash private constructor(val value: String) : Comparable<Hash> {
     companion object {
+        private const val HEX_RADIX = 16
         operator fun invoke(value: String) = Hash(value.lowercase())
     }
 
-    operator fun plus(other: Hash): Hash = Hash(value + other.value)
+    operator fun plus(other: Hash): Hash = Hash(value + other.value.replaceFirst("0x", ""))
+
+    override fun compareTo(other: Hash): Int {
+        val thisValue = BigInteger(value.replaceFirst("0x", ""), HEX_RADIX)
+        val otherValue = BigInteger(other.value.replaceFirst("0x", ""), HEX_RADIX)
+        return thisValue.compareTo(otherValue)
+    }
 }
 
 @JvmInline

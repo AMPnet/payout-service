@@ -27,11 +27,6 @@ enum class Chain(val id: ChainId, val rpcUrl: String, val infura: String?) {
     HARDHAT_TESTNET(
         ChainId(31337),
         "http://hardhat:8545",
-        null
-    ),
-    HARDHAT_TESTNET_LOCALHOST(
-        ChainId(31337),
-        "http://localhost:8545",
         "http://localhost:" // used in tests to inject HARDHAT_PORT via infuraId
     );
 

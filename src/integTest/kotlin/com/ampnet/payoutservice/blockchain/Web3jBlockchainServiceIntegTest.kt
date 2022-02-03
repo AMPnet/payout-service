@@ -64,7 +64,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
         verify("correct balances are fetched for first end block") {
             val service = Web3jBlockchainService(hardhatProperties())
             val balances = service.fetchErc20AccountBalances(
-                chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
+                chainId = Chain.HARDHAT_TESTNET.id,
                 erc20ContractAddress = ContractAddress(contract.contractAddress),
                 startBlock = startBlock,
                 endBlock = endBlock1
@@ -84,7 +84,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
         verify("correct balances are fetched for second end block") {
             val service = Web3jBlockchainService(hardhatProperties())
             val balances = service.fetchErc20AccountBalances(
-                chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
+                chainId = Chain.HARDHAT_TESTNET.id,
                 erc20ContractAddress = ContractAddress(contract.contractAddress),
                 startBlock = startBlock,
                 endBlock = endBlock2
@@ -140,7 +140,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
         verify("correct balances are fetched for first end block") {
             val service = Web3jBlockchainService(hardhatProperties())
             val balances = service.fetchErc20AccountBalances(
-                chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
+                chainId = Chain.HARDHAT_TESTNET.id,
                 erc20ContractAddress = ContractAddress(contract.contractAddress),
                 startBlock = startBlock,
                 endBlock = endBlock1
@@ -160,7 +160,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
         verify("correct balances are fetched for second end block") {
             val service = Web3jBlockchainService(hardhatProperties())
             val balances = service.fetchErc20AccountBalances(
-                chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
+                chainId = Chain.HARDHAT_TESTNET.id,
                 erc20ContractAddress = ContractAddress(contract.contractAddress),
                 startBlock = startBlock,
                 endBlock = endBlock2
@@ -184,7 +184,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
             assertThrows<InternalException>(message) {
                 val service = Web3jBlockchainService(hardhatProperties())
                 service.fetchErc20AccountBalances(
-                    chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
+                    chainId = Chain.HARDHAT_TESTNET.id,
                     erc20ContractAddress = ContractAddress(accounts[0].address),
                     startBlock = null,
                     endBlock = BlockNumber(BigInteger.TEN)
@@ -213,7 +213,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
         verify("correct asset owner is fetched") {
             val service = Web3jBlockchainService(hardhatProperties())
             val assetOwner = service.getAssetOwner(
-                chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
+                chainId = Chain.HARDHAT_TESTNET.id,
                 assetAddress = ContractAddress(contract.contractAddress)
             )
 
@@ -231,7 +231,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
 
             assertThrows<InternalException>(message) {
                 service.getAssetOwner(
-                    chainId = Chain.HARDHAT_TESTNET_LOCALHOST.id,
+                    chainId = Chain.HARDHAT_TESTNET.id,
                     assetAddress = ContractAddress(mainAccount.address)
                 )
             }
