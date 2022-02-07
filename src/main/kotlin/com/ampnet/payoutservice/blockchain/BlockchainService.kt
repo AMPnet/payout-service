@@ -10,6 +10,7 @@ interface BlockchainService {
     fun fetchErc20AccountBalances(
         chainId: ChainId,
         erc20ContractAddress: ContractAddress,
+        ignoredErc20Addresses: Set<WalletAddress>,
         startBlock: BlockNumber?,
         endBlock: BlockNumber
     ): List<AccountBalance>

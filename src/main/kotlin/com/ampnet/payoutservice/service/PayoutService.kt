@@ -11,6 +11,7 @@ interface PayoutService {
         chainId: ChainId,
         assetAddress: ContractAddress,
         requesterAddress: WalletAddress,
-        payoutBlock: BlockNumber
+        payoutBlock: BlockNumber,
+        ignoredAssetAddresses: Set<WalletAddress>
     ): CreatePayoutResponse
 }

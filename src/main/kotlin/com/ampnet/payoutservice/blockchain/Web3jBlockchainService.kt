@@ -29,10 +29,14 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
     override fun fetchErc20AccountBalances(
         chainId: ChainId,
         erc20ContractAddress: ContractAddress,
+        ignoredErc20Addresses: Set<WalletAddress>,
         startBlock: BlockNumber?,
         endBlock: BlockNumber
     ): List<AccountBalance> {
-        logger.info { "Fetching balances for ERC20 contract: $erc20ContractAddress on chain: $chainId" }
+        logger.info {
+            "Fetching balances for ERC20 contract: $erc20ContractAddress on chain: $chainId," +
+                " ignored addresses: $ignoredErc20Addresses"
+        }
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
         val contract = IERC20.load(
             erc20ContractAddress.rawValue,
@@ -46,7 +50,7 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
 
         logger.debug { "Block range from: ${startBlockParameter.value} to: ${endBlockParameter.value}" }
 
-        val accounts = contract.findAccounts(startBlockParameter, endBlockParameter)
+        val accounts = contract.findAccounts(startBlockParameter, endBlockParameter) - ignoredErc20Addresses
 
         logger.debug { "Found ${accounts.size} holder addresses for ERC20 contract: $erc20ContractAddress" }
 
@@ -82,7 +86,7 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
     private fun IERC20.findAccounts(
         startBlockParameter: DefaultBlockParameter,
         endBlockParameter: DefaultBlockParameter
-    ): HashSet<WalletAddress> {
+    ): Set<WalletAddress> {
         val accounts = HashSet<WalletAddress>()
         val errors = mutableListOf<InternalException>()
 

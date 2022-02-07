@@ -24,12 +24,22 @@ class PayoutControllerTest : TestBase() {
         val chainId = ChainId(1L)
         val assetAddress = ContractAddress("a")
         val requesterAddress = WalletAddress("b")
-        val requestBody = CreatePayoutRequest(payoutBlockNumber = BigInteger.TEN)
+        val requestBody = CreatePayoutRequest(
+            payoutBlockNumber = BigInteger.TEN,
+            ignoredAssetAddresses = setOf("f")
+        )
+        val totalAssetAmount = BigInteger.TEN
         val rootHash = Hash("test")
+        val ipfsHash = "testIpfsHash"
+        val treeDepth = 3
+
         val serviceResponse = CreatePayoutResponse(
+            totalAssetAmount,
+            requestBody.ignoredAssetAddresses.mapTo(HashSet()) { WalletAddress(it).rawValue },
             requestBody.payoutBlockNumber,
             rootHash.value,
-            "testIpfsHash"
+            ipfsHash,
+            treeDepth
         )
 
         suppose("some Merkle tree hash is returned") {
@@ -38,7 +48,8 @@ class PayoutControllerTest : TestBase() {
                     chainId = chainId,
                     assetAddress = assetAddress,
                     requesterAddress = requesterAddress,
-                    payoutBlock = BlockNumber(requestBody.payoutBlockNumber)
+                    payoutBlock = BlockNumber(requestBody.payoutBlockNumber),
+                    ignoredAssetAddresses = requestBody.ignoredAssetAddresses.mapTo(HashSet()) { WalletAddress(it) }
                 )
             )
                 .willReturn(serviceResponse)

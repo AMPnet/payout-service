@@ -32,11 +32,13 @@ class PayoutServiceImpl(
         chainId: ChainId,
         assetAddress: ContractAddress,
         requesterAddress: WalletAddress,
-        payoutBlock: BlockNumber
+        payoutBlock: BlockNumber,
+        ignoredAssetAddresses: Set<WalletAddress>
     ): CreatePayoutResponse {
         logger.info {
             "Payout request for chain ID: $chainId, asset address: $assetAddress," +
-                " requester address: $requesterAddress, payout block: $payoutBlock"
+                " requester address: $requesterAddress, payout block: $payoutBlock," +
+                " ignored asset addresses: $ignoredAssetAddresses"
         }
 
         checkAssetOwnerIfNeeded(chainId, assetAddress, requesterAddress)
@@ -44,9 +46,13 @@ class PayoutServiceImpl(
         val balances = blockchainService.fetchErc20AccountBalances(
             chainId = chainId,
             erc20ContractAddress = assetAddress,
+            ignoredErc20Addresses = ignoredAssetAddresses,
             startBlock = chainHandler.getChainProperties(chainId)?.startBlockNumber?.let { BlockNumber(it) },
             endBlock = payoutBlock
         )
+        val totalAssetAmount = balances.sumOf { it.balance.rawValue }
+
+        logger.info { "Total sum of non-ignored asset balances: $totalAssetAmount" }
 
         val tree = MerkleTree(balances, HashFunction.KECCAK_256)
         val ipfsHash = ipfsService.pinJsonToIpfs(tree)
@@ -60,9 +66,12 @@ class PayoutServiceImpl(
         }
 
         return CreatePayoutResponse(
+            totalAssetAmount = totalAssetAmount,
+            ignoredAssetAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
             payoutBlockNumber = payoutBlock.value,
             merkleRootHash = rootHash.value,
-            merkleTreeIpfsHash = ipfsHash.value
+            merkleTreeIpfsHash = ipfsHash.value,
+            merkleTreeDepth = tree.root.depth
         )
     }
 

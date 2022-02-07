@@ -46,12 +46,14 @@ class PayoutServiceTest : TestBase() {
             AccountBalance(WalletAddress("2"), Balance(BigInteger.ONE)),
             AccountBalance(WalletAddress("3"), Balance(BigInteger.TWO))
         )
+        val ignoredAddresses = setOf(WalletAddress("dead"))
 
         suppose("some asset balances are fetched") {
             given(
                 blockchainService.fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
+                    ignoredErc20Addresses = ignoredAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
@@ -86,14 +88,17 @@ class PayoutServiceTest : TestBase() {
         val service = PayoutServiceImpl(repository, ipfsService, blockchainService, properties)
 
         verify("payout is correctly created and Merkle tree root hash is returned") {
-            val response = service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock)
+            val response = service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock, ignoredAddresses)
 
             assertThat(response).withMessage()
                 .isEqualTo(
                     CreatePayoutResponse(
+                        totalAssetAmount = accountBalances.sumOf { it.balance.rawValue },
+                        ignoredAssetAddresses = ignoredAddresses.mapTo(HashSet()) { it.rawValue },
                         payoutBlockNumber = payoutBlock.value,
                         merkleRootHash = tree.root.hash.value,
-                        merkleTreeIpfsHash = ipfsHash.value
+                        merkleTreeIpfsHash = ipfsHash.value,
+                        merkleTreeDepth = tree.root.depth
                     )
                 )
         }
@@ -105,6 +110,7 @@ class PayoutServiceTest : TestBase() {
                 .fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
+                    ignoredErc20Addresses = ignoredAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
@@ -138,12 +144,14 @@ class PayoutServiceTest : TestBase() {
             AccountBalance(WalletAddress("2"), Balance(BigInteger.ONE)),
             AccountBalance(WalletAddress("3"), Balance(BigInteger.TWO))
         )
+        val ignoredAddresses = setOf(WalletAddress("dead"))
 
         suppose("some asset balances are fetched") {
             given(
                 blockchainService.fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
+                    ignoredErc20Addresses = ignoredAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
@@ -173,14 +181,17 @@ class PayoutServiceTest : TestBase() {
         val service = PayoutServiceImpl(repository, ipfsService, blockchainService, properties)
 
         verify("payout is correctly created and Merkle tree root hash is returned") {
-            val response = service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock)
+            val response = service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock, ignoredAddresses)
 
             assertThat(response).withMessage()
                 .isEqualTo(
                     CreatePayoutResponse(
+                        totalAssetAmount = accountBalances.sumOf { it.balance.rawValue },
+                        ignoredAssetAddresses = ignoredAddresses.mapTo(HashSet()) { it.rawValue },
                         payoutBlockNumber = payoutBlock.value,
                         merkleRootHash = tree.root.hash.value,
-                        merkleTreeIpfsHash = ipfsHash.value
+                        merkleTreeIpfsHash = ipfsHash.value,
+                        merkleTreeDepth = tree.root.depth
                     )
                 )
         }
@@ -192,6 +203,7 @@ class PayoutServiceTest : TestBase() {
                 .fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
+                    ignoredErc20Addresses = ignoredAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
@@ -226,10 +238,11 @@ class PayoutServiceTest : TestBase() {
         val ipfsService = mock<IpfsService>()
         val repository = mock<MerkleTreeRepository>()
         val service = PayoutServiceImpl(repository, ipfsService, blockchainService, properties)
+        val ignoredAddresses = setOf(WalletAddress("dead"))
 
         verify("InvalidRequestException exception is thrown") {
             assertThrows<InvalidRequestException>(message) {
-                service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock)
+                service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock, ignoredAddresses)
             }
         }
 
@@ -253,12 +266,14 @@ class PayoutServiceTest : TestBase() {
             AccountBalance(WalletAddress("2"), Balance(BigInteger.ONE)),
             AccountBalance(WalletAddress("3"), Balance(BigInteger.TWO))
         )
+        val ignoredAddresses = setOf(WalletAddress("dead"))
 
         suppose("some asset balances are fetched") {
             given(
                 blockchainService.fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
+                    ignoredErc20Addresses = ignoredAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
@@ -294,14 +309,17 @@ class PayoutServiceTest : TestBase() {
         val requesterAddress = WalletAddress("1")
 
         verify("payout is correctly created and Merkle tree root hash is returned") {
-            val response = service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock)
+            val response = service.createPayout(chainId, assetAddress, requesterAddress, payoutBlock, ignoredAddresses)
 
             assertThat(response).withMessage()
                 .isEqualTo(
                     CreatePayoutResponse(
+                        totalAssetAmount = accountBalances.sumOf { it.balance.rawValue },
+                        ignoredAssetAddresses = ignoredAddresses.mapTo(HashSet()) { it.rawValue },
                         payoutBlockNumber = payoutBlock.value,
                         merkleRootHash = tree.root.hash.value,
-                        merkleTreeIpfsHash = ipfsHash.value
+                        merkleTreeIpfsHash = ipfsHash.value,
+                        merkleTreeDepth = tree.root.depth
                     )
                 )
         }
@@ -311,6 +329,7 @@ class PayoutServiceTest : TestBase() {
                 .fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
+                    ignoredErc20Addresses = ignoredAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
