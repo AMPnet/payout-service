@@ -66,6 +66,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
             val balances = service.fetchErc20AccountBalances(
                 chainId = Chain.HARDHAT_TESTNET.id,
                 erc20ContractAddress = ContractAddress(contract.contractAddress),
+                ignoredErc20Addresses = emptySet(),
                 startBlock = startBlock,
                 endBlock = endBlock1
             )
@@ -86,6 +87,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
             val balances = service.fetchErc20AccountBalances(
                 chainId = Chain.HARDHAT_TESTNET.id,
                 erc20ContractAddress = ContractAddress(contract.contractAddress),
+                ignoredErc20Addresses = emptySet(),
                 startBlock = startBlock,
                 endBlock = endBlock2
             )
@@ -98,6 +100,64 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
                 AccountBalance(WalletAddress(accounts[4].address), Balance(BigInteger("400"))),
                 AccountBalance(WalletAddress(accounts[5].address), Balance(BigInteger("1000"))),
                 AccountBalance(WalletAddress(accounts[6].address), Balance(BigInteger("2000")))
+            )
+        }
+    }
+
+    @Test
+    fun mustCorrectlyFetchBalancesBasedOnBlockRangeWhenSomeAddressesAreIgnored() {
+        val mainAccount = accounts[0]
+
+        val contract = suppose("simple ERC20 contract is deployed") {
+            val future = SimpleERC20.deploy(
+                hardhatContainer.web3j,
+                mainAccount,
+                DefaultGasProvider(),
+                listOf(mainAccount.address),
+                listOf(BigInteger("10000")),
+                mainAccount.address
+            ).sendAsync()
+            hardhatContainer.waitAndMine()
+            future.get()
+        }
+
+        suppose("some accounts get ERC20 tokens") {
+            contract.transferAndMine(accounts[1].address, BigInteger("100"))
+            contract.transferAndMine(accounts[2].address, BigInteger("200"))
+            contract.transferAndMine(accounts[3].address, BigInteger("300"))
+            contract.transferAndMine(accounts[4].address, BigInteger("400"))
+        }
+
+        val startBlock = BlockNumber(BigInteger.ZERO)
+        val endBlock = hardhatContainer.blockNumber()
+
+        contract.applyWeb3jFilterFix(startBlock, endBlock)
+
+        suppose("some additional transactions of ERC20 token are made") {
+            contract.transferAndMine(accounts[1].address, BigInteger("900"))
+            contract.transferAndMine(accounts[5].address, BigInteger("1000"))
+            contract.transferAndMine(accounts[6].address, BigInteger("2000"))
+        }
+
+        val ignoredAddresses = setOf(
+            WalletAddress(mainAccount.address),
+            WalletAddress(accounts[1].address),
+            WalletAddress(accounts[3].address)
+        )
+
+        verify("correct balances are fetched") {
+            val service = Web3jBlockchainService(hardhatProperties())
+            val balances = service.fetchErc20AccountBalances(
+                chainId = Chain.HARDHAT_TESTNET.id,
+                erc20ContractAddress = ContractAddress(contract.contractAddress),
+                ignoredErc20Addresses = ignoredAddresses,
+                startBlock = startBlock,
+                endBlock = endBlock
+            )
+
+            assertThat(balances).withMessage().containsExactlyInAnyOrder(
+                AccountBalance(WalletAddress(accounts[2].address), Balance(BigInteger("200"))),
+                AccountBalance(WalletAddress(accounts[4].address), Balance(BigInteger("400")))
             )
         }
     }
@@ -142,6 +202,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
             val balances = service.fetchErc20AccountBalances(
                 chainId = Chain.HARDHAT_TESTNET.id,
                 erc20ContractAddress = ContractAddress(contract.contractAddress),
+                ignoredErc20Addresses = emptySet(),
                 startBlock = startBlock,
                 endBlock = endBlock1
             )
@@ -162,6 +223,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
             val balances = service.fetchErc20AccountBalances(
                 chainId = Chain.HARDHAT_TESTNET.id,
                 erc20ContractAddress = ContractAddress(contract.contractAddress),
+                ignoredErc20Addresses = emptySet(),
                 startBlock = startBlock,
                 endBlock = endBlock2
             )
@@ -186,6 +248,7 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
                 service.fetchErc20AccountBalances(
                     chainId = Chain.HARDHAT_TESTNET.id,
                     erc20ContractAddress = ContractAddress(accounts[0].address),
+                    ignoredErc20Addresses = emptySet(),
                     startBlock = null,
                     endBlock = BlockNumber(BigInteger.TEN)
                 )

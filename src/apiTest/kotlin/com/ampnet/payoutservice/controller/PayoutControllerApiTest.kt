@@ -118,18 +118,33 @@ class PayoutControllerApiTest : ControllerTestBase() {
             )
         }
 
+        val ignoredAddresses = setOf(mainAccount.address, accounts[4].address)
+
         val createPayoutResponse = suppose("create payout request is made") {
             val response = mockMvc.perform(
                 MockMvcRequestBuilders.post(
                     "/payout/${chainId.value}/${contract.contractAddress}/create"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\n    \"payout_block_number\": \"${payoutBlock.value}\"\n}")
+                    .content(
+                        "{\n    \"payout_block_number\": \"${payoutBlock.value}\",\n " +
+                            "   \"ignored_asset_addresses\": ${ignoredAddresses.map { "\"$it\"" }}\n}"
+                    )
             )
                 .andExpect(MockMvcResultMatchers.status().isOk)
                 .andReturn()
 
             objectMapper.readValue(response.response.contentAsString, CreatePayoutResponse::class.java)
+        }
+
+        verify("response has correct total asset amount") {
+            assertThat(createPayoutResponse.totalAssetAmount).withMessage()
+                .isEqualTo(600)
+        }
+
+        verify("response has correct ignored asset addresses") {
+            assertThat(createPayoutResponse.ignoredAssetAddresses).withMessage()
+                .isEqualTo(ignoredAddresses)
         }
 
         verify("response has correct payout block number") {
@@ -155,18 +170,13 @@ class PayoutControllerApiTest : ControllerTestBase() {
                 .isNotNull()
 
             assertThat(tree?.leafNodesByAddress).withMessage()
-                .hasSize(5)
+                .hasSize(3)
             assertThat(tree?.leafNodesByAddress?.keys).withMessage()
                 .containsExactlyInAnyOrder(
-                    WalletAddress(accounts[0].address),
                     WalletAddress(accounts[1].address),
                     WalletAddress(accounts[2].address),
-                    WalletAddress(accounts[3].address),
-                    WalletAddress(accounts[4].address)
+                    WalletAddress(accounts[3].address)
                 )
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[0].address))?.value?.data?.balance)
-                .withMessage()
-                .isEqualTo(Balance(BigInteger("9000")))
             assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[1].address))?.value?.data?.balance)
                 .withMessage()
                 .isEqualTo(Balance(BigInteger("100")))
@@ -176,9 +186,9 @@ class PayoutControllerApiTest : ControllerTestBase() {
             assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[3].address))?.value?.data?.balance)
                 .withMessage()
                 .isEqualTo(Balance(BigInteger("300")))
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[4].address))?.value?.data?.balance)
-                .withMessage()
-                .isEqualTo(Balance(BigInteger("400")))
+
+            assertThat(createPayoutResponse.merkleTreeDepth).withMessage()
+                .isEqualTo(tree?.root?.depth)
         }
     }
 
@@ -247,12 +257,22 @@ class PayoutControllerApiTest : ControllerTestBase() {
                     "/payout/${chainId.value}/${contract.contractAddress}/create"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\n    \"payout_block_number\": \"${payoutBlock.value}\"\n}")
+                    .content("{\"payout_block_number\":\"${payoutBlock.value}\",\"ignored_asset_addresses\":[]}")
             )
                 .andExpect(MockMvcResultMatchers.status().isOk)
                 .andReturn()
 
             objectMapper.readValue(response.response.contentAsString, CreatePayoutResponse::class.java)
+        }
+
+        verify("response has correct total asset amount") {
+            assertThat(createPayoutResponse.totalAssetAmount).withMessage()
+                .isEqualTo(10_000)
+        }
+
+        verify("response has correct ignored asset addresses") {
+            assertThat(createPayoutResponse.ignoredAssetAddresses).withMessage()
+                .isEmpty()
         }
 
         verify("response has correct payout block number") {
@@ -281,13 +301,13 @@ class PayoutControllerApiTest : ControllerTestBase() {
                 .hasSize(5)
             assertThat(tree?.leafNodesByAddress?.keys).withMessage()
                 .containsExactlyInAnyOrder(
-                    WalletAddress(accounts[0].address),
+                    WalletAddress(mainAccount.address),
                     WalletAddress(accounts[1].address),
                     WalletAddress(accounts[2].address),
                     WalletAddress(accounts[3].address),
                     WalletAddress(accounts[4].address)
                 )
-            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[0].address))?.value?.data?.balance)
+            assertThat(tree?.leafNodesByAddress?.get(WalletAddress(mainAccount.address))?.value?.data?.balance)
                 .withMessage()
                 .isEqualTo(Balance(BigInteger("9000")))
             assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[1].address))?.value?.data?.balance)
@@ -302,6 +322,9 @@ class PayoutControllerApiTest : ControllerTestBase() {
             assertThat(tree?.leafNodesByAddress?.get(WalletAddress(accounts[4].address))?.value?.data?.balance)
                 .withMessage()
                 .isEqualTo(Balance(BigInteger("400")))
+
+            assertThat(createPayoutResponse.merkleTreeDepth).withMessage()
+                .isEqualTo(tree?.root?.depth)
         }
 
         verify("second create payout request is made and succeeds") {
@@ -310,7 +333,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                     "/payout/${chainId.value}/${contract.contractAddress}/create"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\n    \"payout_block_number\": \"${payoutBlock.value}\"\n}")
+                    .content("{\"payout_block_number\":\"${payoutBlock.value}\",\"ignored_asset_addresses\":[]}")
             )
                 .andExpect(MockMvcResultMatchers.status().isOk)
                 .andReturn()
@@ -351,7 +374,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                     "/payout/${chainId.value}/${contract.contractAddress}/create"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\n    \"payout_block_number\": \"${payoutBlock.value}\"\n}")
+                    .content("{\"payout_block_number\":\"${payoutBlock.value}\",\"ignored_asset_addresses\":[]}")
             )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest)
                 .andReturn()
@@ -371,7 +394,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                     "/payout/${chainId.value}/${accounts[1].address}/create"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\n    \"payout_block_number\": \"${payoutBlock.value}\"\n}")
+                    .content("{\"payout_block_number\":\"${payoutBlock.value}\",\"ignored_asset_addresses\":[]}")
             )
                 .andExpect(MockMvcResultMatchers.status().isBadGateway)
                 .andReturn()

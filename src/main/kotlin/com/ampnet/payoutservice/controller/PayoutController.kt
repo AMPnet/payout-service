@@ -28,7 +28,8 @@ class PayoutController(private val payoutService: PayoutService) {
             chainId = ChainId(chainId),
             assetAddress = ContractAddress(assetAddress),
             requesterAddress = WalletAddress(requesterAddress),
-            payoutBlock = BlockNumber(requestBody.payoutBlockNumber)
+            payoutBlock = BlockNumber(requestBody.payoutBlockNumber),
+            ignoredAssetAddresses = requestBody.ignoredAssetAddresses.mapTo(HashSet()) { WalletAddress(it) }
         )
 
         return ResponseEntity.ok(response)
