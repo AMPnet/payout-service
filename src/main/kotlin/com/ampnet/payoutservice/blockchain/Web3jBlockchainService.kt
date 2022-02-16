@@ -17,6 +17,7 @@ import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.core.RemoteFunctionCall
 import org.web3j.tx.ReadonlyTransactionManager
 import org.web3j.tx.gas.DefaultGasProvider
+import java.math.BigInteger
 
 @Service
 class Web3jBlockchainService(applicationProperties: ApplicationProperties) : BlockchainService {
@@ -62,7 +63,7 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
                     ErrorCode.BLOCKCHAIN_CONTRACT_READ_ERROR, "Unable to fetch balance for address: $account"
                 )
             AccountBalance(account, balance)
-        }
+        }.filter { it.balance.rawValue > BigInteger.ZERO }
     }
 
     @Throws(InternalException::class)

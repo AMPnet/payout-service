@@ -162,7 +162,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                 FetchMerkleTreeRequest(
                     rootHash = Hash(createPayoutResponse.merkleRootHash),
                     chainId = chainId,
-                    contractAddress = ContractAddress(contract.contractAddress)
+                    assetAddress = ContractAddress(contract.contractAddress)
                 )
             )
 
@@ -290,7 +290,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                 FetchMerkleTreeRequest(
                     rootHash = Hash(createPayoutResponse.merkleRootHash),
                     chainId = chainId,
-                    contractAddress = ContractAddress(contract.contractAddress)
+                    assetAddress = ContractAddress(contract.contractAddress)
                 )
             )
 

@@ -7,5 +7,5 @@ import com.ampnet.payoutservice.util.Hash
 data class FetchMerkleTreeRequest(
     val rootHash: Hash,
     val chainId: ChainId,
-    val contractAddress: ContractAddress
+    val assetAddress: ContractAddress
 )

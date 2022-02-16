@@ -8,9 +8,9 @@ import com.ampnet.payoutservice.util.WalletAddress
 data class FetchMerkleTreePathRequest(
     val rootHash: Hash,
     val chainId: ChainId,
-    val contractAddress: ContractAddress,
+    val assetAddress: ContractAddress,
     val walletAddress: WalletAddress
 ) {
     val toFetchMerkleTreeRequest: FetchMerkleTreeRequest
-        get() = FetchMerkleTreeRequest(rootHash, chainId, contractAddress)
+        get() = FetchMerkleTreeRequest(rootHash, chainId, assetAddress)
 }

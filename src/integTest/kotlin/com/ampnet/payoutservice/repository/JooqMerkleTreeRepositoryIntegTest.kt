@@ -86,7 +86,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                     MerkleTreeRootRecord(
                         id = treeRootUuid,
                         chainId = chainId.value,
-                        contractAddress = contractAddress.rawValue,
+                        assetAddress = contractAddress.rawValue,
                         blockNumber = BigInteger("123"),
                         hash = merkleTree.root.hash.value,
                         hashFn = DbHashFunction.IDENTITY
@@ -165,7 +165,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                     MerkleTreeRootRecord(
                         id = treeRootUuid,
                         chainId = chainId.value,
-                        contractAddress = contractAddress.rawValue,
+                        assetAddress = contractAddress.rawValue,
                         blockNumber = BigInteger("123"),
                         hash = merkleTree.root.hash.value,
                         hashFn = DbHashFunction.IDENTITY

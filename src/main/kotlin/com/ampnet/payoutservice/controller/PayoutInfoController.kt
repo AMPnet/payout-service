@@ -31,7 +31,7 @@ class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepositor
         val request = FetchMerkleTreeRequest(
             rootHash = Hash(rootHash),
             chainId = ChainId(chainId),
-            contractAddress = ContractAddress(assetAddress)
+            assetAddress = ContractAddress(assetAddress)
         )
         logger.debug { "Fetching Merkle tree: $request" }
 
@@ -55,7 +55,7 @@ class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepositor
         val request = FetchMerkleTreePathRequest(
             rootHash = Hash(rootHash),
             chainId = ChainId(chainId),
-            contractAddress = ContractAddress(assetAddress),
+            assetAddress = ContractAddress(assetAddress),
             walletAddress = WalletAddress(walletAddress)
         )
         logger.debug { "Fetching payout path for: $request" }

@@ -10,9 +10,9 @@ import com.ampnet.payoutservice.util.MerkleTree
 
 interface MerkleTreeRepository {
 
-    fun storeTree(tree: MerkleTree, chainId: ChainId, contractAddress: ContractAddress, blockNumber: BlockNumber): Hash
+    fun storeTree(tree: MerkleTree, chainId: ChainId, assetAddress: ContractAddress, blockNumber: BlockNumber): Hash
 
-    fun treeExists(rootHash: Hash, chainId: ChainId, contractAddress: ContractAddress): Boolean
+    fun treeExists(rootHash: Hash, chainId: ChainId, assetAddress: ContractAddress): Boolean
 
     fun fetchTree(request: FetchMerkleTreeRequest): MerkleTree?
 

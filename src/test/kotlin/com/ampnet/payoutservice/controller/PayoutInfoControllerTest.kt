@@ -36,7 +36,7 @@ class PayoutInfoControllerTest : TestBase() {
         val request = FetchMerkleTreeRequest(
             rootHash = Hash("test"),
             chainId = ChainId(1L),
-            contractAddress = ContractAddress("abc")
+            assetAddress = ContractAddress("abc")
         )
 
         suppose("some Merkle tree is returned") {
@@ -49,7 +49,7 @@ class PayoutInfoControllerTest : TestBase() {
         verify("correct response is returned") {
             val response = controller.getPayoutTree(
                 chainId = request.chainId.value,
-                assetAddress = request.contractAddress.rawValue,
+                assetAddress = request.assetAddress.rawValue,
                 rootHash = request.rootHash.value
             )
             assertThat(response).withMessage()
@@ -63,7 +63,7 @@ class PayoutInfoControllerTest : TestBase() {
         val request = FetchMerkleTreeRequest(
             rootHash = Hash("test"),
             chainId = ChainId(1L),
-            contractAddress = ContractAddress("abc")
+            assetAddress = ContractAddress("abc")
         )
 
         suppose("null is returned when fetching Merkle tree") {
@@ -77,7 +77,7 @@ class PayoutInfoControllerTest : TestBase() {
             assertThrows<ResourceNotFoundException>(message) {
                 controller.getPayoutTree(
                     chainId = request.chainId.value,
-                    assetAddress = request.contractAddress.rawValue,
+                    assetAddress = request.assetAddress.rawValue,
                     rootHash = request.rootHash.value
                 )
             }
@@ -91,7 +91,7 @@ class PayoutInfoControllerTest : TestBase() {
         val request = FetchMerkleTreePathRequest(
             rootHash = Hash("test"),
             chainId = ChainId(1L),
-            contractAddress = ContractAddress("abc"),
+            assetAddress = ContractAddress("abc"),
             walletAddress = accountBalance.address
         )
 
@@ -115,7 +115,7 @@ class PayoutInfoControllerTest : TestBase() {
         verify("correct response is returned") {
             val response = controller.getPayoutPath(
                 chainId = request.chainId.value,
-                assetAddress = request.contractAddress.rawValue,
+                assetAddress = request.assetAddress.rawValue,
                 rootHash = request.rootHash.value,
                 walletAddress = accountBalance.address.rawValue
             )
@@ -139,7 +139,7 @@ class PayoutInfoControllerTest : TestBase() {
         val request = FetchMerkleTreePathRequest(
             rootHash = Hash("test"),
             chainId = ChainId(1L),
-            contractAddress = ContractAddress("abc"),
+            assetAddress = ContractAddress("abc"),
             walletAddress = accountBalance.address
         )
 
@@ -154,7 +154,7 @@ class PayoutInfoControllerTest : TestBase() {
             assertThrows<ResourceNotFoundException>(message) {
                 controller.getPayoutPath(
                     chainId = request.chainId.value,
-                    assetAddress = request.contractAddress.rawValue,
+                    assetAddress = request.assetAddress.rawValue,
                     rootHash = request.rootHash.value,
                     walletAddress = accountBalance.address.rawValue
                 )
@@ -169,7 +169,7 @@ class PayoutInfoControllerTest : TestBase() {
         val request = FetchMerkleTreePathRequest(
             rootHash = Hash("test"),
             chainId = ChainId(1L),
-            contractAddress = ContractAddress("abc"),
+            assetAddress = ContractAddress("abc"),
             walletAddress = accountBalance.address
         )
 
@@ -189,7 +189,7 @@ class PayoutInfoControllerTest : TestBase() {
             assertThrows<ResourceNotFoundException>(message) {
                 controller.getPayoutPath(
                     chainId = request.chainId.value,
-                    assetAddress = request.contractAddress.rawValue,
+                    assetAddress = request.assetAddress.rawValue,
                     rootHash = request.rootHash.value,
                     walletAddress = accountBalance.address.rawValue
                 )
@@ -204,7 +204,7 @@ class PayoutInfoControllerTest : TestBase() {
         val request = FetchMerkleTreePathRequest(
             rootHash = Hash("test"),
             chainId = ChainId(1L),
-            contractAddress = ContractAddress("abc"),
+            assetAddress = ContractAddress("abc"),
             walletAddress = accountBalance.address
         )
 
@@ -229,7 +229,7 @@ class PayoutInfoControllerTest : TestBase() {
             assertThrows<ResourceNotFoundException>(message) {
                 controller.getPayoutPath(
                     chainId = request.chainId.value,
-                    assetAddress = request.contractAddress.rawValue,
+                    assetAddress = request.assetAddress.rawValue,
                     rootHash = request.rootHash.value,
                     walletAddress = "fff"
                 )
