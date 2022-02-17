@@ -13,6 +13,7 @@ enum class ErrorCode(val categoryCode: String, var specificCode: String, var mes
     IPFS_UPLOAD_FAILED("05", "01", "IPFS upload failed"),
 
     // Payout: 06
-    PAYOUT_MERKLE_TREE_NOT_FOUND("06", "01", "Merkle tree not found for specified payout parameters"),
-    PAYOUT_NOT_FOUND_FOR_ACCOUNT("06", "02", "Payout does not exist for specified account")
+    PAYOUT_TASK_NOT_FOUND("06", "01", "Create payout task not found"),
+    PAYOUT_MERKLE_TREE_NOT_FOUND("06", "02", "Merkle tree not found for specified payout parameters"),
+    PAYOUT_NOT_FOUND_FOR_ACCOUNT("06", "03", "Payout does not exist for specified account")
 }

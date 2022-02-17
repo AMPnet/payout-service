@@ -10,10 +10,8 @@ import com.ampnet.payoutservice.util.MerkleTree
 import java.util.UUID
 
 interface MerkleTreeRepository {
-
+    fun getById(treeId: UUID): MerkleTree?
     fun storeTree(tree: MerkleTree, chainId: ChainId, assetAddress: ContractAddress, blockNumber: BlockNumber): UUID
-
     fun fetchTree(request: FetchMerkleTreeRequest): MerkleTreeWithId?
-
     fun containsAddress(request: FetchMerkleTreePathRequest): Boolean
 }

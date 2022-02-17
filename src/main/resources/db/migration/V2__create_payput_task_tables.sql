@@ -10,7 +10,8 @@ CREATE TABLE payout_service.create_payout_task (
     issuer_address          VARCHAR                        NULL,
     status                  payout_service.TASK_STATUS NOT NULL,
     result_tree             UUID                           NULL REFERENCES payout_service.merkle_tree_root(id),
-    tree_ipfs_hash          VARCHAR                        NULL
+    tree_ipfs_hash          VARCHAR                        NULL,
+    total_asset_amount      NUMERIC(78)                    NULL
 );
 
 CREATE INDEX create_payout_task_chain_id_requester_idx

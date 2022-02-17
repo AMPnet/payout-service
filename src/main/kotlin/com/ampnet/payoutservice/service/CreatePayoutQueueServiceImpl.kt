@@ -4,9 +4,13 @@ import com.ampnet.payoutservice.blockchain.BlockchainService
 import com.ampnet.payoutservice.blockchain.properties.ChainPropertiesHandler
 import com.ampnet.payoutservice.config.ApplicationProperties
 import com.ampnet.payoutservice.controller.request.FetchMerkleTreeRequest
+import com.ampnet.payoutservice.controller.response.CreatePayoutData
+import com.ampnet.payoutservice.controller.response.CreatePayoutTaskResponse
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.InvalidRequestException
+import com.ampnet.payoutservice.model.OptionalCreatePayoutTaskData
 import com.ampnet.payoutservice.model.PendingCreatePayoutTask
+import com.ampnet.payoutservice.model.SuccessfulTaskData
 import com.ampnet.payoutservice.repository.CreatePayoutTaskRepository
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
 import com.ampnet.payoutservice.util.BlockNumber
@@ -78,6 +82,39 @@ class CreatePayoutQueueServiceImpl(
         )
     }
 
+    override fun getTaskById(taskId: UUID): CreatePayoutTaskResponse? {
+        logger.debug { "Fetching create payout task, taskId: $taskId" }
+
+        val task = createPayoutTaskRepository.getById(taskId) ?: return null
+
+        return CreatePayoutTaskResponse(
+            taskId = taskId,
+            chainId = task.chainId.value,
+            assetAddress = task.assetAddress.rawValue,
+            payoutBlockNumber = task.blockNumber.value,
+            ignoredAssetAddresses = task.ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
+            requesterAddress = task.requesterAddress.rawValue,
+            issuerAddress = task.issuerAddress?.rawValue,
+            taskStatus = task.data.status,
+            data = task.data.createPayoutData()
+        )
+    }
+
+    private fun OptionalCreatePayoutTaskData.createPayoutData(): CreatePayoutData? {
+        return if (this is SuccessfulTaskData) {
+            val tree = merkleTreeRepository.getById(merkleTreeRootId)
+
+            tree?.let {
+                CreatePayoutData(
+                    totalAssetAmount = totalAssetAmount,
+                    merkleRootHash = it.root.hash.value,
+                    merkleTreeIpfsHash = merkleTreeIpfsHash.value,
+                    merkleTreeDepth = it.root.depth
+                )
+            }
+        } else null
+    }
+
     @Suppress("TooGenericExceptionCaught")
     private fun processTasks() {
         createPayoutTaskRepository.getPending()?.let { task ->
@@ -117,7 +154,7 @@ class CreatePayoutQueueServiceImpl(
 
         val ipfsHash = ipfsService.pinJsonToIpfs(tree)
 
-        createPayoutTaskRepository.completeTask(task.taskId, rootId, ipfsHash)
+        createPayoutTaskRepository.completeTask(task.taskId, rootId, ipfsHash, totalAssetAmount)
         logger.info { "Task completed: ${task.taskId}" }
     }
 

@@ -35,7 +35,7 @@ import com.ampnet.payoutservice.generated.jooq.enums.HashFunction as DbHashFunct
 @JooqTest
 @Import(JooqMerkleTreeRepository::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class JooqMerkleTreeRepositoryIntegTest : TestBase() {
+class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
 
     @Suppress("unused")
     private val postgresContainer = PostgresTestContainer()

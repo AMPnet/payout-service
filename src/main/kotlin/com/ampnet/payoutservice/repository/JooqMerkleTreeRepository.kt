@@ -28,6 +28,15 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
 
     companion object : KLogging()
 
+    override fun getById(treeId: UUID): MerkleTree? {
+        logger.info { "Fetching Merkle tree, treeId: $treeId" }
+
+        return dslContext.selectFrom(MerkleTreeRoot.MERKLE_TREE_ROOT)
+            .where(MerkleTreeRoot.MERKLE_TREE_ROOT.ID.eq(treeId))
+            .fetchOne()
+            ?.let { rebuildTree(it) }
+    }
+
     override fun storeTree(
         tree: MerkleTree,
         chainId: ChainId,
@@ -86,10 +95,7 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
             )
             .fetchOne() ?: return null
 
-        val leafNodes = dslContext.selectFrom(MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE)
-            .where(MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE.MERKLE_ROOT.eq(root.id))
-            .fetch { AccountBalance(WalletAddress(it.address!!), Balance(it.balance!!)) }
-        val tree = MerkleTree(leafNodes, HashFunction.fromDbEnum(root.hashFn!!))
+        val tree = rebuildTree(root)
 
         return if (tree.root.hash == request.rootHash) {
             logger.info {
@@ -131,5 +137,12 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
                     )
                 )
         )
+    }
+
+    private fun rebuildTree(root: MerkleTreeRootRecord): MerkleTree {
+        val leafNodes = dslContext.selectFrom(MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE)
+            .where(MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE.MERKLE_ROOT.eq(root.id))
+            .fetch { AccountBalance(WalletAddress(it.address!!), Balance(it.balance!!)) }
+        return MerkleTree(leafNodes, HashFunction.fromDbEnum(root.hashFn!!))
     }
 }
