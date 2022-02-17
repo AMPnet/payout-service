@@ -6,6 +6,7 @@ import com.ampnet.payoutservice.controller.request.FetchMerkleTreeRequest
 import com.ampnet.payoutservice.controller.response.FetchMerkleTreePathResponse
 import com.ampnet.payoutservice.controller.response.FetchMerkleTreeResponse
 import com.ampnet.payoutservice.exception.ResourceNotFoundException
+import com.ampnet.payoutservice.model.MerkleTreeWithId
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
@@ -23,7 +24,9 @@ import org.mockito.kotlin.given
 import org.mockito.kotlin.mock
 import org.springframework.http.ResponseEntity
 import java.math.BigInteger
+import java.util.UUID
 
+@Deprecated("SD-572") // TODO
 class PayoutInfoControllerTest : TestBase() {
 
     @Test
@@ -41,7 +44,7 @@ class PayoutInfoControllerTest : TestBase() {
 
         suppose("some Merkle tree is returned") {
             given(repository.fetchTree(request))
-                .willReturn(tree)
+                .willReturn(tree.withRandomId())
         }
 
         val controller = PayoutInfoController(repository)
@@ -107,7 +110,7 @@ class PayoutInfoControllerTest : TestBase() {
 
         suppose("some Merkle tree is returned") {
             given(repository.fetchTree(request.toFetchMerkleTreeRequest))
-                .willReturn(tree)
+                .willReturn(tree.withRandomId())
         }
 
         val controller = PayoutInfoController(repository)
@@ -220,7 +223,7 @@ class PayoutInfoControllerTest : TestBase() {
 
         suppose("some Merkle tree is returned") {
             given(repository.fetchTree(request.toFetchMerkleTreeRequest))
-                .willReturn(tree)
+                .willReturn(tree.withRandomId())
         }
 
         val controller = PayoutInfoController(repository)
@@ -236,4 +239,6 @@ class PayoutInfoControllerTest : TestBase() {
             }
         }
     }
+
+    private fun MerkleTree.withRandomId(): MerkleTreeWithId = MerkleTreeWithId(UUID.randomUUID(), this)
 }

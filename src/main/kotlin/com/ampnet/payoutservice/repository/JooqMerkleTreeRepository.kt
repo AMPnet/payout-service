@@ -6,13 +6,13 @@ import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeLeafNode
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeRoot
 import com.ampnet.payoutservice.generated.jooq.tables.records.MerkleTreeLeafNodeRecord
 import com.ampnet.payoutservice.generated.jooq.tables.records.MerkleTreeRootRecord
+import com.ampnet.payoutservice.model.MerkleTreeWithId
 import com.ampnet.payoutservice.service.UuidProvider
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
-import com.ampnet.payoutservice.util.Hash
 import com.ampnet.payoutservice.util.HashFunction
 import com.ampnet.payoutservice.util.MerkleTree
 import com.ampnet.payoutservice.util.WalletAddress
@@ -20,6 +20,7 @@ import mu.KLogging
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.springframework.stereotype.Repository
+import java.util.UUID
 
 @Repository
 class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val uuidProvider: UuidProvider) :
@@ -32,7 +33,7 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
         chainId: ChainId,
         assetAddress: ContractAddress,
         blockNumber: BlockNumber
-    ): Hash {
+    ): UUID {
         logger.info {
             "Storing Merkle tree with root hash: ${tree.root.hash} for chainId: $chainId," +
                 " assetAddress: $assetAddress, blockNumber: $blockNumber"
@@ -66,28 +67,10 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
 
         insert.execute()
 
-        return tree.root.hash
+        return rootId
     }
 
-    override fun treeExists(rootHash: Hash, chainId: ChainId, assetAddress: ContractAddress): Boolean {
-        logger.info {
-            "Checking if Merkle tree already exists with root hash: $rootHash for chainId: $chainId," +
-                " assetAddress: $assetAddress"
-        }
-
-        return dslContext.fetchExists(
-            dslContext.selectFrom(MerkleTreeRoot.MERKLE_TREE_ROOT)
-                .where(
-                    DSL.and(
-                        MerkleTreeRoot.MERKLE_TREE_ROOT.CHAIN_ID.eq(chainId.value),
-                        MerkleTreeRoot.MERKLE_TREE_ROOT.ASSET_ADDRESS.eq(assetAddress.rawValue),
-                        MerkleTreeRoot.MERKLE_TREE_ROOT.HASH.eq(rootHash.value)
-                    )
-                )
-        )
-    }
-
-    override fun fetchTree(request: FetchMerkleTreeRequest): MerkleTree? {
+    override fun fetchTree(request: FetchMerkleTreeRequest): MerkleTreeWithId? {
         logger.info {
             "Fetching Merkle tree with root hash: ${request.rootHash} for chainId: ${request.chainId}," +
                 " assetAddress: ${request.assetAddress}"
@@ -113,7 +96,7 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
                 "Successfully fetched and reconstructed Merkle tree with root hash: ${request.rootHash} for" +
                     " chainId: ${request.chainId}, assetAddress: ${request.assetAddress}"
             }
-            tree
+            MerkleTreeWithId(root.id!!, tree)
         } else {
             logger.error {
                 "Failed to reconstruct Merkle tree with root hash: ${request.rootHash} for" +

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@Deprecated("will be changed or removed by SD-572") // TODO
 class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepository) {
 
     companion object : KLogging()
@@ -35,7 +36,7 @@ class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepositor
         )
         logger.debug { "Fetching Merkle tree: $request" }
 
-        val tree = merkleTreeRepository.fetchTree(request)
+        val tree = merkleTreeRepository.fetchTree(request)?.tree
             ?: throw ResourceNotFoundException(
                 ErrorCode.PAYOUT_MERKLE_TREE_NOT_FOUND,
                 "Payout does not exist for specified parameters"
@@ -69,7 +70,7 @@ class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepositor
             )
         }
 
-        val tree = merkleTreeRepository.fetchTree(request.toFetchMerkleTreeRequest)
+        val tree = merkleTreeRepository.fetchTree(request.toFetchMerkleTreeRequest)?.tree
             ?: throw ResourceNotFoundException(
                 ErrorCode.PAYOUT_NOT_FOUND_FOR_ACCOUNT,
                 "Payout does not exist for specified parameters"

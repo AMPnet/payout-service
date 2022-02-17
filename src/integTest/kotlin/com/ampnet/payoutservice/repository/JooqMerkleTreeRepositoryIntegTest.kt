@@ -115,11 +115,6 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                     )
                 )
         }
-
-        verify("checking if Merkle tree exists will return true") {
-            assertThat(repository.treeExists(storedRootHash, chainId, contractAddress)).withMessage()
-                .isTrue()
-        }
     }
 
     @Test
@@ -233,11 +228,6 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                     )
                 )
         }
-
-        verify("checking if Merkle tree exists will return true") {
-            assertThat(repository.treeExists(storedRootHash, chainId, contractAddress)).withMessage()
-                .isTrue()
-        }
     }
 
     @Test
@@ -252,11 +242,6 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
             )
             assertThat(result).withMessage()
                 .isNull()
-        }
-
-        verify("checking if Merkle tree exists will return false") {
-            assertThat(repository.treeExists(Hash("a"), ChainId(1L), ContractAddress("1"))).withMessage()
-                .isFalse()
         }
     }
 
@@ -353,11 +338,13 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
             )
             assertThat(result).withMessage()
                 .isNotNull()
-            assertThat(result?.root)
+            assertThat(result?.treeId)
+                .isEqualTo(treeRootUuid)
+            assertThat(result?.tree?.root)
                 .isEqualTo(merkleTree.root)
-            assertThat(result?.leafNodesByHash)
+            assertThat(result?.tree?.leafNodesByHash)
                 .isEqualTo(merkleTree.leafNodesByHash)
-            assertThat(result?.hashFn)
+            assertThat(result?.tree?.hashFn)
                 .isEqualTo(merkleTree.hashFn)
         }
     }
