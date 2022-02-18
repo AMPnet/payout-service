@@ -35,7 +35,7 @@ import com.ampnet.payoutservice.generated.jooq.enums.HashFunction as DbHashFunct
 @JooqTest
 @Import(JooqMerkleTreeRepository::class)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
+class JooqMerkleTreeRepositoryIntegTest : TestBase() {
 
     @Suppress("unused")
     private val postgresContainer = PostgresTestContainer()
@@ -48,6 +48,61 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
 
     @MockBean
     private lateinit var uuidProvider: UuidProvider
+
+    @Test
+    fun mustCorrectlyFetchAndReconstructMerkleTreeById() {
+        val treeRootUuid = UUID.randomUUID()
+        val leaf1Uuid = UUID.randomUUID()
+        val leaf2Uuid = UUID.randomUUID()
+        val leaf3Uuid = UUID.randomUUID()
+        val leaf4Uuid = UUID.randomUUID()
+
+        suppose("UUID provider will return specified UUIDs") {
+            given(uuidProvider.getUuid()).willReturn(treeRootUuid, leaf1Uuid, leaf2Uuid, leaf3Uuid, leaf4Uuid)
+        }
+
+        val leafNode1 = AccountBalance(WalletAddress("a"), Balance(BigInteger.ZERO))
+        val leafNode2 = AccountBalance(WalletAddress("b"), Balance(BigInteger("100")))
+        val leafNode3 = AccountBalance(WalletAddress("c"), Balance(BigInteger("200")))
+        val leafNode4 = AccountBalance(WalletAddress("d"), Balance(BigInteger("300")))
+        val merkleTree = MerkleTree(listOf(leafNode1, leafNode2, leafNode3, leafNode4), HashFunction.IDENTITY)
+
+        val storedTreeId = suppose("multi-node Merkle tree is stored into database") {
+            repository.storeTree(
+                merkleTree,
+                ChainId(1L),
+                ContractAddress("b"),
+                BlockNumber(BigInteger("123"))
+            )
+        }
+
+        verify("correct tree ID is returned") {
+            assertThat(storedTreeId).withMessage()
+                .isEqualTo(treeRootUuid)
+        }
+
+        verify("Merkle tree is correctly fetched and reconstructed") {
+            val result = repository.getById(storedTreeId)
+
+            assertThat(result).withMessage()
+                .isNotNull()
+            assertThat(result?.root)
+                .isEqualTo(merkleTree.root)
+            assertThat(result?.leafNodesByHash)
+                .isEqualTo(merkleTree.leafNodesByHash)
+            assertThat(result?.hashFn)
+                .isEqualTo(merkleTree.hashFn)
+        }
+    }
+
+    @Test
+    fun mustReturnNullWhenFetchingNonExistentMerkleTreeById() {
+        verify("null is returned when fetching non-existent Merkle tree") {
+            val result = repository.getById(UUID.randomUUID())
+            assertThat(result).withMessage()
+                .isNull()
+        }
+    }
 
     @Test
     fun mustCorrectlyStoreSimpleMerkleTreeIntoDatabase() {
@@ -63,7 +118,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
 
         val chainId = ChainId(1L)
         val contractAddress = ContractAddress("b")
-        val storedRootHash = suppose("simple Merkle tree is stored into database") {
+        val storedTreeId = suppose("simple Merkle tree is stored into database") {
             repository.storeTree(
                 merkleTree,
                 chainId,
@@ -72,9 +127,9 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
             )
         }
 
-        verify("correct root hash is returned") {
-            assertThat(storedRootHash).withMessage()
-                .isEqualTo(merkleTree.root.hash)
+        verify("correct tree ID is returned") {
+            assertThat(storedTreeId).withMessage()
+                .isEqualTo(treeRootUuid)
         }
 
         verify("simple Merkle tree root is correctly stored into database") {
@@ -137,7 +192,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
 
         val chainId = ChainId(1L)
         val contractAddress = ContractAddress("b")
-        val storedRootHash = suppose("multi-node Merkle tree is stored into database") {
+        val storedTreeId = suppose("multi-node Merkle tree is stored into database") {
             repository.storeTree(
                 merkleTree,
                 chainId,
@@ -146,9 +201,9 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
             )
         }
 
-        verify("correct root hash is returned") {
-            assertThat(storedRootHash).withMessage()
-                .isEqualTo(merkleTree.root.hash)
+        verify("correct tree ID is returned") {
+            assertThat(storedTreeId).withMessage()
+                .isEqualTo(treeRootUuid)
         }
 
         verify("multi-node Merkle tree root is correctly stored into database") {
@@ -231,7 +286,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
     }
 
     @Test
-    fun mustReturnNullWhenFetchingNonExistentMerkleTree() {
+    fun mustReturnNullWhenFetchingNonExistentMerkleTreeByHash() {
         verify("null is returned when fetching non-existent Merkle tree") {
             val result = repository.fetchTree(
                 FetchMerkleTreeRequest(
@@ -246,7 +301,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
     }
 
     @Test
-    fun mustReturnNullWhenMerkleTreeReconstructionFailsDuringFetch() {
+    fun mustReturnNullWhenMerkleTreeReconstructionFailsDuringFetchByHash() {
         val treeRootUuid = UUID.randomUUID()
         val leaf1Uuid = UUID.randomUUID()
         val leaf2Uuid = UUID.randomUUID()
@@ -263,7 +318,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
         val leafNode4 = AccountBalance(WalletAddress("d"), Balance(BigInteger("300")))
         val merkleTree = MerkleTree(listOf(leafNode1, leafNode2, leafNode3, leafNode4), HashFunction.IDENTITY)
 
-        val storedRootHash = suppose("multi-node Merkle tree is stored into database") {
+        val storedTreeId = suppose("multi-node Merkle tree is stored into database") {
             repository.storeTree(
                 merkleTree,
                 ChainId(1L),
@@ -272,9 +327,9 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
             )
         }
 
-        verify("correct root hash is returned") {
-            assertThat(storedRootHash).withMessage()
-                .isEqualTo(merkleTree.root.hash)
+        verify("correct tree ID is returned") {
+            assertThat(storedTreeId).withMessage()
+                .isEqualTo(treeRootUuid)
         }
 
         suppose("Merkle tree leaf node was deleted without updating root hash") {
@@ -297,7 +352,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
     }
 
     @Test
-    fun mustReturnCorrectlyFetchAndReconstructMerkleTree() {
+    fun mustCorrectlyFetchAndReconstructMerkleTreeByHash() {
         val treeRootUuid = UUID.randomUUID()
         val leaf1Uuid = UUID.randomUUID()
         val leaf2Uuid = UUID.randomUUID()
@@ -314,7 +369,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
         val leafNode4 = AccountBalance(WalletAddress("d"), Balance(BigInteger("300")))
         val merkleTree = MerkleTree(listOf(leafNode1, leafNode2, leafNode3, leafNode4), HashFunction.IDENTITY)
 
-        val storedRootHash = suppose("multi-node Merkle tree is stored into database") {
+        val storedTreeId = suppose("multi-node Merkle tree is stored into database") {
             repository.storeTree(
                 merkleTree,
                 ChainId(1L),
@@ -323,9 +378,9 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
             )
         }
 
-        verify("correct root hash is returned") {
-            assertThat(storedRootHash).withMessage()
-                .isEqualTo(merkleTree.root.hash)
+        verify("correct tree ID is returned") {
+            assertThat(storedTreeId).withMessage()
+                .isEqualTo(treeRootUuid)
         }
 
         verify("Merkle tree is correctly fetched and reconstructed") {
@@ -367,7 +422,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
         val leafNode4 = AccountBalance(WalletAddress("d"), Balance(BigInteger("300")))
         val merkleTree = MerkleTree(listOf(leafNode1, leafNode2, leafNode3, leafNode4), HashFunction.IDENTITY)
 
-        val storedRootHash = suppose("multi-node Merkle tree is stored into database") {
+        val storedTreeId = suppose("multi-node Merkle tree is stored into database") {
             repository.storeTree(
                 merkleTree,
                 ChainId(1L),
@@ -376,9 +431,9 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() { // TODO test getById
             )
         }
 
-        verify("correct root hash is returned") {
-            assertThat(storedRootHash).withMessage()
-                .isEqualTo(merkleTree.root.hash)
+        verify("correct tree ID is returned") {
+            assertThat(storedTreeId).withMessage()
+                .isEqualTo(treeRootUuid)
         }
 
         verify("multi-node Merkle tree leaves are correctly contained within the tree") {

@@ -1,5 +1,6 @@
 package com.ampnet.payoutservice.controller.response
 
+import com.ampnet.payoutservice.util.HashFunction
 import com.ampnet.payoutservice.util.TaskStatus
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer
@@ -24,6 +25,7 @@ data class CreatePayoutData(
     val totalAssetAmount: BigInteger,
     val merkleRootHash: String,
     val merkleTreeIpfsHash: String,
-    val merkleTreeDepth: Int
+    val merkleTreeDepth: Int,
+    val hashFn: HashFunction
 )
 

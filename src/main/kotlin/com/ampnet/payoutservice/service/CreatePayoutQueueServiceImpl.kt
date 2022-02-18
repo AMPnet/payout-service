@@ -109,7 +109,8 @@ class CreatePayoutQueueServiceImpl(
                     totalAssetAmount = totalAssetAmount,
                     merkleRootHash = it.root.hash.value,
                     merkleTreeIpfsHash = merkleTreeIpfsHash.value,
-                    merkleTreeDepth = it.root.depth
+                    merkleTreeDepth = it.root.depth,
+                    hashFn = it.hashFn
                 )
             }
         } else null
