@@ -3,10 +3,11 @@ package com.ampnet.payoutservice.repository
 import com.ampnet.payoutservice.TestBase
 import com.ampnet.payoutservice.generated.jooq.tables.records.CreatePayoutTaskRecord
 import com.ampnet.payoutservice.generated.jooq.tables.records.MerkleTreeRootRecord
-import com.ampnet.payoutservice.model.CreatePayoutTask
-import com.ampnet.payoutservice.model.OtherTaskData
-import com.ampnet.payoutservice.model.PendingCreatePayoutTask
-import com.ampnet.payoutservice.model.SuccessfulTaskData
+import com.ampnet.payoutservice.model.params.CreatePayoutTaskParams
+import com.ampnet.payoutservice.model.result.CreatePayoutTask
+import com.ampnet.payoutservice.model.result.OtherTaskData
+import com.ampnet.payoutservice.model.result.PendingCreatePayoutTask
+import com.ampnet.payoutservice.model.result.SuccessfulTaskData
 import com.ampnet.payoutservice.service.UuidProvider
 import com.ampnet.payoutservice.testcontainers.PostgresTestContainer
 import com.ampnet.payoutservice.util.BlockNumber
@@ -237,12 +238,14 @@ class JooqCreatePayoutTaskRepositoryIntegTest : TestBase() {
 
         val storedTaskId = suppose("create payout task is stored into database") {
             repository.createPayoutTask(
-                chainId = chainId,
-                assetAddress = assetAddress,
-                requesterAddress = requesterAddress,
-                issuerAddress = issuerAddress,
-                payoutBlock = payoutBlock,
-                ignoredAssetAddresses = ignoredAssetAddresses
+                CreatePayoutTaskParams(
+                    chainId = chainId,
+                    assetAddress = assetAddress,
+                    requesterAddress = requesterAddress,
+                    issuerAddress = issuerAddress,
+                    payoutBlock = payoutBlock,
+                    ignoredAssetAddresses = ignoredAssetAddresses
+                )
             )
         }
 
@@ -346,12 +349,14 @@ class JooqCreatePayoutTaskRepositoryIntegTest : TestBase() {
 
         val storedTaskId = suppose("create payout task is stored into database") {
             repository.createPayoutTask(
-                chainId = chainId,
-                assetAddress = assetAddress,
-                requesterAddress = requesterAddress,
-                issuerAddress = issuerAddress,
-                payoutBlock = payoutBlock,
-                ignoredAssetAddresses = ignoredAssetAddresses
+                CreatePayoutTaskParams(
+                    chainId = chainId,
+                    assetAddress = assetAddress,
+                    requesterAddress = requesterAddress,
+                    issuerAddress = issuerAddress,
+                    payoutBlock = payoutBlock,
+                    ignoredAssetAddresses = ignoredAssetAddresses
+                )
             )
         }
 
@@ -424,12 +429,14 @@ class JooqCreatePayoutTaskRepositoryIntegTest : TestBase() {
 
         val storedTaskId = suppose("create payout task is stored into database") {
             repository.createPayoutTask(
-                chainId = chainId,
-                assetAddress = assetAddress,
-                requesterAddress = requesterAddress,
-                issuerAddress = issuerAddress,
-                payoutBlock = payoutBlock,
-                ignoredAssetAddresses = ignoredAssetAddresses
+                CreatePayoutTaskParams(
+                    chainId = chainId,
+                    assetAddress = assetAddress,
+                    requesterAddress = requesterAddress,
+                    issuerAddress = issuerAddress,
+                    payoutBlock = payoutBlock,
+                    ignoredAssetAddresses = ignoredAssetAddresses
+                )
             )
         }
 

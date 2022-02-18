@@ -3,14 +3,15 @@ package com.ampnet.payoutservice.service
 import com.ampnet.payoutservice.blockchain.BlockchainService
 import com.ampnet.payoutservice.blockchain.properties.ChainPropertiesHandler
 import com.ampnet.payoutservice.config.ApplicationProperties
-import com.ampnet.payoutservice.controller.request.FetchMerkleTreeRequest
+import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
 import com.ampnet.payoutservice.controller.response.CreatePayoutData
 import com.ampnet.payoutservice.controller.response.CreatePayoutTaskResponse
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.InvalidRequestException
-import com.ampnet.payoutservice.model.OptionalCreatePayoutTaskData
-import com.ampnet.payoutservice.model.PendingCreatePayoutTask
-import com.ampnet.payoutservice.model.SuccessfulTaskData
+import com.ampnet.payoutservice.model.params.CreatePayoutTaskParams
+import com.ampnet.payoutservice.model.result.OptionalCreatePayoutTaskData
+import com.ampnet.payoutservice.model.result.PendingCreatePayoutTask
+import com.ampnet.payoutservice.model.result.SuccessfulTaskData
 import com.ampnet.payoutservice.repository.CreatePayoutTaskRepository
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
 import com.ampnet.payoutservice.util.BlockNumber
@@ -56,30 +57,10 @@ class CreatePayoutQueueServiceImpl(
         executorService.shutdown()
     }
 
-    override fun submitTask(
-        chainId: ChainId,
-        assetAddress: ContractAddress,
-        requesterAddress: WalletAddress,
-        issuerAddress: ContractAddress?,
-        payoutBlock: BlockNumber,
-        ignoredAssetAddresses: Set<WalletAddress>
-    ): UUID {
-        logger.info {
-            "Payout request for chain ID: $chainId, asset address: $assetAddress," +
-                " requester address: $requesterAddress, issuerAddress: $issuerAddress, payout block: $payoutBlock," +
-                " ignored asset addresses: $ignoredAssetAddresses"
-        }
-
-        checkAssetOwnerIfNeeded(chainId, assetAddress, requesterAddress)
-
-        return createPayoutTaskRepository.createPayoutTask(
-            chainId = chainId,
-            assetAddress = assetAddress,
-            requesterAddress = requesterAddress,
-            issuerAddress = issuerAddress,
-            payoutBlock = payoutBlock,
-            ignoredAssetAddresses = ignoredAssetAddresses
-        )
+    override fun submitTask(params: CreatePayoutTaskParams): UUID {
+        logger.info { "Payout request with params: $params" }
+        checkAssetOwnerIfNeeded(params.chainId, params.assetAddress, params.requesterAddress)
+        return createPayoutTaskRepository.createPayoutTask(params)
     }
 
     override fun getTaskById(taskId: UUID): CreatePayoutTaskResponse? {
@@ -142,7 +123,7 @@ class CreatePayoutQueueServiceImpl(
 
         val tree = MerkleTree(balances, HashFunction.KECCAK_256)
         val alreadyInsertedTree = merkleTreeRepository.fetchTree(
-            FetchMerkleTreeRequest(tree.root.hash, task.chainId, task.assetAddress)
+            FetchMerkleTreeParams(tree.root.hash, task.chainId, task.assetAddress)
         )
 
         val rootId = if (alreadyInsertedTree != null) {

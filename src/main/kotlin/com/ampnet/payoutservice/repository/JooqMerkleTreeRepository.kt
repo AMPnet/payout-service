@@ -1,12 +1,12 @@
 package com.ampnet.payoutservice.repository
 
-import com.ampnet.payoutservice.controller.request.FetchMerkleTreePathRequest
-import com.ampnet.payoutservice.controller.request.FetchMerkleTreeRequest
+import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
+import com.ampnet.payoutservice.model.params.FetchMerkleTreePathParams
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeLeafNode
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeRoot
 import com.ampnet.payoutservice.generated.jooq.tables.records.MerkleTreeLeafNodeRecord
 import com.ampnet.payoutservice.generated.jooq.tables.records.MerkleTreeRootRecord
-import com.ampnet.payoutservice.model.MerkleTreeWithId
+import com.ampnet.payoutservice.model.result.MerkleTreeWithId
 import com.ampnet.payoutservice.service.UuidProvider
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
@@ -79,51 +79,39 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
         return rootId
     }
 
-    override fun fetchTree(request: FetchMerkleTreeRequest): MerkleTreeWithId? {
-        logger.info {
-            "Fetching Merkle tree with root hash: ${request.rootHash} for chainId: ${request.chainId}," +
-                " assetAddress: ${request.assetAddress}"
-        }
+    override fun fetchTree(params: FetchMerkleTreeParams): MerkleTreeWithId? {
+        logger.info { "Fetching Merkle, params: $params" }
 
         val root = dslContext.selectFrom(MerkleTreeRoot.MERKLE_TREE_ROOT)
             .where(
                 DSL.and(
-                    MerkleTreeRoot.MERKLE_TREE_ROOT.CHAIN_ID.eq(request.chainId.value),
-                    MerkleTreeRoot.MERKLE_TREE_ROOT.ASSET_ADDRESS.eq(request.assetAddress.rawValue),
-                    MerkleTreeRoot.MERKLE_TREE_ROOT.HASH.eq(request.rootHash.value)
+                    MerkleTreeRoot.MERKLE_TREE_ROOT.CHAIN_ID.eq(params.chainId.value),
+                    MerkleTreeRoot.MERKLE_TREE_ROOT.ASSET_ADDRESS.eq(params.assetAddress.rawValue),
+                    MerkleTreeRoot.MERKLE_TREE_ROOT.HASH.eq(params.rootHash.value)
                 )
             )
             .fetchOne() ?: return null
 
         val tree = rebuildTree(root)
 
-        return if (tree.root.hash == request.rootHash) {
-            logger.info {
-                "Successfully fetched and reconstructed Merkle tree with root hash: ${request.rootHash} for" +
-                    " chainId: ${request.chainId}, assetAddress: ${request.assetAddress}"
-            }
+        return if (tree.root.hash == params.rootHash) {
+            logger.info { "Successfully fetched and reconstructed Merkle tree, params: $params" }
             MerkleTreeWithId(root.id!!, tree)
         } else {
-            logger.error {
-                "Failed to reconstruct Merkle tree with root hash: ${request.rootHash} for" +
-                    " chainId: ${request.chainId}, assetAddress: ${request.assetAddress}"
-            }
+            logger.error { "Failed to reconstruct Merkle tree, params: $params" }
             null
         }
     }
 
-    override fun containsAddress(request: FetchMerkleTreePathRequest): Boolean {
-        logger.info {
-            "Checking if Merkle tree with root hash: ${request.rootHash} for chainId: ${request.chainId}," +
-                " assetAddress: ${request.assetAddress}, contains address: ${request.walletAddress}"
-        }
+    override fun containsAddress(params: FetchMerkleTreePathParams): Boolean {
+        logger.info { "Checking if Merkle tree contains address, params: $params" }
 
         val root = dslContext.selectFrom(MerkleTreeRoot.MERKLE_TREE_ROOT)
             .where(
                 DSL.and(
-                    MerkleTreeRoot.MERKLE_TREE_ROOT.CHAIN_ID.eq(request.chainId.value),
-                    MerkleTreeRoot.MERKLE_TREE_ROOT.ASSET_ADDRESS.eq(request.assetAddress.rawValue),
-                    MerkleTreeRoot.MERKLE_TREE_ROOT.HASH.eq(request.rootHash.value)
+                    MerkleTreeRoot.MERKLE_TREE_ROOT.CHAIN_ID.eq(params.chainId.value),
+                    MerkleTreeRoot.MERKLE_TREE_ROOT.ASSET_ADDRESS.eq(params.assetAddress.rawValue),
+                    MerkleTreeRoot.MERKLE_TREE_ROOT.HASH.eq(params.rootHash.value)
                 )
             )
             .fetchOne() ?: return false
@@ -133,7 +121,7 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
                 .where(
                     DSL.and(
                         MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE.MERKLE_ROOT.eq(root.id),
-                        MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE.ADDRESS.eq(request.walletAddress.rawValue)
+                        MerkleTreeLeafNode.MERKLE_TREE_LEAF_NODE.ADDRESS.eq(params.walletAddress.rawValue)
                     )
                 )
         )

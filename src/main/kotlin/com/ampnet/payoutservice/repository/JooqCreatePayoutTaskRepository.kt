@@ -1,10 +1,11 @@
 package com.ampnet.payoutservice.repository
 
 import com.ampnet.payoutservice.generated.jooq.tables.records.CreatePayoutTaskRecord
-import com.ampnet.payoutservice.model.CreatePayoutTask
-import com.ampnet.payoutservice.model.OtherTaskData
-import com.ampnet.payoutservice.model.PendingCreatePayoutTask
-import com.ampnet.payoutservice.model.SuccessfulTaskData
+import com.ampnet.payoutservice.model.params.CreatePayoutTaskParams
+import com.ampnet.payoutservice.model.result.CreatePayoutTask
+import com.ampnet.payoutservice.model.result.OtherTaskData
+import com.ampnet.payoutservice.model.result.PendingCreatePayoutTask
+import com.ampnet.payoutservice.model.result.SuccessfulTaskData
 import com.ampnet.payoutservice.service.UuidProvider
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
@@ -54,31 +55,20 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
         )
     }
 
-    override fun createPayoutTask(
-        chainId: ChainId,
-        assetAddress: ContractAddress,
-        requesterAddress: WalletAddress,
-        issuerAddress: ContractAddress?,
-        payoutBlock: BlockNumber,
-        ignoredAssetAddresses: Set<WalletAddress>
-    ): UUID {
-        logger.info {
-            "Storing create payout task, chainId: $chainId, assetAddress: $assetAddress," +
-                " requesterAddress: $requesterAddress, issuerAddress: $issuerAddress, payoutBlock: $payoutBlock," +
-                " ignoredAssetAddresses: $ignoredAssetAddresses"
-        }
+    override fun createPayoutTask(params: CreatePayoutTaskParams): UUID {
+        logger.info { "Storing create payout task, params: $params" }
 
         val taskId = uuidProvider.getUuid()
 
         dslContext.executeInsert(
             CreatePayoutTaskRecord(
                 id = taskId,
-                chainId = chainId.value,
-                assetAddress = assetAddress.rawValue,
-                blockNumber = payoutBlock.value,
-                ignoredAssetAddresses = ignoredAssetAddresses.map { it.rawValue }.toTypedArray(),
-                requesterAddress = requesterAddress.rawValue,
-                issuerAddress = issuerAddress?.rawValue,
+                chainId = params.chainId.value,
+                assetAddress = params.assetAddress.rawValue,
+                blockNumber = params.payoutBlock.value,
+                ignoredAssetAddresses = params.ignoredAssetAddresses.map { it.rawValue }.toTypedArray(),
+                requesterAddress = params.requesterAddress.rawValue,
+                issuerAddress = params.issuerAddress?.rawValue,
                 status = DbTaskStatus.PENDING,
                 resultTree = null,
                 treeIpfsHash = null,

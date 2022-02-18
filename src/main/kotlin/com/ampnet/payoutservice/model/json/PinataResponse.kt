@@ -1,4 +1,4 @@
-package com.ampnet.payoutservice.model
+package com.ampnet.payoutservice.model.json
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.time.ZonedDateTime

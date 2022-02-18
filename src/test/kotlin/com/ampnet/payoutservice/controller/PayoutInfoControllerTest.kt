@@ -1,12 +1,12 @@
 package com.ampnet.payoutservice.controller
 
 import com.ampnet.payoutservice.TestBase
-import com.ampnet.payoutservice.controller.request.FetchMerkleTreePathRequest
-import com.ampnet.payoutservice.controller.request.FetchMerkleTreeRequest
+import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
+import com.ampnet.payoutservice.model.params.FetchMerkleTreePathParams
 import com.ampnet.payoutservice.controller.response.FetchMerkleTreePathResponse
 import com.ampnet.payoutservice.controller.response.FetchMerkleTreeResponse
 import com.ampnet.payoutservice.exception.ResourceNotFoundException
-import com.ampnet.payoutservice.model.MerkleTreeWithId
+import com.ampnet.payoutservice.model.result.MerkleTreeWithId
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
@@ -36,14 +36,14 @@ class PayoutInfoControllerTest : TestBase() {
             listOf(AccountBalance(WalletAddress("a"), Balance(BigInteger.ONE))),
             HashFunction.IDENTITY
         )
-        val request = FetchMerkleTreeRequest(
+        val params = FetchMerkleTreeParams(
             rootHash = Hash("test"),
             chainId = ChainId(1L),
             assetAddress = ContractAddress("abc")
         )
 
         suppose("some Merkle tree is returned") {
-            given(repository.fetchTree(request))
+            given(repository.fetchTree(params))
                 .willReturn(tree.withRandomId())
         }
 
@@ -51,9 +51,9 @@ class PayoutInfoControllerTest : TestBase() {
 
         verify("correct response is returned") {
             val response = controller.getPayoutTree(
-                chainId = request.chainId.value,
-                assetAddress = request.assetAddress.rawValue,
-                rootHash = request.rootHash.value
+                chainId = params.chainId.value,
+                assetAddress = params.assetAddress.rawValue,
+                rootHash = params.rootHash.value
             )
             assertThat(response).withMessage()
                 .isEqualTo(ResponseEntity.ok(FetchMerkleTreeResponse(tree)))
@@ -63,14 +63,14 @@ class PayoutInfoControllerTest : TestBase() {
     @Test
     fun mustThrowExceptionWhenFetchingNonExistentPayoutTree() {
         val repository = mock<MerkleTreeRepository>()
-        val request = FetchMerkleTreeRequest(
+        val params = FetchMerkleTreeParams(
             rootHash = Hash("test"),
             chainId = ChainId(1L),
             assetAddress = ContractAddress("abc")
         )
 
         suppose("null is returned when fetching Merkle tree") {
-            given(repository.fetchTree(request))
+            given(repository.fetchTree(params))
                 .willReturn(null)
         }
 
@@ -79,9 +79,9 @@ class PayoutInfoControllerTest : TestBase() {
         verify("exception is thrown") {
             assertThrows<ResourceNotFoundException>(message) {
                 controller.getPayoutTree(
-                    chainId = request.chainId.value,
-                    assetAddress = request.assetAddress.rawValue,
-                    rootHash = request.rootHash.value
+                    chainId = params.chainId.value,
+                    assetAddress = params.assetAddress.rawValue,
+                    rootHash = params.rootHash.value
                 )
             }
         }
@@ -91,7 +91,7 @@ class PayoutInfoControllerTest : TestBase() {
     fun mustCorrectlyFetchPayoutPathForSomeAccount() {
         val repository = mock<MerkleTreeRepository>()
         val accountBalance = AccountBalance(WalletAddress("def"), Balance(BigInteger.ONE))
-        val request = FetchMerkleTreePathRequest(
+        val params = FetchMerkleTreePathParams(
             rootHash = Hash("test"),
             chainId = ChainId(1L),
             assetAddress = ContractAddress("abc"),
@@ -99,7 +99,7 @@ class PayoutInfoControllerTest : TestBase() {
         )
 
         suppose("request address is contained in some Merkle tree") {
-            given(repository.containsAddress(request))
+            given(repository.containsAddress(params))
                 .willReturn(true)
         }
 
@@ -109,7 +109,7 @@ class PayoutInfoControllerTest : TestBase() {
         )
 
         suppose("some Merkle tree is returned") {
-            given(repository.fetchTree(request.toFetchMerkleTreeRequest))
+            given(repository.fetchTree(params.toFetchMerkleTreeParams))
                 .willReturn(tree.withRandomId())
         }
 
@@ -117,9 +117,9 @@ class PayoutInfoControllerTest : TestBase() {
 
         verify("correct response is returned") {
             val response = controller.getPayoutPath(
-                chainId = request.chainId.value,
-                assetAddress = request.assetAddress.rawValue,
-                rootHash = request.rootHash.value,
+                chainId = params.chainId.value,
+                assetAddress = params.assetAddress.rawValue,
+                rootHash = params.rootHash.value,
                 walletAddress = accountBalance.address.rawValue
             )
             assertThat(response).withMessage()
@@ -139,7 +139,7 @@ class PayoutInfoControllerTest : TestBase() {
     fun mustThrowExceptionWhenFetchingPayoutPathForAccountNotIncludedInPayout() {
         val repository = mock<MerkleTreeRepository>()
         val accountBalance = AccountBalance(WalletAddress("def"), Balance(BigInteger.ONE))
-        val request = FetchMerkleTreePathRequest(
+        val params = FetchMerkleTreePathParams(
             rootHash = Hash("test"),
             chainId = ChainId(1L),
             assetAddress = ContractAddress("abc"),
@@ -147,7 +147,7 @@ class PayoutInfoControllerTest : TestBase() {
         )
 
         suppose("request address is not contained in some Merkle tree") {
-            given(repository.containsAddress(request))
+            given(repository.containsAddress(params))
                 .willReturn(false)
         }
 
@@ -156,9 +156,9 @@ class PayoutInfoControllerTest : TestBase() {
         verify("exception is thrown") {
             assertThrows<ResourceNotFoundException>(message) {
                 controller.getPayoutPath(
-                    chainId = request.chainId.value,
-                    assetAddress = request.assetAddress.rawValue,
-                    rootHash = request.rootHash.value,
+                    chainId = params.chainId.value,
+                    assetAddress = params.assetAddress.rawValue,
+                    rootHash = params.rootHash.value,
                     walletAddress = accountBalance.address.rawValue
                 )
             }
@@ -169,7 +169,7 @@ class PayoutInfoControllerTest : TestBase() {
     fun mustThrowExceptionWhenFetchingPayoutPathForNonExistentPayout() {
         val repository = mock<MerkleTreeRepository>()
         val accountBalance = AccountBalance(WalletAddress("def"), Balance(BigInteger.ONE))
-        val request = FetchMerkleTreePathRequest(
+        val params = FetchMerkleTreePathParams(
             rootHash = Hash("test"),
             chainId = ChainId(1L),
             assetAddress = ContractAddress("abc"),
@@ -177,12 +177,12 @@ class PayoutInfoControllerTest : TestBase() {
         )
 
         suppose("request address is contained in some Merkle tree") {
-            given(repository.containsAddress(request))
+            given(repository.containsAddress(params))
                 .willReturn(true)
         }
 
         suppose("null is returned when fetching Merkle tree") {
-            given(repository.fetchTree(request.toFetchMerkleTreeRequest))
+            given(repository.fetchTree(params.toFetchMerkleTreeParams))
                 .willReturn(null)
         }
 
@@ -191,9 +191,9 @@ class PayoutInfoControllerTest : TestBase() {
         verify("exception is thrown") {
             assertThrows<ResourceNotFoundException>(message) {
                 controller.getPayoutPath(
-                    chainId = request.chainId.value,
-                    assetAddress = request.assetAddress.rawValue,
-                    rootHash = request.rootHash.value,
+                    chainId = params.chainId.value,
+                    assetAddress = params.assetAddress.rawValue,
+                    rootHash = params.rootHash.value,
                     walletAddress = accountBalance.address.rawValue
                 )
             }
@@ -204,7 +204,7 @@ class PayoutInfoControllerTest : TestBase() {
     fun mustThrowExceptionWhenPayoutPathDoesNotExist() {
         val repository = mock<MerkleTreeRepository>()
         val accountBalance = AccountBalance(WalletAddress("def"), Balance(BigInteger.ONE))
-        val request = FetchMerkleTreePathRequest(
+        val params = FetchMerkleTreePathParams(
             rootHash = Hash("test"),
             chainId = ChainId(1L),
             assetAddress = ContractAddress("abc"),
@@ -222,7 +222,7 @@ class PayoutInfoControllerTest : TestBase() {
         )
 
         suppose("some Merkle tree is returned") {
-            given(repository.fetchTree(request.toFetchMerkleTreeRequest))
+            given(repository.fetchTree(params.toFetchMerkleTreeParams))
                 .willReturn(tree.withRandomId())
         }
 
@@ -231,9 +231,9 @@ class PayoutInfoControllerTest : TestBase() {
         verify("exception is thrown") {
             assertThrows<ResourceNotFoundException>(message) {
                 controller.getPayoutPath(
-                    chainId = request.chainId.value,
-                    assetAddress = request.assetAddress.rawValue,
-                    rootHash = request.rootHash.value,
+                    chainId = params.chainId.value,
+                    assetAddress = params.assetAddress.rawValue,
+                    rootHash = params.rootHash.value,
                     walletAddress = "fff"
                 )
             }

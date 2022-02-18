@@ -1,8 +1,8 @@
 package com.ampnet.payoutservice.repository
 
 import com.ampnet.payoutservice.TestBase
-import com.ampnet.payoutservice.controller.request.FetchMerkleTreePathRequest
-import com.ampnet.payoutservice.controller.request.FetchMerkleTreeRequest
+import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
+import com.ampnet.payoutservice.model.params.FetchMerkleTreePathParams
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeLeafNode
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeRoot
 import com.ampnet.payoutservice.generated.jooq.tables.records.MerkleTreeLeafNodeRecord
@@ -289,7 +289,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
     fun mustReturnNullWhenFetchingNonExistentMerkleTreeByHash() {
         verify("null is returned when fetching non-existent Merkle tree") {
             val result = repository.fetchTree(
-                FetchMerkleTreeRequest(
+                FetchMerkleTreeParams(
                     Hash("a"),
                     ChainId(1L),
                     ContractAddress("1")
@@ -340,7 +340,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
 
         verify("null is returned when fetching Merkle tree") {
             val result = repository.fetchTree(
-                FetchMerkleTreeRequest(
+                FetchMerkleTreeParams(
                     merkleTree.root.hash,
                     ChainId(1L),
                     ContractAddress("b")
@@ -385,7 +385,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
 
         verify("Merkle tree is correctly fetched and reconstructed") {
             val result = repository.fetchTree(
-                FetchMerkleTreeRequest(
+                FetchMerkleTreeParams(
                     merkleTree.root.hash,
                     ChainId(1L),
                     ContractAddress("b")
@@ -438,7 +438,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
 
         verify("multi-node Merkle tree leaves are correctly contained within the tree") {
             val leaf1Result = repository.containsAddress(
-                FetchMerkleTreePathRequest(
+                FetchMerkleTreePathParams(
                     merkleTree.root.hash,
                     ChainId(1L),
                     ContractAddress("b"),
@@ -449,7 +449,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                 .isTrue()
 
             val leaf2Result = repository.containsAddress(
-                FetchMerkleTreePathRequest(
+                FetchMerkleTreePathParams(
                     merkleTree.root.hash,
                     ChainId(1L),
                     ContractAddress("b"),
@@ -460,7 +460,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                 .isTrue()
 
             val leaf3Result = repository.containsAddress(
-                FetchMerkleTreePathRequest(
+                FetchMerkleTreePathParams(
                     merkleTree.root.hash,
                     ChainId(1L),
                     ContractAddress("b"),
@@ -471,7 +471,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                 .isTrue()
 
             val leaf4Result = repository.containsAddress(
-                FetchMerkleTreePathRequest(
+                FetchMerkleTreePathParams(
                     merkleTree.root.hash,
                     ChainId(1L),
                     ContractAddress("b"),
@@ -484,7 +484,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
 
         verify("other leaves are not contained within the tree") {
             val fakeLeaf1Result = repository.containsAddress(
-                FetchMerkleTreePathRequest(
+                FetchMerkleTreePathParams(
                     merkleTree.root.hash,
                     ChainId(2L),
                     ContractAddress("b"),
@@ -495,7 +495,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                 .isFalse()
 
             val fakeLeaf2Result = repository.containsAddress(
-                FetchMerkleTreePathRequest(
+                FetchMerkleTreePathParams(
                     merkleTree.root.hash,
                     ChainId(1L),
                     ContractAddress("c"),
@@ -506,7 +506,7 @@ class JooqMerkleTreeRepositoryIntegTest : TestBase() {
                 .isFalse()
 
             val fakeLeaf3Result = repository.containsAddress(
-                FetchMerkleTreePathRequest(
+                FetchMerkleTreePathParams(
                     merkleTree.root.hash,
                     ChainId(1L),
                     ContractAddress("b"),

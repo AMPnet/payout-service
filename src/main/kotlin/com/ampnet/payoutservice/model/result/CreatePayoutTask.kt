@@ -1,4 +1,4 @@
-package com.ampnet.payoutservice.model
+package com.ampnet.payoutservice.model.result
 
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
