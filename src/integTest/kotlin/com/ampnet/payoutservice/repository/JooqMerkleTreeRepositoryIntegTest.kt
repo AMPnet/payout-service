@@ -1,12 +1,12 @@
 package com.ampnet.payoutservice.repository
 
 import com.ampnet.payoutservice.TestBase
-import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
-import com.ampnet.payoutservice.model.params.FetchMerkleTreePathParams
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeLeafNode
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeRoot
 import com.ampnet.payoutservice.generated.jooq.tables.records.MerkleTreeLeafNodeRecord
 import com.ampnet.payoutservice.generated.jooq.tables.records.MerkleTreeRootRecord
+import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
+import com.ampnet.payoutservice.model.params.FetchMerkleTreePathParams
 import com.ampnet.payoutservice.service.UuidProvider
 import com.ampnet.payoutservice.testcontainers.PostgresTestContainer
 import com.ampnet.payoutservice.util.AccountBalance

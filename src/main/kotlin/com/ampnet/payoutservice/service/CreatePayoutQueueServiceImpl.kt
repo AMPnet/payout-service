@@ -127,7 +127,7 @@ class CreatePayoutQueueServiceImpl(
         )
 
         val rootId = if (alreadyInsertedTree != null) {
-            logger.debug { "Merkle tree already exists, returning root hash" }
+            logger.debug { "Merkle tree already exists, returning tree ID" }
             alreadyInsertedTree.treeId
         } else {
             logger.debug { "Storing Merkle tree into the database" }

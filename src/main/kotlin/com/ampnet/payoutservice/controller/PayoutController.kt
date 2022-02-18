@@ -5,6 +5,7 @@ import com.ampnet.payoutservice.controller.response.CreatePayoutResponse
 import com.ampnet.payoutservice.controller.response.CreatePayoutTaskResponse
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.ResourceNotFoundException
+import com.ampnet.payoutservice.model.params.CreatePayoutTaskParams
 import com.ampnet.payoutservice.service.CreatePayoutQueueService
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
@@ -40,12 +41,14 @@ class PayoutController(val createPayoutQueueService: CreatePayoutQueueService) {
         @AuthenticationPrincipal requesterAddress: String
     ): ResponseEntity<CreatePayoutResponse> {
         val taskId = createPayoutQueueService.submitTask(
-            chainId = ChainId(chainId),
-            assetAddress = ContractAddress(assetAddress),
-            requesterAddress = WalletAddress(requesterAddress),
-            issuerAddress = requestBody.issuerAddress?.let { ContractAddress(it) },
-            payoutBlock = BlockNumber(requestBody.payoutBlockNumber),
-            ignoredAssetAddresses = requestBody.ignoredAssetAddresses.mapTo(HashSet()) { WalletAddress(it) }
+            CreatePayoutTaskParams(
+                chainId = ChainId(chainId),
+                assetAddress = ContractAddress(assetAddress),
+                requesterAddress = WalletAddress(requesterAddress),
+                issuerAddress = requestBody.issuerAddress?.let { ContractAddress(it) },
+                payoutBlock = BlockNumber(requestBody.payoutBlockNumber),
+                ignoredAssetAddresses = requestBody.ignoredAssetAddresses.mapTo(HashSet()) { WalletAddress(it) }
+            )
         )
 
         return ResponseEntity.ok(CreatePayoutResponse(taskId))
