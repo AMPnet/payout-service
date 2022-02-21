@@ -28,4 +28,3 @@ data class CreatePayoutData(
     val merkleTreeDepth: Int,
     val hashFn: HashFunction
 )
-

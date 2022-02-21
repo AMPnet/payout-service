@@ -1,11 +1,11 @@
 package com.ampnet.payoutservice.controller
 
-import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
-import com.ampnet.payoutservice.model.params.FetchMerkleTreePathParams
 import com.ampnet.payoutservice.controller.response.FetchMerkleTreePathResponse
 import com.ampnet.payoutservice.controller.response.FetchMerkleTreeResponse
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.ResourceNotFoundException
+import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
+import com.ampnet.payoutservice.model.params.FetchMerkleTreePathParams
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress

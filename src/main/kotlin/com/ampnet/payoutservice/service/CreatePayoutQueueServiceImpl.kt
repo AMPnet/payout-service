@@ -3,12 +3,12 @@ package com.ampnet.payoutservice.service
 import com.ampnet.payoutservice.blockchain.BlockchainService
 import com.ampnet.payoutservice.blockchain.properties.ChainPropertiesHandler
 import com.ampnet.payoutservice.config.ApplicationProperties
-import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
 import com.ampnet.payoutservice.controller.response.CreatePayoutData
 import com.ampnet.payoutservice.controller.response.CreatePayoutTaskResponse
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.InvalidRequestException
 import com.ampnet.payoutservice.model.params.CreatePayoutTaskParams
+import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
 import com.ampnet.payoutservice.model.result.OptionalCreatePayoutTaskData
 import com.ampnet.payoutservice.model.result.PendingCreatePayoutTask
 import com.ampnet.payoutservice.model.result.SuccessfulTaskData

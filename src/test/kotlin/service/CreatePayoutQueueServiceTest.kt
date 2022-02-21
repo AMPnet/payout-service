@@ -313,7 +313,6 @@ class CreatePayoutQueueServiceTest : TestBase() {
             ).willThrow(RuntimeException())
         }
 
-
         val properties = suppose("asset owner will be checked") {
             ApplicationProperties().apply { payout.checkAssetOwner = true }
         }
