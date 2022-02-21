@@ -37,6 +37,7 @@ class ChainProperties {
     var startBlockNumber: BigInteger? = null
 }
 
+@Suppress("MagicNumber")
 class CreatePayoutQueueProperties {
     var polling: Long = 5_000L
     var initialDelay: Long = 15_000L
