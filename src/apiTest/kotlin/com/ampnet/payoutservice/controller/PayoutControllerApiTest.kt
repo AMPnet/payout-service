@@ -11,6 +11,9 @@ import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeLeafNode
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeRoot
 import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
+import com.ampnet.payoutservice.model.result.CreatePayoutTask
+import com.ampnet.payoutservice.model.result.OtherTaskData
+import com.ampnet.payoutservice.repository.CreatePayoutTaskRepository
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
 import com.ampnet.payoutservice.security.WithMockUser
 import com.ampnet.payoutservice.testcontainers.HardhatTestContainer
@@ -53,6 +56,9 @@ class PayoutControllerApiTest : ControllerTestBase() {
     private lateinit var merkleTreeRepository: MerkleTreeRepository
 
     @Autowired
+    private lateinit var createPayoutTaskRepository: CreatePayoutTaskRepository
+
+    @Autowired
     private lateinit var dslContext: DSLContext
 
     @Autowired
@@ -74,7 +80,107 @@ class PayoutControllerApiTest : ControllerTestBase() {
 
     @Test
     @WithMockUser
-    fun mustSuccessfullyCreatePayoutForSomeAsset() {
+    fun mustSuccessfullyCreatePayoutTaskForSomeAsset() {
+        val mainAccount = accounts[0]
+
+        val contract = suppose("simple ERC20 contract is deployed") {
+            val future = SimpleERC20.deploy(
+                hardhatContainer.web3j,
+                mainAccount,
+                DefaultGasProvider(),
+                listOf(mainAccount.address),
+                listOf(BigInteger("10000")),
+                mainAccount.address
+            ).sendAsync()
+            hardhatContainer.waitAndMine()
+            future.get()
+        }
+
+        suppose("some accounts get ERC20 tokens") {
+            contract.transferAndMine(accounts[1].address, BigInteger("100"))
+            contract.transferAndMine(accounts[2].address, BigInteger("200"))
+            contract.transferAndMine(accounts[3].address, BigInteger("300"))
+            contract.transferAndMine(accounts[4].address, BigInteger("400"))
+        }
+
+        val payoutBlock = hardhatContainer.blockNumber()
+
+        contract.applyWeb3jFilterFix(BlockNumber(BigInteger.ZERO), payoutBlock)
+
+        suppose("some additional transactions of ERC20 token are made") {
+            contract.transferAndMine(accounts[1].address, BigInteger("900"))
+            contract.transferAndMine(accounts[5].address, BigInteger("1000"))
+            contract.transferAndMine(accounts[6].address, BigInteger("2000"))
+        }
+
+        val ipfsHash = IpfsHash("test-hash")
+
+        suppose("Merkle tree will be stored to IPFS") {
+            WireMock.server.stubFor(
+                post(urlPathEqualTo("/pinning/pinJSONToIPFS"))
+                    .withHeader("pinata_api_key", equalTo("test-api-key"))
+                    .withHeader("pinata_secret_api_key", equalTo("test-api-secret"))
+                    .willReturn(
+                        aResponse()
+                            .withBody(
+                                """
+                                {
+                                    "IpfsHash": "${ipfsHash.value}",
+                                    "PinSize": 1,
+                                    "Timestamp": "2022-01-01T00:00:00Z"
+                                }
+                                """.trimIndent()
+                            )
+                            .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+                            .withStatus(200)
+                    )
+            )
+        }
+
+        val ignoredAddresses = setOf(mainAccount.address, accounts[4].address)
+
+        val createPayoutResponse = suppose("create payout request is made") {
+            val response = mockMvc.perform(
+                MockMvcRequestBuilders.post(
+                    "/payouts/${chainId.value}/${contract.contractAddress}/create"
+                )
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(
+                        "{\n    \"payout_block_number\": \"${payoutBlock.value}\",\n " +
+                            "   \"ignored_asset_addresses\": ${ignoredAddresses.map { "\"$it\"" }},\n " +
+                            "   \"issuer_address\": \"${issuerAddress.rawValue}\"}"
+                    )
+            )
+                .andExpect(MockMvcResultMatchers.status().isOk)
+                .andReturn()
+
+            objectMapper.readValue(response.response.contentAsString, CreatePayoutResponse::class.java)
+        }
+
+        verify("create payout task is created in database") {
+            val result = createPayoutTaskRepository.getById(createPayoutResponse.taskId)
+
+            assertThat(result).withMessage()
+                .isNotNull()
+            assertThat(result).withMessage()
+                .isEqualTo(
+                    CreatePayoutTask(
+                        taskId = createPayoutResponse.taskId,
+                        chainId = chainId,
+                        assetAddress = ContractAddress(contract.contractAddress),
+                        blockNumber = payoutBlock,
+                        ignoredAssetAddresses = ignoredAddresses.mapTo(HashSet()) { WalletAddress(it) },
+                        requesterAddress = WalletAddress(HardhatTestContainer.accountAddress1),
+                        issuerAddress = issuerAddress,
+                        data = OtherTaskData(TaskStatus.PENDING)
+                    )
+                )
+        }
+    }
+
+    @Test
+    @WithMockUser
+    fun mustSuccessfullyCreateAndExecutePayoutForSomeAsset() {
         val mainAccount = accounts[0]
 
         val contract = suppose("simple ERC20 contract is deployed") {
@@ -248,7 +354,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
 
     @Test
     @WithMockUser
-    fun mustBeAbleToCreateSamePayoutTwiceAndGetTheSameResponse() {
+    fun mustBeAbleToCreateAndExecuteSamePayoutTwiceAndGetTheSameResponse() {
         val mainAccount = accounts[0]
 
         val contract = suppose("simple ERC20 contract is deployed") {
@@ -465,7 +571,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
 
     @Test
     @WithMockUser(HardhatTestContainer.accountAddress2)
-    fun mustNotCreatePayoutWhenRequesterIsNotAssetOwner() {
+    fun mustNotCreatePayoutTaskWhenRequesterIsNotAssetOwner() {
         val mainAccount = accounts[0]
 
         val contract = suppose("simple ERC20 contract is deployed") {
