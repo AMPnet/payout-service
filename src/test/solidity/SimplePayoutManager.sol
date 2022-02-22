@@ -15,11 +15,15 @@ contract SimplePayoutManager {
         for (uint i = 0; i < _payouts.length; i++) {
             Structs.Payout memory payout = _payouts[i];
 
-            currentPayoutId = payout.payoutId;
+            currentPayoutId = payout.payoutId + 1;
             payoutsById[payout.payoutId] = payout;
             payoutsByAssetAddress[payout.asset].push(payout.payoutId);
             payoutsByOwnerAddress[payout.payoutOwner].push(payout.payoutId);
         }
+    }
+
+    function setClaim(uint256 _payoutId, address _wallet, uint256 _amount) external {
+        payoutClaims[_payoutId][_wallet] = _amount;
     }
 
     function getCurrentPayoutId() external view returns (uint256) {

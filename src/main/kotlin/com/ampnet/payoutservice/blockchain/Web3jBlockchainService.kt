@@ -16,8 +16,6 @@ import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
-import com.ampnet.payoutservice.util.Hash
-import com.ampnet.payoutservice.util.IpfsHash
 import com.ampnet.payoutservice.util.WalletAddress
 import mu.KLogging
 import org.springframework.stereotype.Service
@@ -26,7 +24,6 @@ import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.core.RemoteFunctionCall
 import org.web3j.tx.ReadonlyTransactionManager
 import org.web3j.tx.gas.DefaultGasProvider
-import org.web3j.utils.Numeric
 import java.math.BigInteger
 
 @Service
@@ -109,7 +106,7 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
             service.fetchAllPayoutsForIssuer(params)?.filter { WalletAddress(it.payoutOwner) == params.owner }
         }
 
-        return payouts?.map { it.toPayout() } ?: throw InternalException(
+        return payouts?.map { Payout(it) } ?: throw InternalException(
             ErrorCode.BLOCKCHAIN_CONTRACT_READ_ERROR,
             "Failed reading payout data for admin"
         )
@@ -130,7 +127,7 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
             }
         }
 
-        return payoutStates?.map { it.toPayoutForInvestor() } ?: throw InternalException(
+        return payoutStates?.map { PayoutForInvestor(it.first, it.second) } ?: throw InternalException(
             ErrorCode.BLOCKCHAIN_CONTRACT_READ_ERROR,
             "Failed reading payout data for investor"
         )
@@ -251,27 +248,6 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
             logger.warn("Failed smart contract call", ex)
             null
         }
-
-    private fun PayoutStruct.toPayout(): Payout =
-        Payout(
-            payoutId = payoutId,
-            payoutOwner = WalletAddress(payoutOwner),
-            payoutInfo = payoutInfo,
-            isCanceled = isCanceled,
-            asset = ContractAddress(asset),
-            totalAssetAmount = Balance(totalAssetAmount),
-            ignoredAssetAddresses = ignoredAssetAddresses.mapTo(HashSet()) { WalletAddress(it) },
-            assetSnapshotMerkleRoot = Hash(Numeric.toHexString(assetSnapshotMerkleRoot)),
-            assetSnapshotMerkleDepth = assetSnapshotMerkleDepth,
-            assetSnapshotBlockNumber = BlockNumber(assetSnapshotBlockNumber),
-            assetSnapshotMerkleIpfsHash = IpfsHash(assetSnapshotMerkleIpfsHash),
-            rewardAsset = ContractAddress(rewardAsset),
-            totalRewardAmount = Balance(totalRewardAmount),
-            remainingRewardAmount = Balance(remainingRewardAmount)
-        )
-
-    private fun Pair<PayoutStruct, PayoutStateForInvestor>.toPayoutForInvestor(): PayoutForInvestor =
-        PayoutForInvestor(first.toPayout(), WalletAddress(second.investor), Balance(second.amountClaimed))
 
     @Suppress("TooGenericExceptionCaught")
     private fun <T> RemoteFunctionCall<T>.sendSafely(): T? =
