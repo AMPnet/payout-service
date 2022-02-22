@@ -15,7 +15,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.RemoteFunctionCall;
-import org.web3j.tx.Contract;
+import org.web3j.tx.FixedContract;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
 
@@ -29,7 +29,7 @@ import org.web3j.tx.gas.ContractGasProvider;
  * <p>Generated with web3j version 1.4.1.
  */
 @SuppressWarnings("rawtypes")
-public class IPayoutService extends Contract {
+public class IPayoutService extends FixedContract {
     public static final String BINARY = "";
 
     public static final String FUNC___DEF_PAYOUTSTATEFORINVESTOR_STRUCT__ = "__def_PayoutStateForInvestor_struct__";
@@ -65,14 +65,14 @@ public class IPayoutService extends Contract {
         return executeRemoteCallSingleValueReturn(function, PayoutStateForInvestor.class);
     }
 
-    public RemoteFunctionCall<Payout> __def_Payout_struct__() {
+    public RemoteFunctionCall<PayoutStruct> __def_Payout_struct__() {
         final Function function = new Function(FUNC___DEF_PAYOUT_STRUCT__, 
                 Arrays.<Type>asList(), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Payout>() {}));
-        return executeRemoteCallSingleValueReturn(function, Payout.class);
+                Arrays.<TypeReference<?>>asList(new TypeReference<PayoutStruct>() {}));
+        return executeRemoteCallSingleValueReturn(function, PayoutStruct.class);
     }
 
-    public RemoteFunctionCall<List> getPayoutStatesForInvestor(String investor, String payoutManager, List<BigInteger> payoutIds) {
+    public RemoteFunctionCall<List<PayoutStateForInvestor>> getPayoutStatesForInvestor(String investor, String payoutManager, List<BigInteger> payoutIds) {
         final Function function = new Function(FUNC_GETPAYOUTSTATESFORINVESTOR, 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, investor), 
                 new org.web3j.abi.datatypes.Address(160, payoutManager), 
@@ -80,30 +80,30 @@ public class IPayoutService extends Contract {
                         org.web3j.abi.datatypes.generated.Uint256.class,
                         org.web3j.abi.Utils.typeMap(payoutIds, org.web3j.abi.datatypes.generated.Uint256.class))), 
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<PayoutStateForInvestor>>() {}));
-        return new RemoteFunctionCall<List>(function,
-                new Callable<List>() {
+        return new RemoteFunctionCall<List<PayoutStateForInvestor>>(function,
+                new Callable<List<PayoutStateForInvestor>>() {
                     @Override
                     @SuppressWarnings("unchecked")
-                    public List call() throws Exception {
+                    public List<PayoutStateForInvestor> call() throws Exception {
                         List<Type> result = (List<Type>) executeCallSingleValueReturn(function, List.class);
                         return convertToNative(result);
                     }
                 });
     }
 
-    public RemoteFunctionCall<List> getPayoutsForIssuer(String issuer, String payoutManager, List<String> assetFactories) {
+    public RemoteFunctionCall<List<PayoutStruct>> getPayoutsForIssuer(String issuer, String payoutManager, List<String> assetFactories) {
         final Function function = new Function(FUNC_GETPAYOUTSFORISSUER, 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, issuer), 
                 new org.web3j.abi.datatypes.Address(160, payoutManager), 
                 new org.web3j.abi.datatypes.DynamicArray<org.web3j.abi.datatypes.Address>(
                         org.web3j.abi.datatypes.Address.class,
                         org.web3j.abi.Utils.typeMap(assetFactories, org.web3j.abi.datatypes.Address.class))), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Payout>>() {}));
-        return new RemoteFunctionCall<List>(function,
-                new Callable<List>() {
+                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<PayoutStruct>>() {}));
+        return new RemoteFunctionCall<List<PayoutStruct>>(function,
+                new Callable<List<PayoutStruct>>() {
                     @Override
                     @SuppressWarnings("unchecked")
-                    public List call() throws Exception {
+                    public List<PayoutStruct> call() throws Exception {
                         List<Type> result = (List<Type>) executeCallSingleValueReturn(function, List.class);
                         return convertToNative(result);
                     }

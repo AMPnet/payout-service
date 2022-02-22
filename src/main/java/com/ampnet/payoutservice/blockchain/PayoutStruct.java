@@ -8,10 +8,11 @@ import org.web3j.abi.datatypes.Utf8String;
 import org.web3j.abi.datatypes.generated.Bytes32;
 import org.web3j.abi.datatypes.generated.Uint256;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Payout extends DynamicStruct {
+public class PayoutStruct extends DynamicStruct {
     public BigInteger payoutId;
 
     public String payoutOwner;
@@ -40,7 +41,7 @@ public class Payout extends DynamicStruct {
 
     public BigInteger remainingRewardAmount;
 
-    public Payout(BigInteger payoutId, String payoutOwner, String payoutInfo, Boolean isCanceled, String asset, BigInteger totalAssetAmount, List<String> ignoredAssetAddresses, byte[] assetSnapshotMerkleRoot, BigInteger assetSnapshotMerkleDepth, BigInteger assetSnapshotBlockNumber, String assetSnapshotMerkleIpfsHash, String rewardAsset, BigInteger totalRewardAmount, BigInteger remainingRewardAmount) {
+    public PayoutStruct(BigInteger payoutId, String payoutOwner, String payoutInfo, Boolean isCanceled, String asset, BigInteger totalAssetAmount, List<String> ignoredAssetAddresses, byte[] assetSnapshotMerkleRoot, BigInteger assetSnapshotMerkleDepth, BigInteger assetSnapshotBlockNumber, String assetSnapshotMerkleIpfsHash, String rewardAsset, BigInteger totalRewardAmount, BigInteger remainingRewardAmount) {
         super(new org.web3j.abi.datatypes.generated.Uint256(payoutId),new org.web3j.abi.datatypes.Address(payoutOwner),new org.web3j.abi.datatypes.Utf8String(payoutInfo),new org.web3j.abi.datatypes.Bool(isCanceled),new org.web3j.abi.datatypes.Address(asset),new org.web3j.abi.datatypes.generated.Uint256(totalAssetAmount),new org.web3j.abi.datatypes.DynamicArray<org.web3j.abi.datatypes.Address>(org.web3j.abi.datatypes.Address.class,ignoredAssetAddresses.stream().map(org.web3j.abi.datatypes.Address::new).collect(Collectors.toList())),new org.web3j.abi.datatypes.generated.Bytes32(assetSnapshotMerkleRoot),new org.web3j.abi.datatypes.generated.Uint256(assetSnapshotMerkleDepth),new org.web3j.abi.datatypes.generated.Uint256(assetSnapshotBlockNumber),new org.web3j.abi.datatypes.Utf8String(assetSnapshotMerkleIpfsHash),new org.web3j.abi.datatypes.Address(rewardAsset),new org.web3j.abi.datatypes.generated.Uint256(totalRewardAmount),new org.web3j.abi.datatypes.generated.Uint256(remainingRewardAmount));
         this.payoutId = payoutId;
         this.payoutOwner = payoutOwner;
@@ -58,7 +59,7 @@ public class Payout extends DynamicStruct {
         this.remainingRewardAmount = remainingRewardAmount;
     }
 
-    public Payout(Uint256 payoutId, Address payoutOwner, Utf8String payoutInfo, Bool isCanceled, Address asset, Uint256 totalAssetAmount, DynamicArray<Address> ignoredAssetAddresses, Bytes32 assetSnapshotMerkleRoot, Uint256 assetSnapshotMerkleDepth, Uint256 assetSnapshotBlockNumber, Utf8String assetSnapshotMerkleIpfsHash, Address rewardAsset, Uint256 totalRewardAmount, Uint256 remainingRewardAmount) {
+    public PayoutStruct(Uint256 payoutId, Address payoutOwner, Utf8String payoutInfo, Bool isCanceled, Address asset, Uint256 totalAssetAmount, DynamicArray<Address> ignoredAssetAddresses, Bytes32 assetSnapshotMerkleRoot, Uint256 assetSnapshotMerkleDepth, Uint256 assetSnapshotBlockNumber, Utf8String assetSnapshotMerkleIpfsHash, Address rewardAsset, Uint256 totalRewardAmount, Uint256 remainingRewardAmount) {
         super(payoutId,payoutOwner,payoutInfo,isCanceled,asset,totalAssetAmount,ignoredAssetAddresses,assetSnapshotMerkleRoot,assetSnapshotMerkleDepth,assetSnapshotBlockNumber,assetSnapshotMerkleIpfsHash,rewardAsset,totalRewardAmount,remainingRewardAmount);
         this.payoutId = payoutId.getValue();
         this.payoutOwner = payoutOwner.getValue();
@@ -74,5 +75,25 @@ public class Payout extends DynamicStruct {
         this.rewardAsset = rewardAsset.getValue();
         this.totalRewardAmount = totalRewardAmount.getValue();
         this.remainingRewardAmount = remainingRewardAmount.getValue();
+    }
+
+    @Override
+    public String toString() {
+        return "Payout{" +
+                "payoutId=" + payoutId +
+                ", payoutOwner='" + payoutOwner + '\'' +
+                ", payoutInfo='" + payoutInfo + '\'' +
+                ", isCanceled=" + isCanceled +
+                ", asset='" + asset + '\'' +
+                ", totalAssetAmount=" + totalAssetAmount +
+                ", ignoredAssetAddresses=" + ignoredAssetAddresses +
+                ", assetSnapshotMerkleRoot=" + Arrays.toString(assetSnapshotMerkleRoot) +
+                ", assetSnapshotMerkleDepth=" + assetSnapshotMerkleDepth +
+                ", assetSnapshotBlockNumber=" + assetSnapshotBlockNumber +
+                ", assetSnapshotMerkleIpfsHash='" + assetSnapshotMerkleIpfsHash + '\'' +
+                ", rewardAsset='" + rewardAsset + '\'' +
+                ", totalRewardAmount=" + totalRewardAmount +
+                ", remainingRewardAmount=" + remainingRewardAmount +
+                '}';
     }
 }

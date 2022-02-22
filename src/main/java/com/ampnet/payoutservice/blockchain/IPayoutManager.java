@@ -13,7 +13,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.RemoteFunctionCall;
-import org.web3j.tx.Contract;
+import org.web3j.tx.FixedContract;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
 
@@ -27,7 +27,7 @@ import org.web3j.tx.gas.ContractGasProvider;
  * <p>Generated with web3j version 1.4.1.
  */
 @SuppressWarnings("rawtypes")
-public class IPayoutManager extends Contract {
+public class IPayoutManager extends FixedContract {
     public static final String BINARY = "";
 
     public static final String FUNC_GETAMOUNTOFCLAIMEDFUNDS = "getAmountOfClaimedFunds";
@@ -77,12 +77,12 @@ public class IPayoutManager extends Contract {
         return executeRemoteCallSingleValueReturn(function, BigInteger.class);
     }
 
-    public RemoteFunctionCall<List> getPayoutIdsForAsset(String _assetAddress) {
+    public RemoteFunctionCall<List<BigInteger>> getPayoutIdsForAsset(String _assetAddress) {
         final Function function = new Function(FUNC_GETPAYOUTIDSFORASSET, 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _assetAddress)), 
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {}));
-        return new RemoteFunctionCall<List>(function,
-                new Callable<List>() {
+        return new RemoteFunctionCall<List<BigInteger>>(function,
+                new Callable<List<BigInteger>>() {
                     @Override
                     @SuppressWarnings("unchecked")
                     public List call() throws Exception {
@@ -92,12 +92,12 @@ public class IPayoutManager extends Contract {
                 });
     }
 
-    public RemoteFunctionCall<List> getPayoutIdsForOwner(String _ownerAddress) {
+    public RemoteFunctionCall<List<BigInteger>> getPayoutIdsForOwner(String _ownerAddress) {
         final Function function = new Function(FUNC_GETPAYOUTIDSFOROWNER, 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _ownerAddress)), 
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {}));
-        return new RemoteFunctionCall<List>(function,
-                new Callable<List>() {
+        return new RemoteFunctionCall<List<BigInteger>>(function,
+                new Callable<List<BigInteger>>() {
                     @Override
                     @SuppressWarnings("unchecked")
                     public List call() throws Exception {
@@ -107,19 +107,19 @@ public class IPayoutManager extends Contract {
                 });
     }
 
-    public RemoteFunctionCall<Payout> getPayoutInfo(BigInteger _payoutId) {
+    public RemoteFunctionCall<PayoutStruct> getPayoutInfo(BigInteger _payoutId) {
         final Function function = new Function(FUNC_GETPAYOUTINFO, 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(_payoutId)), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<Payout>() {}));
-        return executeRemoteCallSingleValueReturn(function, Payout.class);
+                Arrays.<TypeReference<?>>asList(new TypeReference<PayoutStruct>() {}));
+        return executeRemoteCallSingleValueReturn(function, PayoutStruct.class);
     }
 
-    public RemoteFunctionCall<List> getPayoutsForAsset(String _assetAddress) {
+    public RemoteFunctionCall<List<PayoutStruct>> getPayoutsForAsset(String _assetAddress) {
         final Function function = new Function(FUNC_GETPAYOUTSFORASSET, 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _assetAddress)), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Payout>>() {}));
-        return new RemoteFunctionCall<List>(function,
-                new Callable<List>() {
+                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<PayoutStruct>>() {}));
+        return new RemoteFunctionCall<List<PayoutStruct>>(function,
+                new Callable<List<PayoutStruct>>() {
                     @Override
                     @SuppressWarnings("unchecked")
                     public List call() throws Exception {
@@ -129,12 +129,12 @@ public class IPayoutManager extends Contract {
                 });
     }
 
-    public RemoteFunctionCall<List> getPayoutsForOwner(String _ownerAddress) {
+    public RemoteFunctionCall<List<PayoutStruct>> getPayoutsForOwner(String _ownerAddress) {
         final Function function = new Function(FUNC_GETPAYOUTSFOROWNER, 
                 Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _ownerAddress)), 
-                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Payout>>() {}));
-        return new RemoteFunctionCall<List>(function,
-                new Callable<List>() {
+                Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<PayoutStruct>>() {}));
+        return new RemoteFunctionCall<List<PayoutStruct>>(function,
+                new Callable<List<PayoutStruct>>() {
                     @Override
                     @SuppressWarnings("unchecked")
                     public List call() throws Exception {

@@ -1,14 +1,23 @@
 package com.ampnet.payoutservice.blockchain
 
+import com.ampnet.payoutservice.blockchain.IPayoutService.PayoutStateForInvestor
 import com.ampnet.payoutservice.blockchain.properties.ChainPropertiesHandler
 import com.ampnet.payoutservice.config.ApplicationProperties
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.InternalException
+import com.ampnet.payoutservice.model.params.GetIssuerPayoutsParams
+import com.ampnet.payoutservice.model.params.GetPayoutsForAdminParams
+import com.ampnet.payoutservice.model.params.GetPayoutsForInvestorParams
+import com.ampnet.payoutservice.model.params.LoadPayoutManagerAndServiceParams
+import com.ampnet.payoutservice.model.result.Payout
+import com.ampnet.payoutservice.model.result.PayoutForInvestor
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
+import com.ampnet.payoutservice.util.Hash
+import com.ampnet.payoutservice.util.IpfsHash
 import com.ampnet.payoutservice.util.WalletAddress
 import mu.KLogging
 import org.springframework.stereotype.Service
@@ -17,6 +26,7 @@ import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.core.RemoteFunctionCall
 import org.web3j.tx.ReadonlyTransactionManager
 import org.web3j.tx.gas.DefaultGasProvider
+import org.web3j.utils.Numeric
 import java.math.BigInteger
 
 @Service
@@ -84,6 +94,48 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
             )
     }
 
+    @Throws(InternalException::class)
+    override fun getPayoutsForAdmin(params: GetPayoutsForAdminParams): List<Payout> {
+        logger.debug { "Get payouts for admin, params: $params" }
+        val (manager, service) = loadPayoutManagerAndService(params)
+
+        val payouts = if (params.issuer == null && params.owner == null) {
+            manager.fetchAllPayouts()
+        } else if (params.issuer == null) { // implies params.owner != null
+            manager.fetchAllPayoutsForOwner(params)
+        } else if (params.owner == null) { // implies params.issuer != null
+            service.fetchAllPayoutsForIssuer(params)
+        } else { // implies params.issuer != null && params.owner != null
+            service.fetchAllPayoutsForIssuer(params)?.filter { WalletAddress(it.payoutOwner) == params.owner }
+        }
+
+        return payouts?.map { it.toPayout() } ?: throw InternalException(
+            ErrorCode.BLOCKCHAIN_CONTRACT_READ_ERROR,
+            "Failed reading payout data for admin"
+        )
+    }
+
+    @Throws(InternalException::class)
+    override fun getPayoutsForInvestor(params: GetPayoutsForInvestorParams): List<PayoutForInvestor> {
+        logger.debug { "Get payouts for investor, params: $params" }
+        val (manager, service) = loadPayoutManagerAndService(params)
+
+        val payoutStates = if (params.issuer == null) {
+            manager.fetchAllPayouts()?.let { allPayouts ->
+                manager.fetchAllPayoutStatesForInvestor(params, allPayouts)
+            }
+        } else {
+            service.fetchAllPayoutsForIssuer(params)?.let { issuerPayouts ->
+                service.fetchAllPayoutStatesForInvestorByIssuer(params, issuerPayouts)
+            }
+        }
+
+        return payoutStates?.map { it.toPayoutForInvestor() } ?: throw InternalException(
+            ErrorCode.BLOCKCHAIN_CONTRACT_READ_ERROR,
+            "Failed reading payout data for investor"
+        )
+    }
+
     private fun IERC20.findAccounts(
         startBlockParameter: DefaultBlockParameter,
         endBlockParameter: DefaultBlockParameter
@@ -113,13 +165,120 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
         return accounts
     }
 
+    private fun loadPayoutManagerAndService(
+        params: LoadPayoutManagerAndServiceParams
+    ): Pair<IPayoutManager, IPayoutService> {
+        val blockchainProperties = chainHandler.getBlockchainProperties(params.chainId)
+        val service = IPayoutService.load(
+            params.payoutService.rawValue,
+            blockchainProperties.web3j,
+            ReadonlyTransactionManager(blockchainProperties.web3j, params.payoutService.rawValue),
+            DefaultGasProvider()
+        )
+        val manager = IPayoutManager.load(
+            params.payoutManager.rawValue,
+            blockchainProperties.web3j,
+            ReadonlyTransactionManager(blockchainProperties.web3j, params.payoutManager.rawValue),
+            DefaultGasProvider()
+        )
+
+        return Pair(manager, service)
+    }
+
+    private fun IPayoutService.fetchAllPayoutsForIssuer(params: GetIssuerPayoutsParams): List<PayoutStruct>? =
+        getPayoutsForIssuer(
+            params.issuer?.rawValue,
+            params.payoutManager.rawValue,
+            params.assetFactories.map { it.rawValue }
+        ).sendSafely()
+
+    private fun IPayoutService.fetchAllPayoutStatesForInvestorByIssuer(
+        params: GetPayoutsForInvestorParams,
+        issuerPayouts: List<PayoutStruct>
+    ): List<Pair<PayoutStruct, PayoutStateForInvestor>>? {
+        val payoutIds = issuerPayouts.map { it.payoutId }
+        val investorPayoutStates = getPayoutStatesForInvestor(
+            params.investor.rawValue,
+            params.payoutManager.rawValue,
+            payoutIds
+        )
+            .sendSafely()
+
+        val payoutsById = issuerPayouts.associateBy { it.payoutId }
+
+        return investorPayoutStates?.map { Pair(payoutsById.getValue(it.payoutId), it) }
+    }
+
+    private fun IPayoutManager.fetchAllPayoutsForOwner(params: GetPayoutsForAdminParams): List<PayoutStruct>? =
+        getPayoutsForOwner(params.owner?.rawValue).sendSafely()
+
     @Suppress("TooGenericExceptionCaught")
-    private fun <T> RemoteFunctionCall<T>.sendSafely(): T? {
-        return try {
+    private fun IPayoutManager.fetchAllPayouts(): List<PayoutStruct>? =
+        try {
+            currentPayoutId.sendSafely()?.longValueExact()?.let { numOfPayouts ->
+                (0L until numOfPayouts).map { id -> getPayoutInfo(BigInteger.valueOf(id)).send() }
+            }
+        } catch (ex: Exception) {
+            logger.warn("Failed smart contract call", ex)
+            null
+        }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun IPayoutManager.fetchAllPayoutStatesForInvestor(
+        params: GetPayoutsForInvestorParams,
+        allPayouts: List<PayoutStruct>
+    ): List<Pair<PayoutStruct, PayoutStateForInvestor>>? =
+        try {
+            val payoutIds = allPayouts.map { it.payoutId }
+            val claimedFunds = payoutIds.associate { payoutId ->
+                Pair(
+                    payoutId,
+                    Balance(getAmountOfClaimedFunds(payoutId, params.investor.rawValue).send())
+                )
+            }
+
+            allPayouts.map { payout ->
+                Pair(
+                    payout,
+                    PayoutStateForInvestor(
+                        payout.payoutId,
+                        params.investor.rawValue,
+                        claimedFunds.getValue(payout.payoutId).rawValue
+                    )
+                )
+            }
+        } catch (ex: Exception) {
+            logger.warn("Failed smart contract call", ex)
+            null
+        }
+
+    private fun PayoutStruct.toPayout(): Payout =
+        Payout(
+            payoutId = payoutId,
+            payoutOwner = WalletAddress(payoutOwner),
+            payoutInfo = payoutInfo,
+            isCanceled = isCanceled,
+            asset = ContractAddress(asset),
+            totalAssetAmount = Balance(totalAssetAmount),
+            ignoredAssetAddresses = ignoredAssetAddresses.mapTo(HashSet()) { WalletAddress(it) },
+            assetSnapshotMerkleRoot = Hash(Numeric.toHexString(assetSnapshotMerkleRoot)),
+            assetSnapshotMerkleDepth = assetSnapshotMerkleDepth,
+            assetSnapshotBlockNumber = BlockNumber(assetSnapshotBlockNumber),
+            assetSnapshotMerkleIpfsHash = IpfsHash(assetSnapshotMerkleIpfsHash),
+            rewardAsset = ContractAddress(rewardAsset),
+            totalRewardAmount = Balance(totalRewardAmount),
+            remainingRewardAmount = Balance(remainingRewardAmount)
+        )
+
+    private fun Pair<PayoutStruct, PayoutStateForInvestor>.toPayoutForInvestor(): PayoutForInvestor =
+        PayoutForInvestor(first.toPayout(), WalletAddress(second.investor), Balance(second.amountClaimed))
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun <T> RemoteFunctionCall<T>.sendSafely(): T? =
+        try {
             this.send()
         } catch (ex: Exception) {
             logger.warn("Failed smart contract call", ex)
             null
         }
-    }
 }
