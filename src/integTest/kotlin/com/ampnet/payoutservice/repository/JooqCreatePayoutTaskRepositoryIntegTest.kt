@@ -384,31 +384,33 @@ class JooqCreatePayoutTaskRepositoryIntegTest : TestBase() {
 
         val treeIpfsHash = IpfsHash("tree-ipfs-hash")
         val totalAssetAmount = BigInteger("123")
+        val expectedResult = CreatePayoutTask(
+            taskId = taskUuid,
+            chainId = chainId,
+            assetAddress = assetAddress,
+            blockNumber = payoutBlock,
+            ignoredAssetAddresses = ignoredAssetAddresses,
+            requesterAddress = requesterAddress,
+            issuerAddress = issuerAddress,
+            data = SuccessfulTaskData(
+                merkleTreeRootId = treeUuid,
+                merkleTreeIpfsHash = treeIpfsHash,
+                totalAssetAmount = totalAssetAmount
+            )
+        )
 
-        suppose("task is completed") {
-            repository.completeTask(taskUuid, treeUuid, treeIpfsHash, totalAssetAmount)
+        verify("task is completed") {
+            val result = repository.completeTask(taskUuid, treeUuid, treeIpfsHash, totalAssetAmount)
+
+            assertThat(result).withMessage()
+                .isEqualTo(expectedResult)
         }
 
         verify("successful create payout task is correctly fetched from database") {
             val result = repository.getById(taskUuid)
 
             assertThat(result).withMessage()
-                .isEqualTo(
-                    CreatePayoutTask(
-                        taskId = taskUuid,
-                        chainId = chainId,
-                        assetAddress = assetAddress,
-                        blockNumber = payoutBlock,
-                        ignoredAssetAddresses = ignoredAssetAddresses,
-                        requesterAddress = requesterAddress,
-                        issuerAddress = issuerAddress,
-                        data = SuccessfulTaskData(
-                            merkleTreeRootId = treeUuid,
-                            merkleTreeIpfsHash = treeIpfsHash,
-                            totalAssetAmount = totalAssetAmount
-                        )
-                    )
-                )
+                .isEqualTo(expectedResult)
         }
     }
 
@@ -445,26 +447,29 @@ class JooqCreatePayoutTaskRepositoryIntegTest : TestBase() {
                 .isEqualTo(taskUuid)
         }
 
-        suppose("task failed") {
-            repository.failTask(taskUuid)
+        val expectedResult = CreatePayoutTask(
+            taskId = taskUuid,
+            chainId = chainId,
+            assetAddress = assetAddress,
+            blockNumber = payoutBlock,
+            ignoredAssetAddresses = ignoredAssetAddresses,
+            requesterAddress = requesterAddress,
+            issuerAddress = issuerAddress,
+            data = OtherTaskData(TaskStatus.FAILED)
+        )
+
+        verify("task failed") {
+            val result = repository.failTask(taskUuid)
+
+            assertThat(result).withMessage()
+                .isEqualTo(expectedResult)
         }
 
         verify("failed create payout task is correctly fetched from database") {
             val result = repository.getById(taskUuid)
 
             assertThat(result).withMessage()
-                .isEqualTo(
-                    CreatePayoutTask(
-                        taskId = taskUuid,
-                        chainId = chainId,
-                        assetAddress = assetAddress,
-                        blockNumber = payoutBlock,
-                        ignoredAssetAddresses = ignoredAssetAddresses,
-                        requesterAddress = requesterAddress,
-                        issuerAddress = issuerAddress,
-                        data = OtherTaskData(TaskStatus.FAILED)
-                    )
-                )
+                .isEqualTo(expectedResult)
         }
     }
 }

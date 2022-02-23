@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.UUID
 
 @RestController
-class PayoutController(val createPayoutQueueService: CreatePayoutQueueService) {
+class PayoutController(private val createPayoutQueueService: CreatePayoutQueueService) {
 
     @GetMapping("/payouts/tasks/{taskId}")
     fun getPayoutTaskById(@PathVariable taskId: UUID): ResponseEntity<CreatePayoutTaskResponse> {

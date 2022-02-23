@@ -10,7 +10,7 @@ class ApplicationProperties {
     val jwt = JwtProperties()
     val ipfs = IpfsProperties()
     val payout = PayoutProperties()
-    val createPayoutQueue = CreatePayoutQueueProperties()
+    val createPayoutQueue = QueueProperties()
     val chainEthereum = ChainProperties()
     val chainGoerli = ChainProperties()
     val chainMatic = ChainProperties()
@@ -38,7 +38,7 @@ class ChainProperties {
 }
 
 @Suppress("MagicNumber")
-class CreatePayoutQueueProperties {
+class QueueProperties {
     var polling: Long = 5_000L
     var initialDelay: Long = 15_000L
 }

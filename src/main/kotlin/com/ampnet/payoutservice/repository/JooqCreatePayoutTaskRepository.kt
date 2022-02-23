@@ -29,30 +29,10 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
 
     override fun getById(taskId: UUID): CreatePayoutTask? {
         logger.info { "Fetching create payout task, taskId: $taskId" }
-
-        val task = dslContext.selectFrom(CreatePayoutTaskTable.CREATE_PAYOUT_TASK)
+        return dslContext.selectFrom(CreatePayoutTaskTable.CREATE_PAYOUT_TASK)
             .where(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.ID.eq(taskId))
-            .fetchOne() ?: return null
-
-        val taskStatus = TaskStatus.fromDbEnum(task.status!!)
-        val taskData = if (taskStatus == TaskStatus.SUCCESS) {
-            SuccessfulTaskData(
-                merkleTreeRootId = task.resultTree!!,
-                merkleTreeIpfsHash = IpfsHash(task.treeIpfsHash!!),
-                totalAssetAmount = task.totalAssetAmount!!
-            )
-        } else OtherTaskData(taskStatus)
-
-        return CreatePayoutTask(
-            taskId = task.id!!,
-            chainId = ChainId(task.chainId!!),
-            assetAddress = ContractAddress(task.assetAddress!!),
-            blockNumber = BlockNumber(task.blockNumber!!),
-            ignoredAssetAddresses = task.ignoredAssetAddresses!!.mapTo(HashSet()) { WalletAddress(it!!) },
-            requesterAddress = WalletAddress(task.requesterAddress!!),
-            issuerAddress = task.issuerAddress?.let { ContractAddress(it) },
-            data = taskData
-        )
+            .fetchOne()
+            ?.toModel()
     }
 
     override fun createPayoutTask(params: CreatePayoutTaskParams): UUID {
@@ -103,23 +83,51 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
         merkleTreeRootId: UUID,
         merkleTreeIpfsHash: IpfsHash,
         totalAssetAmount: BigInteger
-    ) {
+    ): CreatePayoutTask? {
         logger.info {
             "Marking task as success, taskId: $taskId, merkleTreeRootId: $merkleTreeRootId," +
                 " merkleTreeIpfsHash: $merkleTreeIpfsHash, totalAssetAmount: $totalAssetAmount"
         }
-        dslContext.update(CreatePayoutTaskTable.CREATE_PAYOUT_TASK)
+        return dslContext.update(CreatePayoutTaskTable.CREATE_PAYOUT_TASK)
             .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.STATUS, DbTaskStatus.SUCCESS)
             .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.RESULT_TREE, merkleTreeRootId)
             .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.TREE_IPFS_HASH, merkleTreeIpfsHash.value)
             .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.TOTAL_ASSET_AMOUNT, totalAssetAmount)
-            .execute()
+            .where(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.ID.eq(taskId))
+            .returning()
+            .fetchOne()
+            ?.toModel()
     }
 
-    override fun failTask(taskId: UUID) {
+    override fun failTask(taskId: UUID): CreatePayoutTask? {
         logger.info { "Marking task as failed, taskId: $taskId" }
-        dslContext.update(CreatePayoutTaskTable.CREATE_PAYOUT_TASK)
+        return dslContext.update(CreatePayoutTaskTable.CREATE_PAYOUT_TASK)
             .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.STATUS, DbTaskStatus.FAILED)
-            .execute()
+            .where(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.ID.eq(taskId))
+            .returning()
+            .fetchOne()
+            ?.toModel()
+    }
+
+    private fun CreatePayoutTaskRecord.toModel(): CreatePayoutTask {
+        val taskStatus = TaskStatus.fromDbEnum(status!!)
+        val taskData = if (taskStatus == TaskStatus.SUCCESS) {
+            SuccessfulTaskData(
+                merkleTreeRootId = resultTree!!,
+                merkleTreeIpfsHash = IpfsHash(treeIpfsHash!!),
+                totalAssetAmount = totalAssetAmount!!
+            )
+        } else OtherTaskData(taskStatus)
+
+        return CreatePayoutTask(
+            taskId = id!!,
+            chainId = ChainId(chainId!!),
+            assetAddress = ContractAddress(assetAddress!!),
+            blockNumber = BlockNumber(blockNumber!!),
+            ignoredAssetAddresses = ignoredAssetAddresses!!.mapTo(HashSet()) { WalletAddress(it!!) },
+            requesterAddress = WalletAddress(requesterAddress!!),
+            issuerAddress = issuerAddress?.let { ContractAddress(it) },
+            data = taskData
+        )
     }
 }

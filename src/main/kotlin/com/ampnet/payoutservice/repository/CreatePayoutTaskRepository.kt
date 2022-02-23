@@ -11,6 +11,13 @@ interface CreatePayoutTaskRepository {
     fun getById(taskId: UUID): CreatePayoutTask?
     fun createPayoutTask(params: CreatePayoutTaskParams): UUID
     fun getPending(): PendingCreatePayoutTask?
-    fun completeTask(taskId: UUID, merkleTreeRootId: UUID, merkleTreeIpfsHash: IpfsHash, totalAssetAmount: BigInteger)
-    fun failTask(taskId: UUID)
+
+    fun completeTask(
+        taskId: UUID,
+        merkleTreeRootId: UUID,
+        merkleTreeIpfsHash: IpfsHash,
+        totalAssetAmount: BigInteger
+    ): CreatePayoutTask?
+
+    fun failTask(taskId: UUID): CreatePayoutTask?
 }
