@@ -26,7 +26,6 @@ import org.springframework.http.ResponseEntity
 import java.math.BigInteger
 import java.util.UUID
 
-@Deprecated("SD-572") // TODO
 class PayoutInfoControllerTest : TestBase() {
 
     @Test

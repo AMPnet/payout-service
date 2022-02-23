@@ -4,12 +4,12 @@ import com.ampnet.payoutservice.ManualFixedScheduler
 import com.ampnet.payoutservice.TestBase
 import com.ampnet.payoutservice.blockchain.BlockchainService
 import com.ampnet.payoutservice.config.ApplicationProperties
-import com.ampnet.payoutservice.controller.response.CreatePayoutData
-import com.ampnet.payoutservice.controller.response.CreatePayoutTaskResponse
 import com.ampnet.payoutservice.exception.InvalidRequestException
 import com.ampnet.payoutservice.model.params.CreatePayoutTaskParams
 import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
+import com.ampnet.payoutservice.model.result.FullCreatePayoutData
 import com.ampnet.payoutservice.model.result.CreatePayoutTask
+import com.ampnet.payoutservice.model.result.FullCreatePayoutTask
 import com.ampnet.payoutservice.model.result.MerkleTreeWithId
 import com.ampnet.payoutservice.model.result.OtherTaskData
 import com.ampnet.payoutservice.model.result.PendingCreatePayoutTask
@@ -191,19 +191,19 @@ class CreatePayoutQueueServiceTest : TestBase() {
 
             assertThat(response).withMessage()
                 .isEqualTo(
-                    CreatePayoutTaskResponse(
+                    FullCreatePayoutTask(
                         taskId = taskUuid,
-                        chainId = chainId.value,
-                        assetAddress = assetAddress.rawValue,
-                        payoutBlockNumber = payoutBlock.value,
-                        ignoredAssetAddresses = ignoredAddresses.mapTo(HashSet()) { it.rawValue },
-                        requesterAddress = requesterAddress.rawValue,
-                        issuerAddress = issuerAddress.rawValue,
+                        chainId = chainId,
+                        assetAddress = assetAddress,
+                        payoutBlockNumber = payoutBlock,
+                        ignoredAssetAddresses = ignoredAddresses,
+                        requesterAddress = requesterAddress,
+                        issuerAddress = issuerAddress,
                         taskStatus = TaskStatus.SUCCESS,
-                        data = CreatePayoutData(
+                        data = FullCreatePayoutData(
                             totalAssetAmount = totalAssetAmount,
-                            merkleRootHash = tree.root.hash.value,
-                            merkleTreeIpfsHash = ipfsHash.value,
+                            merkleRootHash = tree.root.hash,
+                            merkleTreeIpfsHash = ipfsHash,
                             merkleTreeDepth = tree.root.depth,
                             hashFn = tree.hashFn
                         )
@@ -368,14 +368,14 @@ class CreatePayoutQueueServiceTest : TestBase() {
 
             assertThat(response).withMessage()
                 .isEqualTo(
-                    CreatePayoutTaskResponse(
+                    FullCreatePayoutTask(
                         taskId = taskUuid,
-                        chainId = chainId.value,
-                        assetAddress = assetAddress.rawValue,
-                        payoutBlockNumber = payoutBlock.value,
-                        ignoredAssetAddresses = ignoredAddresses.mapTo(HashSet()) { it.rawValue },
-                        requesterAddress = requesterAddress.rawValue,
-                        issuerAddress = issuerAddress.rawValue,
+                        chainId = chainId,
+                        assetAddress = assetAddress,
+                        payoutBlockNumber = payoutBlock,
+                        ignoredAssetAddresses = ignoredAddresses,
+                        requesterAddress = requesterAddress,
+                        issuerAddress = issuerAddress,
                         taskStatus = TaskStatus.FAILED,
                         data = null
                     )
@@ -564,19 +564,19 @@ class CreatePayoutQueueServiceTest : TestBase() {
 
             assertThat(response).withMessage()
                 .isEqualTo(
-                    CreatePayoutTaskResponse(
+                    FullCreatePayoutTask(
                         taskId = taskUuid,
-                        chainId = chainId.value,
-                        assetAddress = assetAddress.rawValue,
-                        payoutBlockNumber = payoutBlock.value,
-                        ignoredAssetAddresses = ignoredAddresses.mapTo(HashSet()) { it.rawValue },
-                        requesterAddress = requesterAddress.rawValue,
-                        issuerAddress = issuerAddress.rawValue,
+                        chainId = chainId,
+                        assetAddress = assetAddress,
+                        payoutBlockNumber = payoutBlock,
+                        ignoredAssetAddresses = ignoredAddresses,
+                        requesterAddress = requesterAddress,
+                        issuerAddress = issuerAddress,
                         taskStatus = TaskStatus.SUCCESS,
-                        data = CreatePayoutData(
+                        data = FullCreatePayoutData(
                             totalAssetAmount = totalAssetAmount,
-                            merkleRootHash = tree.root.hash.value,
-                            merkleTreeIpfsHash = ipfsHash.value,
+                            merkleRootHash = tree.root.hash,
+                            merkleTreeIpfsHash = ipfsHash,
                             merkleTreeDepth = tree.root.depth,
                             hashFn = tree.hashFn
                         )
@@ -836,19 +836,19 @@ class CreatePayoutQueueServiceTest : TestBase() {
 
             assertThat(response).withMessage()
                 .isEqualTo(
-                    CreatePayoutTaskResponse(
+                    FullCreatePayoutTask(
                         taskId = taskUuid,
-                        chainId = chainId.value,
-                        assetAddress = assetAddress.rawValue,
-                        payoutBlockNumber = payoutBlock.value,
-                        ignoredAssetAddresses = ignoredAddresses.mapTo(HashSet()) { it.rawValue },
-                        requesterAddress = requesterAddress.rawValue,
-                        issuerAddress = issuerAddress.rawValue,
+                        chainId = chainId,
+                        assetAddress = assetAddress,
+                        payoutBlockNumber = payoutBlock,
+                        ignoredAssetAddresses = ignoredAddresses,
+                        requesterAddress = requesterAddress,
+                        issuerAddress = issuerAddress,
                         taskStatus = TaskStatus.SUCCESS,
-                        data = CreatePayoutData(
+                        data = FullCreatePayoutData(
                             totalAssetAmount = totalAssetAmount,
-                            merkleRootHash = tree.root.hash.value,
-                            merkleTreeIpfsHash = ipfsHash.value,
+                            merkleRootHash = tree.root.hash,
+                            merkleTreeIpfsHash = ipfsHash,
                             merkleTreeDepth = tree.root.depth,
                             hashFn = tree.hashFn
                         )
@@ -971,31 +971,31 @@ class CreatePayoutQueueServiceTest : TestBase() {
 
             assertThat(response).withMessage()
                 .containsExactlyInAnyOrder(
-                    CreatePayoutTaskResponse(
+                    FullCreatePayoutTask(
                         taskId = tasks[0].taskId,
-                        chainId = tasks[0].chainId.value,
-                        assetAddress = tasks[0].assetAddress.rawValue,
-                        payoutBlockNumber = tasks[0].blockNumber.value,
+                        chainId = tasks[0].chainId,
+                        assetAddress = tasks[0].assetAddress,
+                        payoutBlockNumber = tasks[0].blockNumber,
                         ignoredAssetAddresses = emptySet(),
-                        requesterAddress = tasks[0].requesterAddress.rawValue,
-                        issuerAddress = tasks[0].issuerAddress?.rawValue,
+                        requesterAddress = tasks[0].requesterAddress,
+                        issuerAddress = tasks[0].issuerAddress,
                         taskStatus = TaskStatus.SUCCESS,
-                        data = CreatePayoutData(
+                        data = FullCreatePayoutData(
                             totalAssetAmount = totalAssetAmount,
-                            merkleRootHash = tree.root.hash.value,
-                            merkleTreeIpfsHash = ipfsHash.value,
+                            merkleRootHash = tree.root.hash,
+                            merkleTreeIpfsHash = ipfsHash,
                             merkleTreeDepth = tree.root.depth,
                             hashFn = tree.hashFn
                         )
                     ),
-                    CreatePayoutTaskResponse(
+                    FullCreatePayoutTask(
                         taskId = tasks[1].taskId,
-                        chainId = tasks[1].chainId.value,
-                        assetAddress = tasks[1].assetAddress.rawValue,
-                        payoutBlockNumber = tasks[1].blockNumber.value,
+                        chainId = tasks[1].chainId,
+                        assetAddress = tasks[1].assetAddress,
+                        payoutBlockNumber = tasks[1].blockNumber,
                         ignoredAssetAddresses = emptySet(),
-                        requesterAddress = tasks[1].requesterAddress.rawValue,
-                        issuerAddress = tasks[1].issuerAddress?.rawValue,
+                        requesterAddress = tasks[1].requesterAddress,
+                        issuerAddress = tasks[1].issuerAddress,
                         taskStatus = TaskStatus.PENDING,
                         data = null
                     )

@@ -3,8 +3,8 @@ package com.ampnet.payoutservice.service
 import com.ampnet.payoutservice.blockchain.BlockchainService
 import com.ampnet.payoutservice.blockchain.properties.ChainPropertiesHandler
 import com.ampnet.payoutservice.config.ApplicationProperties
-import com.ampnet.payoutservice.controller.response.CreatePayoutData
-import com.ampnet.payoutservice.controller.response.CreatePayoutTaskResponse
+import com.ampnet.payoutservice.model.result.FullCreatePayoutData
+import com.ampnet.payoutservice.model.result.FullCreatePayoutTask
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.InvalidRequestException
 import com.ampnet.payoutservice.model.params.CreatePayoutTaskParams
@@ -64,7 +64,7 @@ class CreatePayoutQueueServiceImpl(
         return createPayoutTaskRepository.createPayoutTask(params)
     }
 
-    override fun getTaskById(taskId: UUID): CreatePayoutTaskResponse? {
+    override fun getTaskById(taskId: UUID): FullCreatePayoutTask? {
         logger.debug { "Fetching create payout task, taskId: $taskId" }
         return createPayoutTaskRepository.getById(taskId)?.toResponse()
     }
@@ -72,34 +72,34 @@ class CreatePayoutQueueServiceImpl(
     override fun getAllTasksByIssuerAndOwner(
         issuer: ContractAddress?,
         owner: WalletAddress?
-    ): List<CreatePayoutTaskResponse> {
+    ): List<FullCreatePayoutTask> {
         logger.debug { "Fetching all create payout tasks for issuer: $issuer, owner: $owner" }
         return createPayoutTaskRepository.getAllByIssuerAndOwner(issuer, owner)
             .map { it.toResponse() }
     }
 
-    private fun CreatePayoutTask.toResponse(): CreatePayoutTaskResponse =
-        CreatePayoutTaskResponse(
+    private fun CreatePayoutTask.toResponse(): FullCreatePayoutTask =
+        FullCreatePayoutTask(
             taskId = taskId,
-            chainId = chainId.value,
-            assetAddress = assetAddress.rawValue,
-            payoutBlockNumber = blockNumber.value,
-            ignoredAssetAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
-            requesterAddress = requesterAddress.rawValue,
-            issuerAddress = issuerAddress?.rawValue,
+            chainId = chainId,
+            assetAddress = assetAddress,
+            payoutBlockNumber = blockNumber,
+            ignoredAssetAddresses = ignoredAssetAddresses,
+            requesterAddress = requesterAddress,
+            issuerAddress = issuerAddress,
             taskStatus = data.status,
             data = data.createPayoutData()
         )
 
-    private fun OptionalCreatePayoutTaskData.createPayoutData(): CreatePayoutData? {
+    private fun OptionalCreatePayoutTaskData.createPayoutData(): FullCreatePayoutData? {
         return if (this is SuccessfulTaskData) {
             val tree = merkleTreeRepository.getById(merkleTreeRootId)
 
             tree?.let {
-                CreatePayoutData(
+                FullCreatePayoutData(
                     totalAssetAmount = totalAssetAmount,
-                    merkleRootHash = it.root.hash.value,
-                    merkleTreeIpfsHash = merkleTreeIpfsHash.value,
+                    merkleRootHash = it.root.hash,
+                    merkleTreeIpfsHash = merkleTreeIpfsHash,
                     merkleTreeDepth = it.root.depth,
                     hashFn = it.hashFn
                 )

@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@Deprecated("will be changed or removed by SD-572") // TODO
 class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepository) {
 
     companion object : KLogging()

@@ -21,7 +21,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import java.math.BigInteger
 
-@Deprecated("SD-572") // TODO
 class PayoutInfoControllerApiTest : ControllerTestBase() {
 
     @Autowired
