@@ -39,10 +39,21 @@ include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutPathForS
 All endpoint require `Authorization: Bearer JWT` header.
 Chain ID (e.g. 80001) and asset contract address must be provided in the request path.
 
-=== Create payout
-Creates payout Merkle tree for the specified parameters. Path arguments in order are: chain ID, asset contract address.
+=== Submit create payout task
+Requests creation of payout Merkle tree for specified parameters. This endpoint will return task ID which can then be
+used to fetch task info via another endpoint. Path arguments in order are: chain ID, asset contract address. Issuer
+address is optional.
 
 .Request
-include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreatePayoutForSomeAsset/http-request.adoc[]
+include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreatePayoutTaskForSomeAsset/http-request.adoc[]
 .Response
-include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreatePayoutForSomeAsset/http-response.adoc[]
+include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreatePayoutTaskForSomeAsset/http-response.adoc[]
+
+=== Fetch create payout task info
+Fetches create payout task info. Only successfully completed tasks will contain the `data` field. Possible task
+statuses are `PENDING`, `SUCCESS` and `FAILED`. Path argument is the task ID.
+
+.Request
+include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreateAndExecutePayoutForSomeAsset/http-request.adoc[]
+.Response
+include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreateAndExecutePayoutForSomeAsset/http-response.adoc[]

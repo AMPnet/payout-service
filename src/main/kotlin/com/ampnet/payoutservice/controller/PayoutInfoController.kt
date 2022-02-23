@@ -1,11 +1,11 @@
 package com.ampnet.payoutservice.controller
 
-import com.ampnet.payoutservice.controller.request.FetchMerkleTreePathRequest
-import com.ampnet.payoutservice.controller.request.FetchMerkleTreeRequest
 import com.ampnet.payoutservice.controller.response.FetchMerkleTreePathResponse
 import com.ampnet.payoutservice.controller.response.FetchMerkleTreeResponse
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.ResourceNotFoundException
+import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
+import com.ampnet.payoutservice.model.params.FetchMerkleTreePathParams
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@Deprecated("will be changed or removed by SD-572") // TODO
 class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepository) {
 
     companion object : KLogging()
@@ -28,14 +29,14 @@ class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepositor
         @PathVariable assetAddress: String,
         @PathVariable rootHash: String
     ): ResponseEntity<FetchMerkleTreeResponse> {
-        val request = FetchMerkleTreeRequest(
+        val params = FetchMerkleTreeParams(
             rootHash = Hash(rootHash),
             chainId = ChainId(chainId),
-            contractAddress = ContractAddress(assetAddress)
+            assetAddress = ContractAddress(assetAddress)
         )
-        logger.debug { "Fetching Merkle tree: $request" }
+        logger.debug { "Fetching Merkle tree: $params" }
 
-        val tree = merkleTreeRepository.fetchTree(request)
+        val tree = merkleTreeRepository.fetchTree(params)?.tree
             ?: throw ResourceNotFoundException(
                 ErrorCode.PAYOUT_MERKLE_TREE_NOT_FOUND,
                 "Payout does not exist for specified parameters"
@@ -52,15 +53,15 @@ class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepositor
         @PathVariable rootHash: String,
         @PathVariable walletAddress: String
     ): ResponseEntity<FetchMerkleTreePathResponse> {
-        val request = FetchMerkleTreePathRequest(
+        val params = FetchMerkleTreePathParams(
             rootHash = Hash(rootHash),
             chainId = ChainId(chainId),
-            contractAddress = ContractAddress(assetAddress),
+            assetAddress = ContractAddress(assetAddress),
             walletAddress = WalletAddress(walletAddress)
         )
-        logger.debug { "Fetching payout path for: $request" }
+        logger.debug { "Fetching payout path for: $params" }
 
-        val payoutExists = merkleTreeRepository.containsAddress(request)
+        val payoutExists = merkleTreeRepository.containsAddress(params)
 
         if (payoutExists.not()) {
             throw ResourceNotFoundException(
@@ -69,13 +70,13 @@ class PayoutInfoController(private val merkleTreeRepository: MerkleTreeRepositor
             )
         }
 
-        val tree = merkleTreeRepository.fetchTree(request.toFetchMerkleTreeRequest)
+        val tree = merkleTreeRepository.fetchTree(params.toFetchMerkleTreeParams)?.tree
             ?: throw ResourceNotFoundException(
                 ErrorCode.PAYOUT_NOT_FOUND_FOR_ACCOUNT,
                 "Payout does not exist for specified parameters"
             )
 
-        val (path, accountBalance) = tree.leafNodesByAddress[request.walletAddress]?.let {
+        val (path, accountBalance) = tree.leafNodesByAddress[params.walletAddress]?.let {
             tree.pathTo(it.value.data)?.let { path -> Pair(path, it.value.data) }
         }
             ?: throw ResourceNotFoundException(

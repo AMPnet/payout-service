@@ -10,6 +10,7 @@ class ApplicationProperties {
     val jwt = JwtProperties()
     val ipfs = IpfsProperties()
     val payout = PayoutProperties()
+    val createPayoutQueue = QueueProperties()
     val chainEthereum = ChainProperties()
     val chainGoerli = ChainProperties()
     val chainMatic = ChainProperties()
@@ -34,4 +35,10 @@ class PayoutProperties {
 
 class ChainProperties {
     var startBlockNumber: BigInteger? = null
+}
+
+@Suppress("MagicNumber")
+class QueueProperties {
+    var polling: Long = 5_000L
+    var initialDelay: Long = 15_000L
 }

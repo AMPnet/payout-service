@@ -1,16 +1,16 @@
-package com.ampnet.payoutservice.controller.request
+package com.ampnet.payoutservice.model.params
 
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.Hash
 import com.ampnet.payoutservice.util.WalletAddress
 
-data class FetchMerkleTreePathRequest(
+data class FetchMerkleTreePathParams(
     val rootHash: Hash,
     val chainId: ChainId,
-    val contractAddress: ContractAddress,
+    val assetAddress: ContractAddress,
     val walletAddress: WalletAddress
 ) {
-    val toFetchMerkleTreeRequest: FetchMerkleTreeRequest
-        get() = FetchMerkleTreeRequest(rootHash, chainId, contractAddress)
+    val toFetchMerkleTreeParams: FetchMerkleTreeParams
+        get() = FetchMerkleTreeParams(rootHash, chainId, assetAddress)
 }

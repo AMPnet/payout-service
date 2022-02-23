@@ -3,7 +3,7 @@ package com.ampnet.payoutservice.service
 import com.ampnet.payoutservice.config.ApplicationProperties
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.InternalException
-import com.ampnet.payoutservice.model.PinataResponse
+import com.ampnet.payoutservice.model.json.PinataResponse
 import com.ampnet.payoutservice.util.IpfsHash
 import mu.KLogging
 import org.springframework.http.RequestEntity
