@@ -16,5 +16,7 @@ CREATE TABLE payout_service.create_payout_task (
 
 CREATE INDEX create_payout_task_chain_id_requester_idx
     ON payout_service.create_payout_task(chain_id, requester_address);
+CREATE INDEX create_payout_task_chain_id_idx ON payout_service.create_payout_task(chain_id);
+CREATE INDEX create_payout_task_status_idx ON payout_service.create_payout_task(status);
 CREATE INDEX create_payout_task_issuer_address_idx ON payout_service.create_payout_task(issuer_address);
 CREATE INDEX create_payout_task_requester_address_idx ON payout_service.create_payout_task(requester_address);

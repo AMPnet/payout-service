@@ -7,8 +7,8 @@ import com.ampnet.payoutservice.config.ApplicationProperties
 import com.ampnet.payoutservice.exception.InvalidRequestException
 import com.ampnet.payoutservice.model.params.CreatePayoutTaskParams
 import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
-import com.ampnet.payoutservice.model.result.FullCreatePayoutData
 import com.ampnet.payoutservice.model.result.CreatePayoutTask
+import com.ampnet.payoutservice.model.result.FullCreatePayoutData
 import com.ampnet.payoutservice.model.result.FullCreatePayoutTask
 import com.ampnet.payoutservice.model.result.MerkleTreeWithId
 import com.ampnet.payoutservice.model.result.OtherTaskData
@@ -899,7 +899,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
     }
 
     @Test
-    fun mustCorrectlyFetchAllTasksByIssuerAndOwner() {
+    fun mustCorrectlyFetchAllTasksByChainIdIssuerOwnerAndStatuses() {
         val merkleTreeRepository = mock<MerkleTreeRepository>()
         val treeUuid = UUID.randomUUID()
         val tree = MerkleTree(
@@ -913,6 +913,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
         }
 
         val createPayoutTaskRepository = mock<CreatePayoutTaskRepository>()
+        val chainId = ChainId(1L)
         val issuer = ContractAddress("a")
         val owner = WalletAddress("b")
         val ipfsHash = IpfsHash("ipfs-hash")
@@ -920,7 +921,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
         val tasks = listOf(
             CreatePayoutTask(
                 taskId = UUID.randomUUID(),
-                chainId = ChainId(123L),
+                chainId = chainId,
                 assetAddress = ContractAddress("1"),
                 blockNumber = BlockNumber(BigInteger.TEN),
                 ignoredAssetAddresses = emptySet(),
@@ -934,7 +935,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
             ),
             CreatePayoutTask(
                 taskId = UUID.randomUUID(),
-                chainId = ChainId(456L),
+                chainId = chainId,
                 assetAddress = ContractAddress("2"),
                 blockNumber = BlockNumber(BigInteger.TEN),
                 ignoredAssetAddresses = emptySet(),
@@ -943,9 +944,10 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 data = OtherTaskData(TaskStatus.PENDING)
             )
         )
+        val statuses = listOf(TaskStatus.PENDING, TaskStatus.SUCCESS)
 
         suppose("some create payout tasks are returned") {
-            given(createPayoutTaskRepository.getAllByIssuerAndOwner(issuer, owner))
+            given(createPayoutTaskRepository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer, owner, statuses))
                 .willReturn(tasks)
         }
 
@@ -967,7 +969,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
         )
 
         verify("task are correctly fetched by issuer and owner") {
-            val response = service.getAllTasksByIssuerAndOwner(issuer, owner)
+            val response = service.getAllTasksByIssuerAndOwner(chainId, issuer, owner, statuses)
 
             assertThat(response).withMessage()
                 .containsExactlyInAnyOrder(

@@ -20,6 +20,7 @@ import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.HashFunction
 import com.ampnet.payoutservice.util.MerkleTree
+import com.ampnet.payoutservice.util.TaskStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import mu.KLogging
 import org.springframework.beans.factory.DisposableBean
@@ -70,11 +71,17 @@ class CreatePayoutQueueServiceImpl(
     }
 
     override fun getAllTasksByIssuerAndOwner(
+        chainId: ChainId,
         issuer: ContractAddress?,
-        owner: WalletAddress?
+        owner: WalletAddress?,
+        statuses: List<TaskStatus>
     ): List<FullCreatePayoutTask> {
-        logger.debug { "Fetching all create payout tasks for issuer: $issuer, owner: $owner" }
-        return createPayoutTaskRepository.getAllByIssuerAndOwner(issuer, owner)
+        logger.debug {
+            "Fetching all create payout tasks for chainId: $chainId, issuer: $issuer," +
+                " owner: $owner, statuses: $statuses"
+        }
+
+        return createPayoutTaskRepository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer, owner, statuses)
             .map { it.toResponse() }
     }
 

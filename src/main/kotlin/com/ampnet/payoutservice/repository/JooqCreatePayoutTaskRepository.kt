@@ -36,16 +36,27 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
             ?.toModel()
     }
 
-    override fun getAllByIssuerAndOwner(issuer: ContractAddress?, owner: WalletAddress?): List<CreatePayoutTask> {
-        logger.info { "Fetching all create payout tasks for issuer: $issuer, owner: $owner" }
+    override fun getAllByChainIdIssuerOwnerAndStatuses(
+        chainId: ChainId,
+        issuer: ContractAddress?,
+        owner: WalletAddress?,
+        statuses: List<TaskStatus>
+    ): List<CreatePayoutTask> {
+        logger.info {
+            "Fetching all create payout tasks for chainId: $chainId, issuer: $issuer," +
+                " owner: $owner, statuses: $statuses"
+        }
 
+        val chainIdCondition = CreatePayoutTaskTable.CREATE_PAYOUT_TASK.CHAIN_ID.eq(chainId.value)
         val issuerCondition = issuer?.let { CreatePayoutTaskTable.CREATE_PAYOUT_TASK.ISSUER_ADDRESS.eq(it.rawValue) }
-            ?: DSL.condition("1=1")
         val ownerCondition = owner?.let { CreatePayoutTaskTable.CREATE_PAYOUT_TASK.REQUESTER_ADDRESS.eq(it.rawValue) }
-            ?: DSL.condition("1=1")
+        val dbStatuses = statuses.map { it.toDbEnum }
+        val statusesCondition = dbStatuses.takeIf { it.isNotEmpty() }
+            ?.let { CreatePayoutTaskTable.CREATE_PAYOUT_TASK.STATUS.`in`(it) }
+        val conditions = listOfNotNull(chainIdCondition, issuerCondition, ownerCondition, statusesCondition)
 
         return dslContext.selectFrom(CreatePayoutTaskTable.CREATE_PAYOUT_TASK)
-            .where(issuerCondition.and(ownerCondition))
+            .where(DSL.and(conditions))
             .fetch { it.toModel() }
     }
 
