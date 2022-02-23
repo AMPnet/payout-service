@@ -15,6 +15,7 @@ import com.ampnet.payoutservice.util.TaskStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import mu.KLogging
 import org.jooq.DSLContext
+import org.jooq.impl.DSL
 import org.springframework.stereotype.Repository
 import java.math.BigInteger
 import java.util.UUID
@@ -33,6 +34,19 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
             .where(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.ID.eq(taskId))
             .fetchOne()
             ?.toModel()
+    }
+
+    override fun getAllByIssuerAndOwner(issuer: ContractAddress?, owner: WalletAddress?): List<CreatePayoutTask> {
+        logger.info { "Fetching all create payout tasks for issuer: $issuer, owner: $owner" }
+
+        val issuerCondition = issuer?.let { CreatePayoutTaskTable.CREATE_PAYOUT_TASK.ISSUER_ADDRESS.eq(it.rawValue) }
+            ?: DSL.condition("1=1")
+        val ownerCondition = owner?.let { CreatePayoutTaskTable.CREATE_PAYOUT_TASK.REQUESTER_ADDRESS.eq(it.rawValue) }
+            ?: DSL.condition("1=1")
+
+        return dslContext.selectFrom(CreatePayoutTaskTable.CREATE_PAYOUT_TASK)
+            .where(issuerCondition.and(ownerCondition))
+            .fetch { it.toModel() }
     }
 
     override fun createPayoutTask(params: CreatePayoutTaskParams): UUID {

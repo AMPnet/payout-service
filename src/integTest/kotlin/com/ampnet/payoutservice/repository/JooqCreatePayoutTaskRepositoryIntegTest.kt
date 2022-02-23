@@ -213,6 +213,87 @@ class JooqCreatePayoutTaskRepositoryIntegTest : TestBase() {
     }
 
     @Test
+    fun mustCorrectlyFetchAllTasksByIssuerAndOwner() {
+        val requester1 = WalletAddress("aaa1")
+        val issuer1 = ContractAddress("bbb1")
+        val requester1Issuer1Tasks = listOf(
+            createPendingTaskRecord(issuer1, requester1),
+            createPendingTaskRecord(issuer1, requester1)
+        )
+
+        val issuer2 = ContractAddress("bbb2")
+        val requester1Issuer2Tasks = listOf(
+            createPendingTaskRecord(issuer2, requester1),
+            createPendingTaskRecord(issuer2, requester1),
+            createPendingTaskRecord(issuer2, requester1),
+            createPendingTaskRecord(issuer2, requester1)
+        )
+
+        val requester1NullIssuerTasks = listOf(
+            createPendingTaskRecord(null, requester1),
+            createPendingTaskRecord(null, requester1)
+        )
+
+        val requester2 = WalletAddress("aaa2")
+        val requester2Issuer1Tasks = listOf(
+            createPendingTaskRecord(issuer1, requester2),
+            createPendingTaskRecord(issuer1, requester2),
+            createPendingTaskRecord(issuer1, requester2)
+        )
+
+        val requester2Issuer2Tasks = listOf(
+            createPendingTaskRecord(issuer2, requester2)
+        )
+
+        val requester2NullIssuerTasks = listOf(
+            createPendingTaskRecord(null, requester2),
+            createPendingTaskRecord(null, requester2),
+            createPendingTaskRecord(null, requester2)
+        )
+
+        val requester1Tasks = requester1Issuer1Tasks + requester1Issuer2Tasks + requester1NullIssuerTasks
+        val requester2Tasks = requester2Issuer1Tasks + requester2Issuer2Tasks + requester2NullIssuerTasks
+        val allTasks = requester1Tasks + requester2Tasks
+
+        suppose("all tasks are stored into database") {
+            dslContext.batchInsert(allTasks).execute()
+        }
+
+        verify("tasks are correctly fetched by issuer and owner") {
+            assertThat(repository.getAllByIssuerAndOwner(issuer1, requester1)).withMessage()
+                .containsExactlyInAnyOrderElementsOf(requester1Issuer1Tasks.toModels())
+            assertThat(repository.getAllByIssuerAndOwner(issuer2, requester1)).withMessage()
+                .containsExactlyInAnyOrderElementsOf(requester1Issuer2Tasks.toModels())
+            assertThat(repository.getAllByIssuerAndOwner(issuer1, requester2)).withMessage()
+                .containsExactlyInAnyOrderElementsOf(requester2Issuer1Tasks.toModels())
+            assertThat(repository.getAllByIssuerAndOwner(issuer2, requester2)).withMessage()
+                .containsExactlyInAnyOrderElementsOf(requester2Issuer2Tasks.toModels())
+        }
+
+        val issuer1Tasks = requester1Issuer1Tasks + requester2Issuer1Tasks
+        val issuer2Tasks = requester1Issuer2Tasks + requester2Issuer2Tasks
+
+        verify("tasks are correctly fetched by issuer") {
+            assertThat(repository.getAllByIssuerAndOwner(issuer1, null)).withMessage()
+                .containsExactlyInAnyOrderElementsOf(issuer1Tasks.toModels())
+            assertThat(repository.getAllByIssuerAndOwner(issuer2, null)).withMessage()
+                .containsExactlyInAnyOrderElementsOf(issuer2Tasks.toModels())
+        }
+
+        verify("tasks are correctly fetched by owner") {
+            assertThat(repository.getAllByIssuerAndOwner(null, requester1)).withMessage()
+                .containsExactlyInAnyOrderElementsOf(requester1Tasks.toModels())
+            assertThat(repository.getAllByIssuerAndOwner(null, requester2)).withMessage()
+                .containsExactlyInAnyOrderElementsOf(requester2Tasks.toModels())
+        }
+
+        verify("tasks are correctly fetched with null filters") {
+            assertThat(repository.getAllByIssuerAndOwner(null, null)).withMessage()
+                .containsExactlyInAnyOrderElementsOf(allTasks.toModels())
+        }
+    }
+
+    @Test
     fun mustReturnNullWhenFetchingNonExistentCreatePayoutTaskById() {
         verify("null is returned when fetching non-existent create payout task") {
             val result = repository.getById(UUID.randomUUID())
@@ -472,4 +553,33 @@ class JooqCreatePayoutTaskRepositoryIntegTest : TestBase() {
                 .isEqualTo(expectedResult)
         }
     }
+
+    private fun createPendingTaskRecord(issuer: ContractAddress?, requester: WalletAddress): CreatePayoutTaskRecord =
+        CreatePayoutTaskRecord(
+            id = UUID.randomUUID(),
+            chainId = 1L,
+            assetAddress = ContractAddress("a").rawValue,
+            blockNumber = BlockNumber(BigInteger.TEN).value,
+            ignoredAssetAddresses = emptyArray(),
+            requesterAddress = requester.rawValue,
+            issuerAddress = issuer?.rawValue,
+            status = TaskStatus.PENDING.toDbEnum,
+            resultTree = null,
+            treeIpfsHash = null,
+            totalAssetAmount = null
+        )
+
+    private fun List<CreatePayoutTaskRecord>.toModels(): List<CreatePayoutTask> =
+        map {
+            CreatePayoutTask(
+                taskId = it.id!!,
+                chainId = ChainId(it.chainId!!),
+                assetAddress = ContractAddress(it.assetAddress!!),
+                blockNumber = BlockNumber(it.blockNumber!!),
+                ignoredAssetAddresses = emptySet(),
+                requesterAddress = WalletAddress(it.requesterAddress!!),
+                issuerAddress = it.issuerAddress?.let { ContractAddress(it) },
+                data = OtherTaskData(TaskStatus.PENDING)
+            )
+        }
 }
