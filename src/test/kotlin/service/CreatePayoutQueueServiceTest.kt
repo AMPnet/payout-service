@@ -897,4 +897,109 @@ class CreatePayoutQueueServiceTest : TestBase() {
             verifyNoMoreInteractions(merkleTreeRepository)
         }
     }
+
+    @Test
+    fun mustCorrectlyFetchAllTasksByIssuerAndOwner() {
+        val merkleTreeRepository = mock<MerkleTreeRepository>()
+        val treeUuid = UUID.randomUUID()
+        val tree = MerkleTree(
+            listOf(AccountBalance(WalletAddress("aaaa"), Balance(BigInteger.ONE))),
+            HashFunction.KECCAK_256
+        )
+
+        suppose("Merkle tree can be fetched by ID") {
+            given(merkleTreeRepository.getById(treeUuid))
+                .willReturn(tree)
+        }
+
+        val createPayoutTaskRepository = mock<CreatePayoutTaskRepository>()
+        val issuer = ContractAddress("a")
+        val owner = WalletAddress("b")
+        val ipfsHash = IpfsHash("ipfs-hash")
+        val totalAssetAmount = BigInteger("1000")
+        val tasks = listOf(
+            CreatePayoutTask(
+                taskId = UUID.randomUUID(),
+                chainId = ChainId(123L),
+                assetAddress = ContractAddress("1"),
+                blockNumber = BlockNumber(BigInteger.TEN),
+                ignoredAssetAddresses = emptySet(),
+                requesterAddress = owner,
+                issuerAddress = issuer,
+                data = SuccessfulTaskData(
+                    merkleTreeRootId = treeUuid,
+                    merkleTreeIpfsHash = ipfsHash,
+                    totalAssetAmount = totalAssetAmount
+                )
+            ),
+            CreatePayoutTask(
+                taskId = UUID.randomUUID(),
+                chainId = ChainId(456L),
+                assetAddress = ContractAddress("2"),
+                blockNumber = BlockNumber(BigInteger.TEN),
+                ignoredAssetAddresses = emptySet(),
+                requesterAddress = owner,
+                issuerAddress = issuer,
+                data = OtherTaskData(TaskStatus.PENDING)
+            )
+        )
+
+        suppose("some create payout tasks are returned") {
+            given(createPayoutTaskRepository.getAllByIssuerAndOwner(issuer, owner))
+                .willReturn(tasks)
+        }
+
+        val executorServiceProvider = mock<ScheduledExecutorServiceProvider>()
+        val scheduler = ManualFixedScheduler()
+
+        suppose("ManualFixedScheduler will be used") {
+            given(executorServiceProvider.newSingleThreadScheduledExecutor(any()))
+                .willReturn(scheduler)
+        }
+
+        val service = CreatePayoutQueueServiceImpl(
+            merkleTreeRepository = merkleTreeRepository,
+            createPayoutTaskRepository = createPayoutTaskRepository,
+            ipfsService = mock(),
+            blockchainService = mock(),
+            applicationProperties = ApplicationProperties(),
+            scheduledExecutorServiceProvider = executorServiceProvider
+        )
+
+        verify("task are correctly fetched by issuer and owner") {
+            val response = service.getAllTasksByIssuerAndOwner(issuer, owner)
+
+            assertThat(response).withMessage()
+                .containsExactlyInAnyOrder(
+                    CreatePayoutTaskResponse(
+                        taskId = tasks[0].taskId,
+                        chainId = tasks[0].chainId.value,
+                        assetAddress = tasks[0].assetAddress.rawValue,
+                        payoutBlockNumber = tasks[0].blockNumber.value,
+                        ignoredAssetAddresses = emptySet(),
+                        requesterAddress = tasks[0].requesterAddress.rawValue,
+                        issuerAddress = tasks[0].issuerAddress?.rawValue,
+                        taskStatus = TaskStatus.SUCCESS,
+                        data = CreatePayoutData(
+                            totalAssetAmount = totalAssetAmount,
+                            merkleRootHash = tree.root.hash.value,
+                            merkleTreeIpfsHash = ipfsHash.value,
+                            merkleTreeDepth = tree.root.depth,
+                            hashFn = tree.hashFn
+                        )
+                    ),
+                    CreatePayoutTaskResponse(
+                        taskId = tasks[1].taskId,
+                        chainId = tasks[1].chainId.value,
+                        assetAddress = tasks[1].assetAddress.rawValue,
+                        payoutBlockNumber = tasks[1].blockNumber.value,
+                        ignoredAssetAddresses = emptySet(),
+                        requesterAddress = tasks[1].requesterAddress.rawValue,
+                        issuerAddress = tasks[1].issuerAddress?.rawValue,
+                        taskStatus = TaskStatus.PENDING,
+                        data = null
+                    )
+                )
+        }
+    }
 }

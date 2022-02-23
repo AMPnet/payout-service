@@ -9,6 +9,7 @@ import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.InvalidRequestException
 import com.ampnet.payoutservice.model.params.CreatePayoutTaskParams
 import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
+import com.ampnet.payoutservice.model.result.CreatePayoutTask
 import com.ampnet.payoutservice.model.result.OptionalCreatePayoutTaskData
 import com.ampnet.payoutservice.model.result.PendingCreatePayoutTask
 import com.ampnet.payoutservice.model.result.SuccessfulTaskData
@@ -65,21 +66,30 @@ class CreatePayoutQueueServiceImpl(
 
     override fun getTaskById(taskId: UUID): CreatePayoutTaskResponse? {
         logger.debug { "Fetching create payout task, taskId: $taskId" }
-
-        val task = createPayoutTaskRepository.getById(taskId) ?: return null
-
-        return CreatePayoutTaskResponse(
-            taskId = taskId,
-            chainId = task.chainId.value,
-            assetAddress = task.assetAddress.rawValue,
-            payoutBlockNumber = task.blockNumber.value,
-            ignoredAssetAddresses = task.ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
-            requesterAddress = task.requesterAddress.rawValue,
-            issuerAddress = task.issuerAddress?.rawValue,
-            taskStatus = task.data.status,
-            data = task.data.createPayoutData()
-        )
+        return createPayoutTaskRepository.getById(taskId)?.toResponse()
     }
+
+    override fun getAllTasksByIssuerAndOwner(
+        issuer: ContractAddress?,
+        owner: WalletAddress?
+    ): List<CreatePayoutTaskResponse> {
+        logger.debug { "Fetching all create payout tasks for issuer: $issuer, owner: $owner" }
+        return createPayoutTaskRepository.getAllByIssuerAndOwner(issuer, owner)
+            .map { it.toResponse() }
+    }
+
+    private fun CreatePayoutTask.toResponse(): CreatePayoutTaskResponse =
+        CreatePayoutTaskResponse(
+            taskId = taskId,
+            chainId = chainId.value,
+            assetAddress = assetAddress.rawValue,
+            payoutBlockNumber = blockNumber.value,
+            ignoredAssetAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
+            requesterAddress = requesterAddress.rawValue,
+            issuerAddress = issuerAddress?.rawValue,
+            taskStatus = data.status,
+            data = data.createPayoutData()
+        )
 
     private fun OptionalCreatePayoutTaskData.createPayoutData(): CreatePayoutData? {
         return if (this is SuccessfulTaskData) {

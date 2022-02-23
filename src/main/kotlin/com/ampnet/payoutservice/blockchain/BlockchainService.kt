@@ -21,7 +21,7 @@ interface BlockchainService {
 
     fun getAssetOwner(chainId: ChainId, assetAddress: ContractAddress): WalletAddress
 
-    fun getPayoutsForAdmin(params: GetPayoutsForAdminParams): List<Payout> // TODO test
+    fun getPayoutsForAdmin(params: GetPayoutsForAdminParams): List<Payout>
 
-    fun getPayoutsForInvestor(params: GetPayoutsForInvestorParams): List<PayoutForInvestor> // TODO test
+    fun getPayoutsForInvestor(params: GetPayoutsForInvestorParams): List<PayoutForInvestor>
 }
