@@ -1,14 +1,17 @@
 package com.ampnet.payoutservice.model.result
 
 import com.ampnet.payoutservice.blockchain.PayoutStruct
+import com.ampnet.payoutservice.controller.response.PayoutResponse
 import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.Hash
 import com.ampnet.payoutservice.util.IpfsHash
+import com.ampnet.payoutservice.util.PayoutStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import org.web3j.utils.Numeric
 import java.math.BigInteger
+import java.util.UUID
 
 data class Payout(
     val payoutId: BigInteger,
@@ -50,6 +53,30 @@ data class Payout(
             owner = payoutOwner,
             merkleRootHash = assetSnapshotMerkleRoot,
             totalAssetAmount = totalAssetAmount
+        )
+
+    fun toPayoutResponse(taskId: UUID?, issuer: String?): PayoutResponse =
+        PayoutResponse(
+            taskId = taskId,
+            status = PayoutStatus.PAYOUT_CREATED,
+            issuer = issuer,
+
+            payoutId = payoutId,
+            payoutOwner = payoutOwner.rawValue,
+            payoutInfo = payoutInfo,
+            isCanceled = isCanceled,
+
+            asset = asset.rawValue,
+            totalAssetAmount = totalAssetAmount.rawValue,
+            ignoredAssetAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
+
+            assetSnapshotMerkleRoot = assetSnapshotMerkleRoot.value,
+            assetSnapshotMerkleDepth = assetSnapshotMerkleDepth.intValueExact(),
+            assetSnapshotBlockNumber = assetSnapshotBlockNumber.value,
+
+            rewardAsset = rewardAsset.rawValue,
+            totalRewardAmount = totalRewardAmount.rawValue,
+            remainingRewardAmount = remainingRewardAmount.rawValue
         )
 }
 

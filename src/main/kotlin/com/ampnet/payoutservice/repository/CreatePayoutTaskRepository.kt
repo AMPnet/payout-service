@@ -9,7 +9,6 @@ import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.IpfsHash
 import com.ampnet.payoutservice.util.TaskStatus
 import com.ampnet.payoutservice.util.WalletAddress
-import java.math.BigInteger
 import java.util.UUID
 
 interface CreatePayoutTaskRepository {

@@ -44,7 +44,7 @@ class PayoutController(
 
     companion object : KLogging()
 
-    @GetMapping("/payouts/{chainId}/task/{taskId}")  // TODO update docs
+    @GetMapping("/payouts/{chainId}/task/{taskId}")
     fun getPayoutByTaskId(
         @PathVariable chainId: Long,
         @PathVariable taskId: UUID
@@ -59,7 +59,8 @@ class PayoutController(
             )
     }
 
-    @GetMapping("/payouts/{chainId}") // TODO document
+    @Suppress("LongParameterList")
+    @GetMapping("/payouts/{chainId}")
     fun getPayouts(
         @PathVariable chainId: Long,
         @RequestParam(required = false) issuer: String?,
@@ -99,12 +100,13 @@ class PayoutController(
         } else emptyList()
 
         val otherPayouts = otherTasks.map { it.toPayoutResponse() }
-        val allPayouts = otherPayouts + matchCreatedPayoutsWithSuccessfulTasks(successfulTasks, createdPayouts, issuer)
+        val allPayouts = matchCreatedPayoutsWithSuccessfulTasks(successfulTasks, createdPayouts, issuer) + otherPayouts
 
         return ResponseEntity.ok(AdminPayoutsResponse(allPayouts))
     }
 
-    @GetMapping("/payouts/{chainId}/investor/{investorAddress}")  // TODO document
+    @Suppress("LongParameterList")
+    @GetMapping("/payouts/{chainId}/investor/{investorAddress}")
     fun getPayoutsForInvestor(
         @PathVariable chainId: Long,
         @PathVariable investorAddress: String,
@@ -140,8 +142,13 @@ class PayoutController(
             val path = accountBalance?.let { tree.pathTo(it) }
 
             if (path != null) { // return only claimable (and already claimed) payouts for this investor
+                val totalRewardAmount = payoutData.payout.totalRewardAmount.rawValue
+                val balance = accountBalance.balance.rawValue
+                val totalAssetAmount = payoutData.payout.totalAssetAmount.rawValue
+                val totalAmountClaimable = (totalRewardAmount * balance) / totalAssetAmount
+                val amountClaimable = totalAmountClaimable - payoutData.amountClaimed.rawValue
+
                 val payout = payoutData.payout.toPayoutResponse(taskId = null, issuer = issuer)
-                val amountClaimable = accountBalance.balance.rawValue - payoutData.amountClaimed.rawValue
 
                 InvestorPayoutResponse(
                     payout = payout,
@@ -196,8 +203,8 @@ class PayoutController(
             val tasks = tasksByKey[key] ?: emptyList()
             val payouts = payoutsByKey[key] ?: emptyList()
 
-            val matchedTasks = tasks.subList(0, payouts.size)
-            val matchedPayouts = payouts.subList(0, tasks.size)
+            val matchedTasks = tasks.take(payouts.size)
+            val matchedPayouts = payouts.take(tasks.size)
             val payoutsWithTask = matchedPayouts.zip(matchedTasks).map {
                 it.first.toPayoutResponse(taskId = it.second.taskId, issuer = it.second.issuerAddress?.rawValue)
             }
@@ -205,55 +212,7 @@ class PayoutController(
             val remainingTasks = tasks.drop(payouts.size).map { it.toPayoutResponse() }
             val remainingPayouts = payouts.drop(tasks.size).map { it.toPayoutResponse(taskId = null, issuer = issuer) }
 
-            payoutsWithTask + remainingTasks + remainingPayouts
+            payoutsWithTask + remainingPayouts + remainingTasks
         }
     }
-
-    private fun FullCreatePayoutTask.toPayoutResponse(): PayoutResponse =
-        PayoutResponse(
-            taskId = taskId,
-            status = taskStatus.toPayoutStatus,
-            issuer = issuerAddress?.rawValue,
-
-            payoutId = null,
-            payoutOwner = requesterAddress.rawValue,
-            payoutInfo = null,
-            isCanceled = null,
-
-            asset = assetAddress.rawValue,
-            totalAssetAmount = null,
-            ignoredAssetAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
-
-            assetSnapshotMerkleRoot = null,
-            assetSnapshotMerkleDepth = null,
-            assetSnapshotBlockNumber = payoutBlockNumber.value,
-
-            rewardAsset = null,
-            totalRewardAmount = null,
-            remainingRewardAmount = null
-        )
-
-    private fun Payout.toPayoutResponse(taskId: UUID?, issuer: String?): PayoutResponse =
-        PayoutResponse(
-            taskId = taskId,
-            status = PayoutStatus.PAYOUT_CREATED,
-            issuer = issuer,
-
-            payoutId = payoutId,
-            payoutOwner = payoutOwner.rawValue,
-            payoutInfo = payoutInfo,
-            isCanceled = isCanceled,
-
-            asset = asset.rawValue,
-            totalAssetAmount = totalAssetAmount.rawValue,
-            ignoredAssetAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
-
-            assetSnapshotMerkleRoot = assetSnapshotMerkleRoot.value,
-            assetSnapshotMerkleDepth = assetSnapshotMerkleDepth.intValueExact(),
-            assetSnapshotBlockNumber = assetSnapshotBlockNumber.value,
-
-            rewardAsset = rewardAsset.rawValue,
-            totalRewardAmount = totalRewardAmount.rawValue,
-            remainingRewardAmount = remainingRewardAmount.rawValue
-        )
 }

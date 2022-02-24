@@ -1,5 +1,6 @@
 package com.ampnet.payoutservice.model.result
 
+import com.ampnet.payoutservice.controller.response.PayoutResponse
 import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
@@ -7,6 +8,7 @@ import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.Hash
 import com.ampnet.payoutservice.util.HashFunction
 import com.ampnet.payoutservice.util.IpfsHash
+import com.ampnet.payoutservice.util.PayoutStatus
 import com.ampnet.payoutservice.util.TaskStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import java.util.UUID
@@ -32,6 +34,30 @@ data class FullCreatePayoutTask(
                 totalAssetAmount = data.totalAssetAmount
             )
         }
+
+    fun toPayoutResponse(): PayoutResponse =
+        PayoutResponse(
+            taskId = taskId,
+            status = PayoutStatus.fromTaskStatus(taskStatus),
+            issuer = issuerAddress?.rawValue,
+
+            payoutId = null,
+            payoutOwner = requesterAddress.rawValue,
+            payoutInfo = null,
+            isCanceled = null,
+
+            asset = assetAddress.rawValue,
+            totalAssetAmount = data?.totalAssetAmount?.rawValue,
+            ignoredAssetAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
+
+            assetSnapshotMerkleRoot = data?.merkleRootHash?.value,
+            assetSnapshotMerkleDepth = data?.merkleTreeDepth,
+            assetSnapshotBlockNumber = payoutBlockNumber.value,
+
+            rewardAsset = null,
+            totalRewardAmount = null,
+            remainingRewardAmount = null
+        )
 }
 
 data class FullCreatePayoutData(

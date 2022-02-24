@@ -27,6 +27,7 @@ import org.web3j.tx.gas.DefaultGasProvider
 import java.math.BigInteger
 
 @Service
+@Suppress("TooManyFunctions")
 class Web3jBlockchainService(applicationProperties: ApplicationProperties) : BlockchainService {
 
     companion object : KLogging()

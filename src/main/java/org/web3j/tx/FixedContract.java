@@ -63,6 +63,7 @@ public abstract class FixedContract extends ManagedTransaction {
      * @deprecated ...
      * @see org.web3j.tx.gas.DefaultGasProvider
      */
+    @Deprecated
     public static final BigInteger GAS_LIMIT = BigInteger.valueOf(4_300_000);
 
     public static final String BIN_NOT_PROVIDED = "Bin file was not provided";
@@ -206,6 +207,7 @@ public abstract class FixedContract extends ManagedTransaction {
      * @param newPrice gas price to use for subsequent transactions
      * @deprecated use ContractGasProvider
      */
+    @Deprecated
     public void setGasPrice(BigInteger newPrice) {
         this.gasProvider = new StaticGasProvider(newPrice, gasProvider.getGasLimit());
     }
@@ -216,6 +218,7 @@ public abstract class FixedContract extends ManagedTransaction {
      * @return the gas price set on this contract
      * @deprecated use ContractGasProvider
      */
+    @Deprecated
     public BigInteger getGasPrice() {
         return gasProvider.getGasPrice();
     }
