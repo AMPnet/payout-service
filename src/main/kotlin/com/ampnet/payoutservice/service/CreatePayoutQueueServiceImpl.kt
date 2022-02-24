@@ -3,18 +3,19 @@ package com.ampnet.payoutservice.service
 import com.ampnet.payoutservice.blockchain.BlockchainService
 import com.ampnet.payoutservice.blockchain.properties.ChainPropertiesHandler
 import com.ampnet.payoutservice.config.ApplicationProperties
-import com.ampnet.payoutservice.model.result.FullCreatePayoutData
-import com.ampnet.payoutservice.model.result.FullCreatePayoutTask
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.InvalidRequestException
 import com.ampnet.payoutservice.model.params.CreatePayoutTaskParams
 import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
 import com.ampnet.payoutservice.model.result.CreatePayoutTask
+import com.ampnet.payoutservice.model.result.FullCreatePayoutData
+import com.ampnet.payoutservice.model.result.FullCreatePayoutTask
 import com.ampnet.payoutservice.model.result.OptionalCreatePayoutTaskData
 import com.ampnet.payoutservice.model.result.PendingCreatePayoutTask
 import com.ampnet.payoutservice.model.result.SuccessfulTaskData
 import com.ampnet.payoutservice.repository.CreatePayoutTaskRepository
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
+import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
@@ -74,7 +75,7 @@ class CreatePayoutQueueServiceImpl(
         chainId: ChainId,
         issuer: ContractAddress?,
         owner: WalletAddress?,
-        statuses: List<TaskStatus>
+        statuses: Set<TaskStatus>
     ): List<FullCreatePayoutTask> {
         logger.debug {
             "Fetching all create payout tasks for chainId: $chainId, issuer: $issuer," +
@@ -134,7 +135,7 @@ class CreatePayoutQueueServiceImpl(
             startBlock = chainHandler.getChainProperties(task.chainId)?.startBlockNumber?.let { BlockNumber(it) },
             endBlock = task.blockNumber
         )
-        val totalAssetAmount = balances.sumOf { it.balance.rawValue }
+        val totalAssetAmount = Balance(balances.sumOf { it.balance.rawValue })
 
         logger.info { "Total sum of non-ignored asset balances: $totalAssetAmount" }
 

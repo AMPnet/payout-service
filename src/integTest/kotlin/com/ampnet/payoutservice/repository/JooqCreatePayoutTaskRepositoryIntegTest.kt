@@ -10,6 +10,7 @@ import com.ampnet.payoutservice.model.result.PendingCreatePayoutTask
 import com.ampnet.payoutservice.model.result.SuccessfulTaskData
 import com.ampnet.payoutservice.service.UuidProvider
 import com.ampnet.payoutservice.testcontainers.PostgresTestContainer
+import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
@@ -29,8 +30,8 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Import
 import java.math.BigInteger
 import java.util.UUID
-import com.ampnet.payoutservice.generated.jooq.tables.CreatePayoutTask as CreatePayoutTaskTable
 import com.ampnet.payoutservice.generated.jooq.enums.TaskStatus as DbTaskStatus
+import com.ampnet.payoutservice.generated.jooq.tables.CreatePayoutTask as CreatePayoutTaskTable
 
 @JooqTest
 @Import(JooqCreatePayoutTaskRepository::class)
@@ -76,7 +77,7 @@ class JooqCreatePayoutTaskRepositoryIntegTest : TestBase() {
         val issuerAddress = ContractAddress("c")
         val ignoredAssetAddresses = setOf(WalletAddress("e"))
         val treeIpfsHash = IpfsHash("tree-ipfs-hash")
-        val totalAssetAmount = BigInteger("123")
+        val totalAssetAmount = Balance(BigInteger("123"))
 
         suppose("successful task is stored into database") {
             dslContext.executeInsert(
@@ -91,7 +92,7 @@ class JooqCreatePayoutTaskRepositoryIntegTest : TestBase() {
                     status = TaskStatus.SUCCESS.toDbEnum,
                     resultTree = treeUuid,
                     treeIpfsHash = treeIpfsHash.value,
-                    totalAssetAmount = totalAssetAmount
+                    totalAssetAmount = totalAssetAmount.rawValue
                 )
             )
         }
@@ -271,16 +272,16 @@ class JooqCreatePayoutTaskRepositoryIntegTest : TestBase() {
         }
 
         verify("tasks are correctly fetched by issuer and owner") {
-            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer1, requester1, emptyList()))
+            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer1, requester1, emptySet()))
                 .withMessage()
                 .containsExactlyInAnyOrderElementsOf(requester1Issuer1Tasks.toModels())
-            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer2, requester1, emptyList()))
+            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer2, requester1, emptySet()))
                 .withMessage()
                 .containsExactlyInAnyOrderElementsOf(requester1Issuer2Tasks.toModels())
-            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer1, requester2, emptyList()))
+            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer1, requester2, emptySet()))
                 .withMessage()
                 .containsExactlyInAnyOrderElementsOf(requester2Issuer1Tasks.toModels())
-            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer2, requester2, emptyList()))
+            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer2, requester2, emptySet()))
                 .withMessage()
                 .containsExactlyInAnyOrderElementsOf(requester2Issuer2Tasks.toModels())
         }
@@ -289,44 +290,44 @@ class JooqCreatePayoutTaskRepositoryIntegTest : TestBase() {
         val issuer2Tasks = requester1Issuer2Tasks + requester2Issuer2Tasks
 
         verify("tasks are correctly fetched by issuer") {
-            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer1, null, emptyList()))
+            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer1, null, emptySet()))
                 .withMessage()
                 .containsExactlyInAnyOrderElementsOf(issuer1Tasks.toModels())
-            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer2, null, emptyList()))
+            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer2, null, emptySet()))
                 .withMessage()
                 .containsExactlyInAnyOrderElementsOf(issuer2Tasks.toModels())
         }
 
         verify("tasks are correctly fetched by owner") {
-            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, null, requester1, emptyList()))
+            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, null, requester1, emptySet()))
                 .withMessage()
                 .containsExactlyInAnyOrderElementsOf(requester1Tasks.toModels())
-            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, null, requester2, emptyList()))
+            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, null, requester2, emptySet()))
                 .withMessage()
                 .containsExactlyInAnyOrderElementsOf(requester2Tasks.toModels())
         }
 
         verify("tasks are correctly fetched by status") {
             assertThat(
-                repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, null, null, listOf(TaskStatus.PENDING))
+                repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, null, null, setOf(TaskStatus.PENDING))
             )
                 .withMessage()
                 .containsExactlyInAnyOrderElementsOf(allTasks.filter { it.status == DbTaskStatus.PENDING }.toModels())
             assertThat(
-                repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, null, null, listOf(TaskStatus.FAILED))
+                repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, null, null, setOf(TaskStatus.FAILED))
             )
                 .withMessage()
                 .containsExactlyInAnyOrderElementsOf(allTasks.filter { it.status == DbTaskStatus.FAILED }.toModels())
         }
 
         verify("tasks are correctly fetched with null filters") {
-            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, null, null, emptyList()))
+            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(chainId, null, null, emptySet()))
                 .withMessage()
                 .containsExactlyInAnyOrderElementsOf(allTasks.toModels())
         }
 
         verify("tasks are correctly fetched for other chain ID") {
-            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(otherChainId, null, null, emptyList()))
+            assertThat(repository.getAllByChainIdIssuerOwnerAndStatuses(otherChainId, null, null, emptySet()))
                 .withMessage()
                 .containsExactlyInAnyOrderElementsOf(otherChainTasks.toModels())
         }
@@ -503,7 +504,7 @@ class JooqCreatePayoutTaskRepositoryIntegTest : TestBase() {
         }
 
         val treeIpfsHash = IpfsHash("tree-ipfs-hash")
-        val totalAssetAmount = BigInteger("123")
+        val totalAssetAmount = Balance(BigInteger("123"))
         val expectedResult = CreatePayoutTask(
             taskId = taskUuid,
             chainId = chainId,

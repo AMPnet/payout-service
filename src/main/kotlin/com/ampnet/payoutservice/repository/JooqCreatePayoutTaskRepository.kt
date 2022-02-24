@@ -7,6 +7,7 @@ import com.ampnet.payoutservice.model.result.OtherTaskData
 import com.ampnet.payoutservice.model.result.PendingCreatePayoutTask
 import com.ampnet.payoutservice.model.result.SuccessfulTaskData
 import com.ampnet.payoutservice.service.UuidProvider
+import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
@@ -17,7 +18,6 @@ import mu.KLogging
 import org.jooq.DSLContext
 import org.jooq.impl.DSL
 import org.springframework.stereotype.Repository
-import java.math.BigInteger
 import java.util.UUID
 import com.ampnet.payoutservice.generated.jooq.enums.TaskStatus as DbTaskStatus
 import com.ampnet.payoutservice.generated.jooq.tables.CreatePayoutTask as CreatePayoutTaskTable
@@ -40,7 +40,7 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
         chainId: ChainId,
         issuer: ContractAddress?,
         owner: WalletAddress?,
-        statuses: List<TaskStatus>
+        statuses: Set<TaskStatus>
     ): List<CreatePayoutTask> {
         logger.info {
             "Fetching all create payout tasks for chainId: $chainId, issuer: $issuer," +
@@ -107,7 +107,7 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
         taskId: UUID,
         merkleTreeRootId: UUID,
         merkleTreeIpfsHash: IpfsHash,
-        totalAssetAmount: BigInteger
+        totalAssetAmount: Balance
     ): CreatePayoutTask? {
         logger.info {
             "Marking task as success, taskId: $taskId, merkleTreeRootId: $merkleTreeRootId," +
@@ -117,7 +117,7 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
             .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.STATUS, DbTaskStatus.SUCCESS)
             .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.RESULT_TREE, merkleTreeRootId)
             .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.TREE_IPFS_HASH, merkleTreeIpfsHash.value)
-            .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.TOTAL_ASSET_AMOUNT, totalAssetAmount)
+            .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.TOTAL_ASSET_AMOUNT, totalAssetAmount.rawValue)
             .where(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.ID.eq(taskId))
             .returning()
             .fetchOne()
@@ -140,7 +140,7 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
             SuccessfulTaskData(
                 merkleTreeRootId = resultTree!!,
                 merkleTreeIpfsHash = IpfsHash(treeIpfsHash!!),
-                totalAssetAmount = totalAssetAmount!!
+                totalAssetAmount = Balance(totalAssetAmount!!)
             )
         } else OtherTaskData(taskStatus)
 

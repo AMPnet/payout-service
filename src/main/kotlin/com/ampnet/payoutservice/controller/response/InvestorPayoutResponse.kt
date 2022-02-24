@@ -1,5 +1,8 @@
 package com.ampnet.payoutservice.controller.response
 
+import com.ampnet.payoutservice.util.MerkleTree.Companion.PathSegment
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer
 import java.math.BigInteger
@@ -14,5 +17,10 @@ data class InvestorPayoutResponse(
     val amountClaimable: BigInteger?,
     @JsonSerialize(using = ToStringSerializer::class)
     val balance: BigInteger?,
-    val proof: List<String>?
-)
+    @JsonIgnore
+    val path: List<PathSegment>?
+) {
+    @Suppress("unused") // returned in JSON
+    @JsonProperty
+    private val proof = path?.map { it.siblingHash.value }
+}

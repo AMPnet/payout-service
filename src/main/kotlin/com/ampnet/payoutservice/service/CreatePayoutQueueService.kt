@@ -16,6 +16,6 @@ interface CreatePayoutQueueService {
         chainId: ChainId,
         issuer: ContractAddress?,
         owner: WalletAddress?,
-        statuses: List<TaskStatus>
+        statuses: Set<TaskStatus>
     ): List<FullCreatePayoutTask>
 }

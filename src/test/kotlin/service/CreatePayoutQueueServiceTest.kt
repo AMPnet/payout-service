@@ -93,7 +93,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
             AccountBalance(WalletAddress("2"), Balance(BigInteger.ONE)),
             AccountBalance(WalletAddress("3"), Balance(BigInteger.TWO))
         )
-        val totalAssetAmount = BigInteger("3")
+        val totalAssetAmount = Balance(BigInteger("3"))
 
         suppose("some asset balances are fetched") {
             given(
@@ -467,7 +467,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
             AccountBalance(WalletAddress("2"), Balance(BigInteger.ONE)),
             AccountBalance(WalletAddress("3"), Balance(BigInteger.TWO))
         )
-        val totalAssetAmount = BigInteger("3")
+        val totalAssetAmount = Balance(BigInteger("3"))
 
         suppose("some asset balances are fetched") {
             given(
@@ -736,7 +736,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
             AccountBalance(WalletAddress("2"), Balance(BigInteger.ONE)),
             AccountBalance(WalletAddress("3"), Balance(BigInteger.TWO))
         )
-        val totalAssetAmount = BigInteger("3")
+        val totalAssetAmount = Balance(BigInteger("3"))
 
         val blockchainService = mock<BlockchainService>()
 
@@ -917,7 +917,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
         val issuer = ContractAddress("a")
         val owner = WalletAddress("b")
         val ipfsHash = IpfsHash("ipfs-hash")
-        val totalAssetAmount = BigInteger("1000")
+        val totalAssetAmount = Balance(BigInteger("1000"))
         val tasks = listOf(
             CreatePayoutTask(
                 taskId = UUID.randomUUID(),
@@ -944,7 +944,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 data = OtherTaskData(TaskStatus.PENDING)
             )
         )
-        val statuses = listOf(TaskStatus.PENDING, TaskStatus.SUCCESS)
+        val statuses = setOf(TaskStatus.PENDING, TaskStatus.SUCCESS)
 
         suppose("some create payout tasks are returned") {
             given(createPayoutTaskRepository.getAllByChainIdIssuerOwnerAndStatuses(chainId, issuer, owner, statuses))

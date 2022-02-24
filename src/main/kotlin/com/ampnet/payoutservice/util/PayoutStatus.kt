@@ -1,5 +1,8 @@
 package com.ampnet.payoutservice.util
 
-enum class PayoutStatus {
-    PROOF_PENDING, PROOF_FAILED, PROOF_CREATED, PAYOUT_CREATED
+enum class PayoutStatus(val toTaskStatus: TaskStatus) {
+    PROOF_PENDING(TaskStatus.PENDING),
+    PROOF_FAILED(TaskStatus.FAILED),
+    PROOF_CREATED(TaskStatus.SUCCESS),
+    PAYOUT_CREATED(TaskStatus.SUCCESS)
 }

@@ -42,4 +42,21 @@ data class Payout(
         totalRewardAmount = Balance(struct.totalRewardAmount),
         remainingRewardAmount = Balance(struct.remainingRewardAmount)
     )
+
+    fun toKey(): PayoutKey =
+        PayoutKey(
+            asset = asset,
+            payoutBlockNumber = assetSnapshotBlockNumber,
+            owner = payoutOwner,
+            merkleRootHash = assetSnapshotMerkleRoot,
+            totalAssetAmount = totalAssetAmount
+        )
 }
+
+data class PayoutKey(
+    val asset: ContractAddress,
+    val payoutBlockNumber: BlockNumber,
+    val owner: WalletAddress,
+    val merkleRootHash: Hash,
+    val totalAssetAmount: Balance
+)
