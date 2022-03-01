@@ -29,7 +29,7 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
     companion object : KLogging()
 
     override fun getById(taskId: UUID): CreatePayoutTask? {
-        logger.info { "Fetching create payout task, taskId: $taskId" }
+        logger.debug { "Fetching create payout task, taskId: $taskId" }
         return dslContext.selectFrom(CreatePayoutTaskTable.CREATE_PAYOUT_TASK)
             .where(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.ID.eq(taskId))
             .fetchOne()
@@ -42,7 +42,7 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
         owner: WalletAddress?,
         statuses: Set<TaskStatus>
     ): List<CreatePayoutTask> {
-        logger.info {
+        logger.debug {
             "Fetching all create payout tasks for chainId: $chainId, issuer: $issuer," +
                 " owner: $owner, statuses: $statuses"
         }

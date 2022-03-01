@@ -50,8 +50,8 @@ include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreatePayoutTaskForS
 include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreatePayoutTaskForSomeAsset/http-response.adoc[]
 
 === Fetch create payout task info
-Fetches create payout task info. Possible task statuses are `PENDING`, `SUCCESS` and `FAILED`. Path argument is
-the task ID.
+Fetches create payout task info. Possible task statuses are `PENDING`, `SUCCESS` and `FAILED`. Path arguments are
+Chain ID and task ID.
 
 .Request
 include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreateAndExecutePayoutForSomeAsset/http-request.adoc[]

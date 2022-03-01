@@ -213,9 +213,8 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
     @Suppress("TooGenericExceptionCaught")
     private fun IPayoutManager.fetchAllPayouts(): List<PayoutStruct>? =
         try {
-            currentPayoutId.sendSafely()?.longValueExact()?.let { numOfPayouts ->
-                (0L until numOfPayouts).map { id -> getPayoutInfo(BigInteger.valueOf(id)).send() }
-            }
+            val numOfPayouts = currentPayoutId.send().longValueExact()
+            (0L until numOfPayouts).map { id -> getPayoutInfo(BigInteger.valueOf(id)).send() }
         } catch (ex: Exception) {
             logger.warn("Failed smart contract call", ex)
             null

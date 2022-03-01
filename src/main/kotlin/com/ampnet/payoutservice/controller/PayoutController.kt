@@ -63,12 +63,12 @@ class PayoutController(
     @GetMapping("/payouts/{chainId}")
     fun getPayouts(
         @PathVariable chainId: Long,
-        @RequestParam(required = false) issuer: String?,
-        @RequestParam(required = false) owner: String?,
-        @RequestParam(required = false) status: List<PayoutStatus>?,
         @RequestParam(required = true) assetFactories: List<String>,
         @RequestParam(required = true) payoutService: String,
-        @RequestParam(required = true) payoutManager: String
+        @RequestParam(required = true) payoutManager: String,
+        @RequestParam(required = false) issuer: String?,
+        @RequestParam(required = false) owner: String?,
+        @RequestParam(required = false) status: List<PayoutStatus>?
     ): ResponseEntity<AdminPayoutsResponse> {
         logger.debug {
             "Get admin payouts, chainId: $chainId, issuer: $issuer, owner: $owner, statuses: $status," +
@@ -110,10 +110,10 @@ class PayoutController(
     fun getPayoutsForInvestor(
         @PathVariable chainId: Long,
         @PathVariable investorAddress: String,
-        @RequestParam(required = false) issuer: String?,
         @RequestParam(required = true) assetFactories: List<String>,
         @RequestParam(required = true) payoutService: String,
-        @RequestParam(required = true) payoutManager: String
+        @RequestParam(required = true) payoutManager: String,
+        @RequestParam(required = false) issuer: String?
     ): ResponseEntity<InvestorPayoutsResponse> {
         logger.debug {
             "Get investor payouts, chainId: $chainId, investorAddress: $investorAddress, issuer: $issuer," +

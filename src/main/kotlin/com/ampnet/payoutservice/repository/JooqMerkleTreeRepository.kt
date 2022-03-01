@@ -29,7 +29,7 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
     companion object : KLogging()
 
     override fun getById(treeId: UUID): MerkleTree? {
-        logger.info { "Fetching Merkle tree, treeId: $treeId" }
+        logger.debug { "Fetching Merkle tree, treeId: $treeId" }
 
         return dslContext.selectFrom(MerkleTreeRoot.MERKLE_TREE_ROOT)
             .where(MerkleTreeRoot.MERKLE_TREE_ROOT.ID.eq(treeId))
@@ -80,7 +80,7 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
     }
 
     override fun fetchTree(params: FetchMerkleTreeParams): MerkleTreeWithId? {
-        logger.info { "Fetching Merkle, params: $params" }
+        logger.debug { "Fetching Merkle, params: $params" }
 
         val root = dslContext.selectFrom(MerkleTreeRoot.MERKLE_TREE_ROOT)
             .where(
@@ -95,7 +95,7 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
         val tree = rebuildTree(root)
 
         return if (tree.root.hash == params.rootHash) {
-            logger.info { "Successfully fetched and reconstructed Merkle tree, params: $params" }
+            logger.debug { "Successfully fetched and reconstructed Merkle tree, params: $params" }
             MerkleTreeWithId(root.id!!, tree)
         } else {
             logger.error { "Failed to reconstruct Merkle tree, params: $params" }
@@ -104,7 +104,7 @@ class JooqMerkleTreeRepository(private val dslContext: DSLContext, private val u
     }
 
     override fun containsAddress(params: FetchMerkleTreePathParams): Boolean {
-        logger.info { "Checking if Merkle tree contains address, params: $params" }
+        logger.debug { "Checking if Merkle tree contains address, params: $params" }
 
         val root = dslContext.selectFrom(MerkleTreeRoot.MERKLE_TREE_ROOT)
             .where(

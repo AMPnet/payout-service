@@ -148,12 +148,12 @@ class PayoutControllerTest : TestBase() {
         verify("correct payouts are returned") {
             val result = controller.getPayouts(
                 chainId = params.chainId.value,
-                issuer = null,
-                owner = null,
-                status = null,
                 assetFactories = params.assetFactories.map { it.rawValue },
                 payoutService = params.payoutService.rawValue,
-                payoutManager = params.payoutManager.rawValue
+                payoutManager = params.payoutManager.rawValue,
+                issuer = null,
+                owner = null,
+                status = null
             )
 
             assertThat(result).withMessage()
@@ -225,12 +225,12 @@ class PayoutControllerTest : TestBase() {
         verify("correct payouts are returned") {
             val result = controller.getPayouts(
                 chainId = params.chainId.value,
-                issuer = issuer.rawValue,
-                owner = owner.rawValue,
-                status = null,
                 assetFactories = params.assetFactories.map { it.rawValue },
                 payoutService = params.payoutService.rawValue,
-                payoutManager = params.payoutManager.rawValue
+                payoutManager = params.payoutManager.rawValue,
+                issuer = issuer.rawValue,
+                owner = owner.rawValue,
+                status = null
             )
 
             assertThat(result).withMessage()
@@ -307,12 +307,12 @@ class PayoutControllerTest : TestBase() {
         verify("correct payouts are returned") {
             val result = controller.getPayouts(
                 chainId = params.chainId.value,
-                issuer = issuer.rawValue,
-                owner = owner.rawValue,
-                status = status,
                 assetFactories = params.assetFactories.map { it.rawValue },
                 payoutService = params.payoutService.rawValue,
-                payoutManager = params.payoutManager.rawValue
+                payoutManager = params.payoutManager.rawValue,
+                issuer = issuer.rawValue,
+                owner = owner.rawValue,
+                status = status
             )
 
             assertThat(result).withMessage()
@@ -409,10 +409,10 @@ class PayoutControllerTest : TestBase() {
             val result = controller.getPayoutsForInvestor(
                 chainId = params.chainId.value,
                 investorAddress = params.investor.rawValue,
-                issuer = params.issuer?.rawValue,
                 assetFactories = params.assetFactories.map { it.rawValue },
                 payoutService = params.payoutService.rawValue,
-                payoutManager = params.payoutManager.rawValue
+                payoutManager = params.payoutManager.rawValue,
+                issuer = params.issuer?.rawValue
             )
 
             assertThat(result).withMessage()
@@ -526,10 +526,10 @@ class PayoutControllerTest : TestBase() {
             val result = controller.getPayoutsForInvestor(
                 chainId = params.chainId.value,
                 investorAddress = params.investor.rawValue,
-                issuer = params.issuer?.rawValue,
                 assetFactories = params.assetFactories.map { it.rawValue },
                 payoutService = params.payoutService.rawValue,
-                payoutManager = params.payoutManager.rawValue
+                payoutManager = params.payoutManager.rawValue,
+                issuer = params.issuer?.rawValue
             )
 
             assertThat(result).withMessage()
