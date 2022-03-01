@@ -26,6 +26,7 @@ data class PayoutResponse(
     val assetSnapshotMerkleDepth: Int?,
     @JsonSerialize(using = ToStringSerializer::class)
     val assetSnapshotBlockNumber: BigInteger,
+    val assetSnapshotMerkleIpfsHash: String?,
 
     val rewardAsset: String?,
     @JsonSerialize(using = ToStringSerializer::class)

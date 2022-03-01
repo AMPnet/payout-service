@@ -73,6 +73,7 @@ data class Payout(
             assetSnapshotMerkleRoot = assetSnapshotMerkleRoot.value,
             assetSnapshotMerkleDepth = assetSnapshotMerkleDepth.intValueExact(),
             assetSnapshotBlockNumber = assetSnapshotBlockNumber.value,
+            assetSnapshotMerkleIpfsHash = assetSnapshotMerkleIpfsHash.value,
 
             rewardAsset = rewardAsset.rawValue,
             totalRewardAmount = totalRewardAmount.rawValue,

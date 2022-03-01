@@ -53,6 +53,7 @@ data class FullCreatePayoutTask(
             assetSnapshotMerkleRoot = data?.merkleRootHash?.value,
             assetSnapshotMerkleDepth = data?.merkleTreeDepth,
             assetSnapshotBlockNumber = payoutBlockNumber.value,
+            assetSnapshotMerkleIpfsHash = data?.merkleTreeIpfsHash?.value,
 
             rewardAsset = null,
             totalRewardAmount = null,

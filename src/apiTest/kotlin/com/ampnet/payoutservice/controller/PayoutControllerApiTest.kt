@@ -534,6 +534,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                                 assetSnapshotMerkleRoot = payoutTask.data?.merkleRootHash?.value!!,
                                 assetSnapshotMerkleDepth = contractPayout.assetSnapshotMerkleDepth?.intValueExact(),
                                 assetSnapshotBlockNumber = contractPayout.assetSnapshotBlockNumber,
+                                assetSnapshotMerkleIpfsHash = contractPayout.assetSnapshotMerkleIpfsHash,
 
                                 rewardAsset = contractPayout.rewardAsset,
                                 totalRewardAmount = contractPayout.totalRewardAmount,
@@ -708,6 +709,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                                     assetSnapshotMerkleRoot = payoutTask.data?.merkleRootHash?.value!!,
                                     assetSnapshotMerkleDepth = contractPayout.assetSnapshotMerkleDepth?.intValueExact(),
                                     assetSnapshotBlockNumber = contractPayout.assetSnapshotBlockNumber,
+                                    assetSnapshotMerkleIpfsHash = contractPayout.assetSnapshotMerkleIpfsHash,
 
                                     rewardAsset = contractPayout.rewardAsset,
                                     totalRewardAmount = contractPayout.totalRewardAmount,
