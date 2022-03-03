@@ -7,6 +7,7 @@ import com.ampnet.payoutservice.model.result.OtherTaskData
 import com.ampnet.payoutservice.model.result.PendingCreatePayoutTask
 import com.ampnet.payoutservice.model.result.SuccessfulTaskData
 import com.ampnet.payoutservice.service.UuidProvider
+import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
@@ -15,8 +16,8 @@ import com.ampnet.payoutservice.util.TaskStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import mu.KLogging
 import org.jooq.DSLContext
+import org.jooq.impl.DSL
 import org.springframework.stereotype.Repository
-import java.math.BigInteger
 import java.util.UUID
 import com.ampnet.payoutservice.generated.jooq.enums.TaskStatus as DbTaskStatus
 import com.ampnet.payoutservice.generated.jooq.tables.CreatePayoutTask as CreatePayoutTaskTable
@@ -28,11 +29,35 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
     companion object : KLogging()
 
     override fun getById(taskId: UUID): CreatePayoutTask? {
-        logger.info { "Fetching create payout task, taskId: $taskId" }
+        logger.debug { "Fetching create payout task, taskId: $taskId" }
         return dslContext.selectFrom(CreatePayoutTaskTable.CREATE_PAYOUT_TASK)
             .where(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.ID.eq(taskId))
             .fetchOne()
             ?.toModel()
+    }
+
+    override fun getAllByChainIdIssuerOwnerAndStatuses(
+        chainId: ChainId,
+        issuer: ContractAddress?,
+        owner: WalletAddress?,
+        statuses: Set<TaskStatus>
+    ): List<CreatePayoutTask> {
+        logger.debug {
+            "Fetching all create payout tasks for chainId: $chainId, issuer: $issuer," +
+                " owner: $owner, statuses: $statuses"
+        }
+
+        val chainIdCondition = CreatePayoutTaskTable.CREATE_PAYOUT_TASK.CHAIN_ID.eq(chainId.value)
+        val issuerCondition = issuer?.let { CreatePayoutTaskTable.CREATE_PAYOUT_TASK.ISSUER_ADDRESS.eq(it.rawValue) }
+        val ownerCondition = owner?.let { CreatePayoutTaskTable.CREATE_PAYOUT_TASK.REQUESTER_ADDRESS.eq(it.rawValue) }
+        val dbStatuses = statuses.map { it.toDbEnum }
+        val statusesCondition = dbStatuses.takeIf { it.isNotEmpty() }
+            ?.let { CreatePayoutTaskTable.CREATE_PAYOUT_TASK.STATUS.`in`(it) }
+        val conditions = listOfNotNull(chainIdCondition, issuerCondition, ownerCondition, statusesCondition)
+
+        return dslContext.selectFrom(CreatePayoutTaskTable.CREATE_PAYOUT_TASK)
+            .where(DSL.and(conditions))
+            .fetch { it.toModel() }
     }
 
     override fun createPayoutTask(params: CreatePayoutTaskParams): UUID {
@@ -82,7 +107,7 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
         taskId: UUID,
         merkleTreeRootId: UUID,
         merkleTreeIpfsHash: IpfsHash,
-        totalAssetAmount: BigInteger
+        totalAssetAmount: Balance
     ): CreatePayoutTask? {
         logger.info {
             "Marking task as success, taskId: $taskId, merkleTreeRootId: $merkleTreeRootId," +
@@ -92,7 +117,7 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
             .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.STATUS, DbTaskStatus.SUCCESS)
             .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.RESULT_TREE, merkleTreeRootId)
             .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.TREE_IPFS_HASH, merkleTreeIpfsHash.value)
-            .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.TOTAL_ASSET_AMOUNT, totalAssetAmount)
+            .set(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.TOTAL_ASSET_AMOUNT, totalAssetAmount.rawValue)
             .where(CreatePayoutTaskTable.CREATE_PAYOUT_TASK.ID.eq(taskId))
             .returning()
             .fetchOne()
@@ -115,7 +140,7 @@ class JooqCreatePayoutTaskRepository(private val dslContext: DSLContext, private
             SuccessfulTaskData(
                 merkleTreeRootId = resultTree!!,
                 merkleTreeIpfsHash = IpfsHash(treeIpfsHash!!),
-                totalAssetAmount = totalAssetAmount!!
+                totalAssetAmount = Balance(totalAssetAmount!!)
             )
         } else OtherTaskData(taskStatus)
 

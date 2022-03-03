@@ -13,7 +13,7 @@ import org.web3j.crypto.Credentials;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.RemoteCall;
 import org.web3j.protocol.core.RemoteFunctionCall;
-import org.web3j.tx.Contract;
+import org.web3j.tx.FixedContract;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
 
@@ -27,7 +27,7 @@ import org.web3j.tx.gas.ContractGasProvider;
  * <p>Generated with web3j version 1.4.1.
  */
 @SuppressWarnings("rawtypes")
-public class IAssetCommon extends Contract {
+public class IAssetCommon extends FixedContract {
     public static final String BINARY = "";
 
     public static final String FUNC_COMMONSTATE = "commonState";

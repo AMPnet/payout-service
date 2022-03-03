@@ -1,12 +1,12 @@
 package com.ampnet.payoutservice.model.result
 
+import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.IpfsHash
 import com.ampnet.payoutservice.util.TaskStatus
 import com.ampnet.payoutservice.util.WalletAddress
-import java.math.BigInteger
 import java.util.UUID
 
 data class CreatePayoutTask(
@@ -27,7 +27,7 @@ sealed interface OptionalCreatePayoutTaskData {
 data class SuccessfulTaskData(
     val merkleTreeRootId: UUID,
     val merkleTreeIpfsHash: IpfsHash,
-    val totalAssetAmount: BigInteger,
+    val totalAssetAmount: Balance,
     override val status: TaskStatus = TaskStatus.SUCCESS
 ) : OptionalCreatePayoutTaskData
 

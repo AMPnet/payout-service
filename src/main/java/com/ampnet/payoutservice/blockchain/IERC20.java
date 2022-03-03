@@ -17,7 +17,7 @@ import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.BaseEventResponse;
 import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
-import org.web3j.tx.Contract;
+import org.web3j.tx.FixedContract;
 import org.web3j.tx.TransactionManager;
 import org.web3j.tx.gas.ContractGasProvider;
 import java.math.BigInteger;
@@ -36,7 +36,7 @@ import java.util.List;
  * <p>Generated with web3j version 4.8.9.
  */
 @SuppressWarnings("rawtypes")
-public class IERC20 extends Contract {
+public class IERC20 extends FixedContract {
     public static final String BINARY = "";
 
     public static final String FUNC_ALLOWANCE = "allowance";
