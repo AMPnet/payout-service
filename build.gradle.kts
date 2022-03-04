@@ -96,6 +96,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.flywaydb:flyway-core")
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("org.postgresql:postgresql")
     flywayMigration(Configurations.Database.driverDependency)
