@@ -20,7 +20,7 @@ data class PayoutResponse(
     val asset: String,
     @JsonSerialize(using = ToStringSerializer::class)
     val totalAssetAmount: BigInteger?,
-    val ignoredAssetAddresses: Set<String>,
+    val ignoredHolderAddresses: Set<String>,
 
     val assetSnapshotMerkleRoot: String?,
     val assetSnapshotMerkleDepth: Int?,

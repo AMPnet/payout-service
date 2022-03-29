@@ -35,6 +35,7 @@ class PayoutProperties {
 
 class ChainProperties {
     var startBlockNumber: BigInteger? = null
+    var rpcUrlOverride: String = ""
 }
 
 @Suppress("MagicNumber")

@@ -4,6 +4,6 @@ import java.math.BigInteger
 
 data class CreatePayoutRequest(
     val payoutBlockNumber: BigInteger,
-    val ignoredAssetAddresses: Set<String>,
+    val ignoredHolderAddresses: Set<String>,
     val issuerAddress: String?
 )

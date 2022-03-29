@@ -155,12 +155,12 @@ class PayoutControllerApiTest : ControllerTestBase() {
         val createPayoutResponse = suppose("create payout request is made") {
             val response = mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                    "/payouts/${chainId.value}/${contract.contractAddress}/create"
+                    "/payouts/${chainId.value}/${contract.contractAddress}"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         "{\n    \"payout_block_number\": \"${payoutBlock.value}\",\n " +
-                            "   \"ignored_asset_addresses\": ${ignoredAddresses.map { "\"$it\"" }},\n " +
+                            "   \"ignored_holder_addresses\": ${ignoredAddresses.map { "\"$it\"" }},\n " +
                             "   \"issuer_address\": \"${issuerAddress.rawValue}\"}"
                     )
             )
@@ -255,12 +255,12 @@ class PayoutControllerApiTest : ControllerTestBase() {
         val createPayoutResponse = suppose("create payout request is made") {
             val response = mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                    "/payouts/${chainId.value}/${contract.contractAddress}/create"
+                    "/payouts/${chainId.value}/${contract.contractAddress}"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         "{\n    \"payout_block_number\": \"${payoutBlock.value}\",\n " +
-                            "   \"ignored_asset_addresses\": ${ignoredAddresses.map { "\"$it\"" }},\n " +
+                            "   \"ignored_holder_addresses\": ${ignoredAddresses.map { "\"$it\"" }},\n " +
                             "   \"issuer_address\": \"${issuerAddress.rawValue}\"}"
                     )
             )
@@ -434,12 +434,12 @@ class PayoutControllerApiTest : ControllerTestBase() {
         val createPayoutResponse = suppose("create payout request is made") {
             val response = mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                    "/payouts/${chainId.value}/${erc20Contract.contractAddress}/create"
+                    "/payouts/${chainId.value}/${erc20Contract.contractAddress}"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         "{\n    \"payout_block_number\": \"${payoutBlock.value}\",\n " +
-                            "   \"ignored_asset_addresses\": ${ignoredAddresses.map { "\"$it\"" }},\n " +
+                            "   \"ignored_holder_addresses\": ${ignoredAddresses.map { "\"$it\"" }},\n " +
                             "   \"issuer_address\": \"${issuerAddress.rawValue}\"}"
                     )
             )
@@ -529,7 +529,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
 
                                 asset = contractPayout.asset,
                                 totalAssetAmount = contractPayout.totalAssetAmount,
-                                ignoredAssetAddresses = contractPayout.ignoredAssetAddresses.toSet(),
+                                ignoredHolderAddresses = contractPayout.ignoredAssetAddresses.toSet(),
 
                                 assetSnapshotMerkleRoot = payoutTask.data?.merkleRootHash?.value!!,
                                 assetSnapshotMerkleDepth = contractPayout.assetSnapshotMerkleDepth?.intValueExact(),
@@ -610,12 +610,12 @@ class PayoutControllerApiTest : ControllerTestBase() {
         val createPayoutResponse = suppose("create payout request is made") {
             val response = mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                    "/payouts/${chainId.value}/${erc20Contract.contractAddress}/create"
+                    "/payouts/${chainId.value}/${erc20Contract.contractAddress}"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         "{\n    \"payout_block_number\": \"${payoutBlock.value}\",\n " +
-                            "   \"ignored_asset_addresses\": ${ignoredAddresses.map { "\"$it\"" }},\n " +
+                            "   \"ignored_holder_addresses\": ${ignoredAddresses.map { "\"$it\"" }},\n " +
                             "   \"issuer_address\": \"${issuerAddress.rawValue}\"}"
                     )
             )
@@ -704,7 +704,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
 
                                     asset = contractPayout.asset,
                                     totalAssetAmount = contractPayout.totalAssetAmount,
-                                    ignoredAssetAddresses = contractPayout.ignoredAssetAddresses.toSet(),
+                                    ignoredHolderAddresses = contractPayout.ignoredAssetAddresses.toSet(),
 
                                     assetSnapshotMerkleRoot = payoutTask.data?.merkleRootHash?.value!!,
                                     assetSnapshotMerkleDepth = contractPayout.assetSnapshotMerkleDepth?.intValueExact(),
@@ -790,12 +790,12 @@ class PayoutControllerApiTest : ControllerTestBase() {
         val createPayoutResponse = suppose("first create payout request is made") {
             val response = mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                    "/payouts/${chainId.value}/${contract.contractAddress}/create"
+                    "/payouts/${chainId.value}/${contract.contractAddress}"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         "{\n    \"payout_block_number\": \"${payoutBlock.value}\",\n " +
-                            "   \"ignored_asset_addresses\": [],\n " +
+                            "   \"ignored_holder_addresses\": [],\n " +
                             "   \"issuer_address\": \"${issuerAddress.rawValue}\"}"
                     )
             )
@@ -915,12 +915,12 @@ class PayoutControllerApiTest : ControllerTestBase() {
         val secondCreatePayoutResponse = suppose("second create payout request is made") {
             val response = mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                    "/payouts/${chainId.value}/${contract.contractAddress}/create"
+                    "/payouts/${chainId.value}/${contract.contractAddress}"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(
                         "{\n    \"payout_block_number\": \"${payoutBlock.value}\",\n " +
-                            "   \"ignored_asset_addresses\": [],\n " +
+                            "   \"ignored_holder_addresses\": [],\n " +
                             "   \"issuer_address\": \"${issuerAddress.rawValue}\"}"
                     )
             )
@@ -973,10 +973,10 @@ class PayoutControllerApiTest : ControllerTestBase() {
         verify("error is returned when non-owner account attempts to create payout") {
             val response = mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                    "/payouts/${chainId.value}/${contract.contractAddress}/create"
+                    "/payouts/${chainId.value}/${contract.contractAddress}"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"payout_block_number\":\"${payoutBlock.value}\",\"ignored_asset_addresses\":[]}")
+                    .content("{\"payout_block_number\":\"${payoutBlock.value}\",\"ignored_holder_addresses\":[]}")
             )
                 .andExpect(MockMvcResultMatchers.status().isBadRequest)
                 .andReturn()
@@ -993,10 +993,10 @@ class PayoutControllerApiTest : ControllerTestBase() {
         verify("error is returned when payout is requested for non-contract address") {
             val response = mockMvc.perform(
                 MockMvcRequestBuilders.post(
-                    "/payouts/${chainId.value}/${accounts[1].address}/create"
+                    "/payouts/${chainId.value}/${accounts[1].address}"
                 )
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content("{\"payout_block_number\":\"${payoutBlock.value}\",\"ignored_asset_addresses\":[]}")
+                    .content("{\"payout_block_number\":\"${payoutBlock.value}\",\"ignored_holder_addresses\":[]}")
             )
                 .andExpect(MockMvcResultMatchers.status().isBadGateway)
                 .andReturn()

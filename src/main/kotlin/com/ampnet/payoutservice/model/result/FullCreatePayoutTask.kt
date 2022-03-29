@@ -48,7 +48,7 @@ data class FullCreatePayoutTask(
 
             asset = assetAddress.rawValue,
             totalAssetAmount = data?.totalAssetAmount?.rawValue,
-            ignoredAssetAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
+            ignoredHolderAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
 
             assetSnapshotMerkleRoot = data?.merkleRootHash?.value,
             assetSnapshotMerkleDepth = data?.merkleTreeDepth,

@@ -165,7 +165,7 @@ class PayoutController(
         return ResponseEntity.ok(InvestorPayoutsResponse(investorPayouts))
     }
 
-    @PostMapping("/payouts/{chainId}/{assetAddress}/create")
+    @PostMapping("/payouts/{chainId}/{assetAddress}")
     fun createPayout(
         @PathVariable chainId: Long,
         @PathVariable assetAddress: String,
@@ -183,7 +183,7 @@ class PayoutController(
                 requesterAddress = WalletAddress(requesterAddress),
                 issuerAddress = requestBody.issuerAddress?.let { ContractAddress(it) },
                 payoutBlock = BlockNumber(requestBody.payoutBlockNumber),
-                ignoredAssetAddresses = requestBody.ignoredAssetAddresses.mapTo(HashSet()) { WalletAddress(it) }
+                ignoredAssetAddresses = requestBody.ignoredHolderAddresses.mapTo(HashSet()) { WalletAddress(it) }
             )
         )
 

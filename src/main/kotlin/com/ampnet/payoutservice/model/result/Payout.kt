@@ -68,7 +68,7 @@ data class Payout(
 
             asset = asset.rawValue,
             totalAssetAmount = totalAssetAmount.rawValue,
-            ignoredAssetAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
+            ignoredHolderAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
 
             assetSnapshotMerkleRoot = assetSnapshotMerkleRoot.value,
             assetSnapshotMerkleDepth = assetSnapshotMerkleDepth.intValueExact(),
