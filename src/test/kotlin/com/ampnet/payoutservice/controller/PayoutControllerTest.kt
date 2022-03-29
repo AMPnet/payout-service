@@ -574,7 +574,7 @@ class PayoutControllerTest : TestBase() {
         val requesterAddress = WalletAddress("b")
         val requestBody = CreatePayoutRequest(
             payoutBlockNumber = BigInteger.TEN,
-            ignoredAssetAddresses = setOf("f"),
+            ignoredHolderAddresses = setOf("f"),
             issuerAddress = "c"
         )
         val taskUuid = UUID.randomUUID()
@@ -588,7 +588,7 @@ class PayoutControllerTest : TestBase() {
                         requesterAddress = requesterAddress,
                         issuerAddress = requestBody.issuerAddress?.let { ContractAddress(it) },
                         payoutBlock = BlockNumber(requestBody.payoutBlockNumber),
-                        ignoredAssetAddresses = requestBody.ignoredAssetAddresses.mapTo(HashSet()) { WalletAddress(it) }
+                        ignoredAssetAddresses = requestBody.ignoredHolderAddresses.mapTo(HashSet()) { WalletAddress(it) }
                     )
                 )
             )
