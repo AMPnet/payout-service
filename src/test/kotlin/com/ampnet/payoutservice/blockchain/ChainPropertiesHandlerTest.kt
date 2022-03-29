@@ -40,6 +40,21 @@ class ChainPropertiesHandlerTest : TestBase() {
     }
 
     @Test
+    fun mustUserOverrideRpcUrlWhenSpecified() {
+        val rpcUrl = "rpc-url-override"
+        val chainPropertiesHandler = suppose("chain properties handler is created from application properties") {
+            val applicationProperties = ApplicationProperties().apply { chainMumbai.rpcUrlOverride = rpcUrl }
+            ChainPropertiesHandler(applicationProperties)
+        }
+
+        verify("correct RPC URL is returned") {
+            val chain = Chain.MATIC_TESTNET_MUMBAI
+            val rpc = chainPropertiesHandler.getChainRpcUrl(chain)
+            assertThat(rpc).withMessage().isEqualTo(rpcUrl)
+        }
+    }
+
+    @Test
     fun mustReturnDefaultRpcIfInfuraIdIsMissing() {
         val chainPropertiesHandler = suppose("chain properties handler is created from application properties") {
             val applicationProperties = ApplicationProperties().apply { infuraId = "" }

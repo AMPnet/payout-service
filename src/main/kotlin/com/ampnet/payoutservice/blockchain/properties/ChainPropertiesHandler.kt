@@ -30,12 +30,17 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
         }
     }
 
-    internal fun getChainRpcUrl(chain: Chain): String =
-        if (chain.infura == null || applicationProperties.infuraId.isBlank()) {
+    internal fun getChainRpcUrl(chain: Chain): String {
+        val chainProperties = getChainProperties(chain.id)
+
+        return if (chainProperties?.rpcUrlOverride?.isNotBlank() == true) {
+            chainProperties.rpcUrlOverride
+        } else if (chain.infura == null || applicationProperties.infuraId.isBlank()) {
             chain.rpcUrl
         } else {
             "${chain.infura}${applicationProperties.infuraId}"
         }
+    }
 
     private fun generateBlockchainProperties(chain: Chain): ChainPropertiesWithServices {
         val rpcUrl = getChainRpcUrl(chain)
