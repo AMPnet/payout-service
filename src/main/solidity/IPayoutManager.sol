@@ -5,6 +5,7 @@ import "./IERC20.sol";
 import "./Structs.sol";
 
 interface IPayoutManager {
+    function getFeeManager() external view returns (address);
     function getCurrentPayoutId() external view returns (uint256);
     function getPayoutInfo(uint256 _payoutId) external view returns (Structs.Payout memory);
     function getPayoutIdsForAsset(address _assetAddress) external view returns (uint256[] memory);

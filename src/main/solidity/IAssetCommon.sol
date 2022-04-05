@@ -12,7 +12,7 @@ interface IAssetCommon {
         string name;
         string symbol;
         uint256 totalSupply;
-        uint256 decimals;
+        uint8 decimals;
         address issuer;
     }
 
