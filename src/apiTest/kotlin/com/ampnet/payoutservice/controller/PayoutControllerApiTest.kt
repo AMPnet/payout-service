@@ -531,7 +531,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
 
                                 asset = contractPayout.asset,
                                 totalAssetAmount = contractPayout.totalAssetAmount,
-                                ignoredHolderAddresses = contractPayout.ignoredAssetAddresses.toSet(),
+                                ignoredHolderAddresses = contractPayout.ignoredHolderAddresses.toSet(),
 
                                 assetSnapshotMerkleRoot = payoutTask.data?.merkleRootHash?.value!!,
                                 assetSnapshotMerkleDepth = contractPayout.assetSnapshotMerkleDepth?.intValueExact(),
@@ -706,7 +706,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
 
                                     asset = contractPayout.asset,
                                     totalAssetAmount = contractPayout.totalAssetAmount,
-                                    ignoredHolderAddresses = contractPayout.ignoredAssetAddresses.toSet(),
+                                    ignoredHolderAddresses = contractPayout.ignoredHolderAddresses.toSet(),
 
                                     assetSnapshotMerkleRoot = payoutTask.data?.merkleRootHash?.value!!,
                                     assetSnapshotMerkleDepth = contractPayout.assetSnapshotMerkleDepth?.intValueExact(),

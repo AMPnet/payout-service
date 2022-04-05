@@ -36,7 +36,7 @@ data class Payout(
         isCanceled = struct.isCanceled,
         asset = ContractAddress(struct.asset),
         totalAssetAmount = Balance(struct.totalAssetAmount),
-        ignoredAssetAddresses = struct.ignoredAssetAddresses.mapTo(HashSet()) { WalletAddress(it) },
+        ignoredAssetAddresses = struct.ignoredHolderAddresses.mapTo(HashSet()) { WalletAddress(it) },
         assetSnapshotMerkleRoot = Hash(Numeric.toHexString(struct.assetSnapshotMerkleRoot)),
         assetSnapshotMerkleDepth = struct.assetSnapshotMerkleDepth,
         assetSnapshotBlockNumber = BlockNumber(struct.assetSnapshotBlockNumber),
