@@ -9,10 +9,11 @@ import com.ampnet.payoutservice.util.Hash
 import com.ampnet.payoutservice.util.HashFunction
 import com.ampnet.payoutservice.util.IpfsHash
 import com.ampnet.payoutservice.util.PayoutStatus
-import com.ampnet.payoutservice.util.TaskStatus
+import com.ampnet.payoutservice.util.SnapshotStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import java.util.UUID
 
+// TODO update in SD-708
 data class FullCreatePayoutTask(
     val taskId: UUID,
     val chainId: ChainId,
@@ -21,7 +22,7 @@ data class FullCreatePayoutTask(
     val ignoredAssetAddresses: Set<WalletAddress>,
     val requesterAddress: WalletAddress,
     val issuerAddress: ContractAddress?,
-    val taskStatus: TaskStatus,
+    val snapshotStatus: SnapshotStatus,
     val data: FullCreatePayoutData?
 ) {
     fun toKey(): PayoutKey? =
@@ -38,7 +39,7 @@ data class FullCreatePayoutTask(
     fun toPayoutResponse(): PayoutResponse =
         PayoutResponse(
             taskId = taskId,
-            status = PayoutStatus.fromTaskStatus(taskStatus),
+            status = PayoutStatus.fromTaskStatus(snapshotStatus),
             issuer = issuerAddress?.rawValue,
 
             payoutId = null,

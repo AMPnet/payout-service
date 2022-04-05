@@ -1,17 +1,18 @@
 package com.ampnet.payoutservice.util
 
-enum class PayoutStatus(val toTaskStatus: TaskStatus) {
-    PROOF_PENDING(TaskStatus.PENDING),
-    PROOF_FAILED(TaskStatus.FAILED),
-    PROOF_CREATED(TaskStatus.SUCCESS),
-    PAYOUT_CREATED(TaskStatus.SUCCESS);
+@Deprecated("for removal in SD-709")
+enum class PayoutStatus(val toSnapshotStatus: SnapshotStatus) {
+    PROOF_PENDING(SnapshotStatus.PENDING),
+    PROOF_FAILED(SnapshotStatus.FAILED),
+    PROOF_CREATED(SnapshotStatus.SUCCESS),
+    PAYOUT_CREATED(SnapshotStatus.SUCCESS);
 
     companion object {
-        fun fromTaskStatus(value: TaskStatus): PayoutStatus {
+        fun fromTaskStatus(value: SnapshotStatus): PayoutStatus {
             return when (value) {
-                TaskStatus.PENDING -> PROOF_PENDING
-                TaskStatus.SUCCESS -> PROOF_CREATED
-                TaskStatus.FAILED -> PROOF_FAILED
+                SnapshotStatus.PENDING -> PROOF_PENDING
+                SnapshotStatus.SUCCESS -> PROOF_CREATED
+                SnapshotStatus.FAILED -> PROOF_FAILED
             }
         }
     }

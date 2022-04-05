@@ -9,7 +9,7 @@ import com.ampnet.payoutservice.controller.response.InvestorPayoutsResponse
 import com.ampnet.payoutservice.controller.response.PayoutResponse
 import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.ResourceNotFoundException
-import com.ampnet.payoutservice.model.params.CreatePayoutTaskParams
+import com.ampnet.payoutservice.model.params.CreateSnapshotParams
 import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
 import com.ampnet.payoutservice.model.params.GetPayoutsForAdminParams
 import com.ampnet.payoutservice.model.params.GetPayoutsForInvestorParams
@@ -21,7 +21,7 @@ import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.PayoutStatus
-import com.ampnet.payoutservice.util.TaskStatus
+import com.ampnet.payoutservice.util.SnapshotStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import mu.KLogging
 import org.springframework.http.ResponseEntity
@@ -83,9 +83,9 @@ class PayoutController(
             chainId = chainIdValue,
             issuer = issuerAddress,
             owner = ownerAddress,
-            statuses = statuses.mapTo(HashSet()) { it.toTaskStatus }
+            statuses = statuses.mapTo(HashSet()) { it.toSnapshotStatus }
         )
-        val (successfulTasks, otherTasks) = payoutTasks.partition { it.taskStatus == TaskStatus.SUCCESS }
+        val (successfulTasks, otherTasks) = payoutTasks.partition { it.snapshotStatus == SnapshotStatus.SUCCESS }
         val createdPayouts = if (statuses.isEmpty() || statuses.contains(PayoutStatus.PAYOUT_CREATED)) {
             blockchainService.getPayoutsForAdmin(
                 GetPayoutsForAdminParams(
@@ -177,13 +177,13 @@ class PayoutController(
                 " requesterAddress: $requesterAddress"
         }
         val taskId = createPayoutQueueService.submitTask(
-            CreatePayoutTaskParams(
+            CreateSnapshotParams(
                 chainId = ChainId(chainId),
+                name = "", // TODO in SD-709
                 assetAddress = ContractAddress(assetAddress),
-                requesterAddress = WalletAddress(requesterAddress),
-                issuerAddress = requestBody.issuerAddress?.let { ContractAddress(it) },
+                ownerAddress = WalletAddress(requesterAddress),
                 payoutBlock = BlockNumber(requestBody.payoutBlockNumber),
-                ignoredAssetAddresses = requestBody.ignoredHolderAddresses.mapTo(HashSet()) { WalletAddress(it) }
+                ignoredHolderAddresses = requestBody.ignoredHolderAddresses.mapTo(HashSet()) { WalletAddress(it) }
             )
         )
 

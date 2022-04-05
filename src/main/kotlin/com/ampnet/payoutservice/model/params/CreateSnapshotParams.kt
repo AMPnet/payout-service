@@ -5,11 +5,11 @@ import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.WalletAddress
 
-data class CreatePayoutTaskParams(
+data class CreateSnapshotParams(
+    val name: String,
     val chainId: ChainId,
     val assetAddress: ContractAddress,
-    val requesterAddress: WalletAddress,
-    val issuerAddress: ContractAddress?,
+    val ownerAddress: WalletAddress,
     val payoutBlock: BlockNumber,
-    val ignoredAssetAddresses: Set<WalletAddress>
+    val ignoredHolderAddresses: Set<WalletAddress>
 )

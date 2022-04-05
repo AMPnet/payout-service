@@ -5,30 +5,30 @@ import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.IpfsHash
-import com.ampnet.payoutservice.util.TaskStatus
+import com.ampnet.payoutservice.util.SnapshotStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import java.util.UUID
 
-data class CreatePayoutTask(
-    val taskId: UUID,
+data class Snapshot(
+    val id: UUID,
+    val name: String,
     val chainId: ChainId,
     val assetAddress: ContractAddress,
     val blockNumber: BlockNumber,
-    val ignoredAssetAddresses: Set<WalletAddress>,
-    val requesterAddress: WalletAddress,
-    val issuerAddress: ContractAddress?,
-    val data: OptionalCreatePayoutTaskData
+    val ignoredHolderAddresses: Set<WalletAddress>,
+    val ownerAddress: WalletAddress,
+    val data: OptionalSnapshotData
 )
 
-sealed interface OptionalCreatePayoutTaskData {
-    val status: TaskStatus
+sealed interface OptionalSnapshotData {
+    val status: SnapshotStatus
 }
 
-data class SuccessfulTaskData(
+data class SuccessfulSnapshotData(
     val merkleTreeRootId: UUID,
     val merkleTreeIpfsHash: IpfsHash,
     val totalAssetAmount: Balance,
-    override val status: TaskStatus = TaskStatus.SUCCESS
-) : OptionalCreatePayoutTaskData
+    override val status: SnapshotStatus = SnapshotStatus.SUCCESS
+) : OptionalSnapshotData
 
-data class OtherTaskData(override val status: TaskStatus) : OptionalCreatePayoutTaskData
+data class OtherSnapshotData(override val status: SnapshotStatus) : OptionalSnapshotData
