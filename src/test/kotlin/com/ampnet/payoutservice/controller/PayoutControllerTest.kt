@@ -12,13 +12,13 @@ import com.ampnet.payoutservice.model.params.CreateSnapshotParams
 import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
 import com.ampnet.payoutservice.model.params.GetPayoutsForAdminParams
 import com.ampnet.payoutservice.model.params.GetPayoutsForInvestorParams
-import com.ampnet.payoutservice.model.result.FullCreatePayoutData
-import com.ampnet.payoutservice.model.result.FullCreatePayoutTask
+import com.ampnet.payoutservice.model.result.FullSnapshot
+import com.ampnet.payoutservice.model.result.FullSnapshotData
 import com.ampnet.payoutservice.model.result.MerkleTreeWithId
 import com.ampnet.payoutservice.model.result.Payout
 import com.ampnet.payoutservice.model.result.PayoutForInvestor
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
-import com.ampnet.payoutservice.service.CreatePayoutQueueService
+import com.ampnet.payoutservice.service.SnapshotQueueService
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
@@ -48,22 +48,22 @@ class PayoutControllerTest : TestBase() {
     @Test
     fun mustCorrectlyFetchPayoutTaskById() {
         val taskUuid = UUID.randomUUID()
-        val task = FullCreatePayoutTask(
-            taskId = taskUuid,
+        val task = FullSnapshot(
+            id = taskUuid,
+            name = "", // TODO in SD-709
             chainId = ChainId(1L),
             assetAddress = ContractAddress("a"),
             payoutBlockNumber = BlockNumber(BigInteger.ONE),
-            ignoredAssetAddresses = setOf(WalletAddress("b")),
-            requesterAddress = WalletAddress("c"),
-            issuerAddress = ContractAddress("d"),
+            ignoredHolderAddresses = setOf(WalletAddress("b")),
+            ownerAddress = WalletAddress("c"),
             snapshotStatus = SnapshotStatus.PENDING,
             data = null
         )
 
-        val service = mock<CreatePayoutQueueService>()
+        val service = mock<SnapshotQueueService>()
 
         suppose("some task will be returned") {
-            given(service.getTaskById(taskUuid))
+            given(service.getSnapshotById(taskUuid))
                 .willReturn(task)
         }
 
@@ -73,7 +73,7 @@ class PayoutControllerTest : TestBase() {
             val controllerResponse = controller.getPayoutByTaskId(1L, taskUuid)
 
             assertThat(controllerResponse).withMessage()
-                .isEqualTo(ResponseEntity.ok(task.toPayoutResponse()))
+                .isEqualTo(ResponseEntity.ok(task)) // TODO .toPayoutResponse()))
         }
 
         verify("exception is thrown for wrong chain ID") {
@@ -85,10 +85,10 @@ class PayoutControllerTest : TestBase() {
 
     @Test
     fun mustThrowResourceNotFoundExceptionForNonExistentPayoutTask() {
-        val service = mock<CreatePayoutQueueService>()
+        val service = mock<SnapshotQueueService>()
 
         suppose("null will be returned") {
-            given(service.getTaskById(any()))
+            given(service.getSnapshotById(any()))
                 .willReturn(null)
         }
 
@@ -131,13 +131,12 @@ class PayoutControllerTest : TestBase() {
             ),
             createPendingFullCreatePayoutTask(payouts[2], null) // pending
         )
-        val queueService = mock<CreatePayoutQueueService>()
+        val queueService = mock<SnapshotQueueService>()
 
         suppose("some payout tasks will be returned") {
             given(
-                queueService.getAllTasksByIssuerAndOwner(
+                queueService.getAllSnapshotsByChainIdOwnerAndStatuses(
                     chainId = params.chainId,
-                    issuer = null,
                     owner = null,
                     statuses = emptySet()
                 )
@@ -163,11 +162,11 @@ class PayoutControllerTest : TestBase() {
                     ResponseEntity.ok(
                         AdminPayoutsResponse(
                             listOf(
-                                payouts[0].toPayoutResponse(taskId = payoutTasks[0].taskId, issuer = null),
-                                payoutTasks[1].toPayoutResponse(),
+                                payouts[0].toPayoutResponse(taskId = payoutTasks[0].id, issuer = null),
+                                // TODO payoutTasks[1].toPayoutResponse(),
                                 payouts[1].toPayoutResponse(taskId = null, issuer = null),
                                 payouts[2].toPayoutResponse(taskId = null, issuer = null),
-                                payoutTasks[2].toPayoutResponse()
+                                // TODO payoutTasks[2].toPayoutResponse()
                             )
                         )
                     )
@@ -208,13 +207,12 @@ class PayoutControllerTest : TestBase() {
             ).copy(assetAddress = ContractAddress("ffff")), // successful, not matched with any payout
             createPendingFullCreatePayoutTask(payouts[2], issuer) // pending
         )
-        val queueService = mock<CreatePayoutQueueService>()
+        val queueService = mock<SnapshotQueueService>()
 
         suppose("some payout tasks will be returned") {
             given(
-                queueService.getAllTasksByIssuerAndOwner(
+                queueService.getAllSnapshotsByChainIdOwnerAndStatuses(
                     chainId = params.chainId,
-                    issuer = issuer,
                     owner = owner,
                     statuses = emptySet()
                 )
@@ -240,11 +238,11 @@ class PayoutControllerTest : TestBase() {
                     ResponseEntity.ok(
                         AdminPayoutsResponse(
                             listOf(
-                                payouts[0].toPayoutResponse(taskId = payoutTasks[0].taskId, issuer = issuer.rawValue),
-                                payoutTasks[1].toPayoutResponse(),
+                                payouts[0].toPayoutResponse(taskId = payoutTasks[0].id, issuer = issuer.rawValue),
+                                // TODO payoutTasks[1].toPayoutResponse(),
                                 payouts[1].toPayoutResponse(taskId = null, issuer = issuer.rawValue),
                                 payouts[2].toPayoutResponse(taskId = null, issuer = issuer.rawValue),
-                                payoutTasks[2].toPayoutResponse()
+                                // TODO payoutTasks[2].toPayoutResponse()
                             )
                         )
                     )
@@ -290,13 +288,12 @@ class PayoutControllerTest : TestBase() {
             ).copy(assetAddress = ContractAddress("ffff")), // successful, not matched with any payout
             createPendingFullCreatePayoutTask(payouts[2], issuer) // pending
         )
-        val queueService = mock<CreatePayoutQueueService>()
+        val queueService = mock<SnapshotQueueService>()
 
         suppose("some payout tasks will be returned") {
             given(
-                queueService.getAllTasksByIssuerAndOwner(
+                queueService.getAllSnapshotsByChainIdOwnerAndStatuses(
                     chainId = params.chainId,
-                    issuer = issuer,
                     owner = owner,
                     statuses = setOf(SnapshotStatus.SUCCESS, SnapshotStatus.PENDING)
                 )
@@ -322,11 +319,11 @@ class PayoutControllerTest : TestBase() {
                     ResponseEntity.ok(
                         AdminPayoutsResponse(
                             listOf(
-                                payouts[0].toPayoutResponse(taskId = payoutTasks[0].taskId, issuer = issuer.rawValue),
-                                payoutTasks[1].toPayoutResponse(),
+                                payouts[0].toPayoutResponse(taskId = payoutTasks[0].id, issuer = issuer.rawValue),
+                                // TODO payoutTasks[1].toPayoutResponse(),
                                 payouts[1].toPayoutResponse(taskId = null, issuer = issuer.rawValue),
                                 payouts[2].toPayoutResponse(taskId = null, issuer = issuer.rawValue),
-                                payoutTasks[2].toPayoutResponse()
+                                // TODO payoutTasks[2].toPayoutResponse()
                             )
                         )
                     )
@@ -570,7 +567,7 @@ class PayoutControllerTest : TestBase() {
 
     @Test
     fun mustCorrectlyCreatePayoutTaskAndReturnAResponse() {
-        val service = mock<CreatePayoutQueueService>()
+        val service = mock<SnapshotQueueService>()
         val chainId = ChainId(1L)
         val assetAddress = ContractAddress("a")
         val requesterAddress = WalletAddress("b")
@@ -583,7 +580,7 @@ class PayoutControllerTest : TestBase() {
 
         suppose("create payout task will be submitted") {
             given(
-                service.submitTask(
+                service.submitSnapshot(
                     CreateSnapshotParams(
                         chainId = chainId,
                         name = "", // TODO sd-709
@@ -613,23 +610,23 @@ class PayoutControllerTest : TestBase() {
         }
     }
 
-    private fun createPendingFullCreatePayoutTask(payout: Payout, issuer: ContractAddress?): FullCreatePayoutTask =
-        FullCreatePayoutTask(
-            taskId = UUID.randomUUID(),
+    private fun createPendingFullCreatePayoutTask(payout: Payout, issuer: ContractAddress?): FullSnapshot =
+        FullSnapshot(
+            id = UUID.randomUUID(),
+            name = "", // TODO in SD-709
             chainId = ChainId(123L),
             assetAddress = payout.asset,
             payoutBlockNumber = payout.assetSnapshotBlockNumber,
-            ignoredAssetAddresses = payout.ignoredAssetAddresses,
-            requesterAddress = payout.payoutOwner,
-            issuerAddress = issuer,
+            ignoredHolderAddresses = payout.ignoredAssetAddresses,
+            ownerAddress = payout.payoutOwner,
             snapshotStatus = SnapshotStatus.PENDING,
             data = null
         )
 
-    private fun createSuccessfulFullCreatePayoutTask(payout: Payout, issuer: ContractAddress?): FullCreatePayoutTask =
+    private fun createSuccessfulFullCreatePayoutTask(payout: Payout, issuer: ContractAddress?): FullSnapshot =
         createPendingFullCreatePayoutTask(payout, issuer).copy(
             snapshotStatus = SnapshotStatus.SUCCESS,
-            data = FullCreatePayoutData(
+            data = FullSnapshotData(
                 totalAssetAmount = payout.totalAssetAmount,
                 merkleRootHash = payout.assetSnapshotMerkleRoot,
                 merkleTreeIpfsHash = payout.assetSnapshotMerkleIpfsHash,

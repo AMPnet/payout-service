@@ -7,8 +7,8 @@ import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.exception.InvalidRequestException
 import com.ampnet.payoutservice.model.params.CreateSnapshotParams
 import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
-import com.ampnet.payoutservice.model.result.FullCreatePayoutData
-import com.ampnet.payoutservice.model.result.FullCreatePayoutTask
+import com.ampnet.payoutservice.model.result.FullSnapshot
+import com.ampnet.payoutservice.model.result.FullSnapshotData
 import com.ampnet.payoutservice.model.result.OptionalSnapshotData
 import com.ampnet.payoutservice.model.result.PendingSnapshot
 import com.ampnet.payoutservice.model.result.Snapshot
@@ -29,18 +29,18 @@ import org.springframework.stereotype.Service
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
-@Service // TODO update ihn SD-708
-class CreatePayoutQueueServiceImpl(
+@Service
+class SnapshotQueueServiceImpl(
     private val merkleTreeRepository: MerkleTreeRepository,
     private val snapshotRepository: SnapshotRepository,
     private val ipfsService: IpfsService,
     private val blockchainService: BlockchainService,
     private val applicationProperties: ApplicationProperties,
     scheduledExecutorServiceProvider: ScheduledExecutorServiceProvider
-) : CreatePayoutQueueService, DisposableBean {
+) : SnapshotQueueService, DisposableBean {
 
     companion object : KLogging() {
-        const val QUEUE_NAME = "CreatePayoutQueue"
+        const val QUEUE_NAME = "SnapshotQueue"
     }
 
     private val executorService = scheduledExecutorServiceProvider.newSingleThreadScheduledExecutor(QUEUE_NAME)
@@ -48,7 +48,7 @@ class CreatePayoutQueueServiceImpl(
 
     init {
         executorService.scheduleAtFixedRate(
-            { processTasks() },
+            { processSnapshots() },
             applicationProperties.createPayoutQueue.initialDelay,
             applicationProperties.createPayoutQueue.polling,
             TimeUnit.MILLISECONDS
@@ -56,55 +56,51 @@ class CreatePayoutQueueServiceImpl(
     }
 
     override fun destroy() {
-        logger.info { "Shutting down create payout task queue executor service..." }
+        logger.info { "Shutting down snapshot queue executor service..." }
         executorService.shutdown()
     }
 
-    override fun submitTask(params: CreateSnapshotParams): UUID {
-        logger.info { "Payout request with params: $params" }
+    override fun submitSnapshot(params: CreateSnapshotParams): UUID {
+        logger.info { "Snapshot request with params: $params" }
         checkAssetOwnerIfNeeded(params.chainId, params.assetAddress, params.ownerAddress)
         return snapshotRepository.createSnapshot(params)
     }
 
-    override fun getTaskById(taskId: UUID): FullCreatePayoutTask? {
-        logger.debug { "Fetching create payout task, taskId: $taskId" }
-        return snapshotRepository.getById(taskId)?.toResponse()
+    override fun getSnapshotById(snapshotId: UUID): FullSnapshot? {
+        logger.debug { "Fetching snapshot, snapshotId: $snapshotId" }
+        return snapshotRepository.getById(snapshotId)?.toResponse()
     }
 
-    override fun getAllTasksByIssuerAndOwner(
-        chainId: ChainId, // TODO make optional in SD-708
-        issuer: ContractAddress?,
+    override fun getAllSnapshotsByChainIdOwnerAndStatuses(
+        chainId: ChainId?,
         owner: WalletAddress?,
         statuses: Set<SnapshotStatus>
-    ): List<FullCreatePayoutTask> {
-        logger.debug {
-            "Fetching all create payout tasks for chainId: $chainId, issuer: $issuer," +
-                " owner: $owner, statuses: $statuses"
-        }
+    ): List<FullSnapshot> {
+        logger.debug { "Fetching all snapshots for chainId: $chainId, owner: $owner, statuses: $statuses" }
 
         return snapshotRepository.getAllByChainIdOwnerAndStatuses(chainId, owner, statuses)
             .map { it.toResponse() }
     }
 
-    private fun Snapshot.toResponse(): FullCreatePayoutTask =
-        FullCreatePayoutTask(
-            taskId = id,
+    private fun Snapshot.toResponse(): FullSnapshot =
+        FullSnapshot(
+            id = id,
+            name = name,
             chainId = chainId,
             assetAddress = assetAddress,
             payoutBlockNumber = blockNumber,
-            ignoredAssetAddresses = ignoredHolderAddresses,
-            requesterAddress = ownerAddress,
-            issuerAddress = null, // TODO remove in SD-708
+            ignoredHolderAddresses = ignoredHolderAddresses,
+            ownerAddress = ownerAddress,
             snapshotStatus = data.status,
-            data = data.createPayoutData()
+            data = data.createSnapshotData()
         )
 
-    private fun OptionalSnapshotData.createPayoutData(): FullCreatePayoutData? {
+    private fun OptionalSnapshotData.createSnapshotData(): FullSnapshotData? {
         return if (this is SuccessfulSnapshotData) {
             val tree = merkleTreeRepository.getById(merkleTreeRootId)
 
             tree?.let {
-                FullCreatePayoutData(
+                FullSnapshotData(
                     totalAssetAmount = totalAssetAmount,
                     merkleRootHash = it.root.hash,
                     merkleTreeIpfsHash = merkleTreeIpfsHash,
@@ -116,24 +112,24 @@ class CreatePayoutQueueServiceImpl(
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private fun processTasks() {
-        snapshotRepository.getPending()?.let { task ->
+    private fun processSnapshots() {
+        snapshotRepository.getPending()?.let { snapshot ->
             try {
-                handlePendingCreatePayoutTask(task)
+                handlePendingSnapshot(snapshot)
             } catch (ex: Throwable) {
-                logger.error { "Failed to handle pending create payout task, taskId: ${task.id}: ${ex.message}" }
-                snapshotRepository.failSnapshot(task.id)
+                logger.error { "Failed to handle pending snapshot, snapshotId: ${snapshot.id}: ${ex.message}" }
+                snapshotRepository.failSnapshot(snapshot.id)
             }
         }
     }
 
-    private fun handlePendingCreatePayoutTask(task: PendingSnapshot) {
+    private fun handlePendingSnapshot(snapshot: PendingSnapshot) {
         val balances = blockchainService.fetchErc20AccountBalances(
-            chainId = task.chainId,
-            erc20ContractAddress = task.assetAddress,
-            ignoredErc20Addresses = task.ignoredHolderAddresses,
-            startBlock = chainHandler.getChainProperties(task.chainId)?.startBlockNumber?.let { BlockNumber(it) },
-            endBlock = task.blockNumber
+            chainId = snapshot.chainId,
+            erc20ContractAddress = snapshot.assetAddress,
+            ignoredErc20Addresses = snapshot.ignoredHolderAddresses,
+            startBlock = chainHandler.getChainProperties(snapshot.chainId)?.startBlockNumber?.let { BlockNumber(it) },
+            endBlock = snapshot.blockNumber
         )
         val totalAssetAmount = Balance(balances.sumOf { it.balance.rawValue })
 
@@ -141,7 +137,7 @@ class CreatePayoutQueueServiceImpl(
 
         val tree = MerkleTree(balances, HashFunction.KECCAK_256)
         val alreadyInsertedTree = merkleTreeRepository.fetchTree(
-            FetchMerkleTreeParams(tree.root.hash, task.chainId, task.assetAddress)
+            FetchMerkleTreeParams(tree.root.hash, snapshot.chainId, snapshot.assetAddress)
         )
 
         val rootId = if (alreadyInsertedTree != null) {
@@ -149,28 +145,28 @@ class CreatePayoutQueueServiceImpl(
             alreadyInsertedTree.treeId
         } else {
             logger.debug { "Storing Merkle tree into the database" }
-            merkleTreeRepository.storeTree(tree, task.chainId, task.assetAddress, task.blockNumber)
+            merkleTreeRepository.storeTree(tree, snapshot.chainId, snapshot.assetAddress, snapshot.blockNumber)
         }
 
         val ipfsHash = ipfsService.pinJsonToIpfs(tree)
 
-        snapshotRepository.completeSnapshot(task.id, rootId, ipfsHash, totalAssetAmount)
-        logger.info { "Task completed: ${task.id}" }
+        snapshotRepository.completeSnapshot(snapshot.id, rootId, ipfsHash, totalAssetAmount)
+        logger.info { "Snapshot completed: ${snapshot.id}" }
     }
 
     private fun checkAssetOwnerIfNeeded(
         chainId: ChainId,
         assetAddress: ContractAddress,
-        requesterAddress: WalletAddress
+        ownerAddress: WalletAddress
     ) {
         if (applicationProperties.payout.checkAssetOwner) {
             val assetOwner = blockchainService.getAssetOwner(chainId, assetAddress)
 
-            if (assetOwner != requesterAddress) {
-                logger.warn { "Requester is not asset owner" }
+            if (assetOwner != ownerAddress) {
+                logger.warn { "Requesting user is not asset owner" }
                 throw InvalidRequestException(
                     ErrorCode.USER_NOT_ASSET_OWNER,
-                    "User with wallet address: $requesterAddress is not the owner of asset contract: $assetAddress"
+                    "User with wallet address: $ownerAddress is not the owner of asset contract: $assetAddress"
                 )
             }
         }

@@ -7,8 +7,8 @@ import com.ampnet.payoutservice.config.ApplicationProperties
 import com.ampnet.payoutservice.exception.InvalidRequestException
 import com.ampnet.payoutservice.model.params.CreateSnapshotParams
 import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
-import com.ampnet.payoutservice.model.result.FullCreatePayoutData
-import com.ampnet.payoutservice.model.result.FullCreatePayoutTask
+import com.ampnet.payoutservice.model.result.FullSnapshot
+import com.ampnet.payoutservice.model.result.FullSnapshotData
 import com.ampnet.payoutservice.model.result.MerkleTreeWithId
 import com.ampnet.payoutservice.model.result.OtherSnapshotData
 import com.ampnet.payoutservice.model.result.PendingSnapshot
@@ -16,9 +16,9 @@ import com.ampnet.payoutservice.model.result.Snapshot
 import com.ampnet.payoutservice.model.result.SuccessfulSnapshotData
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
 import com.ampnet.payoutservice.repository.SnapshotRepository
-import com.ampnet.payoutservice.service.CreatePayoutQueueServiceImpl
 import com.ampnet.payoutservice.service.IpfsService
 import com.ampnet.payoutservice.service.ScheduledExecutorServiceProvider
+import com.ampnet.payoutservice.service.SnapshotQueueServiceImpl
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
@@ -30,7 +30,6 @@ import com.ampnet.payoutservice.util.MerkleTree
 import com.ampnet.payoutservice.util.SnapshotStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.any
@@ -42,51 +41,50 @@ import java.math.BigInteger
 import java.util.UUID
 import org.mockito.kotlin.verify as verifyMock
 
-@Disabled // TODO fix in SD-708
-class CreatePayoutQueueServiceTest : TestBase() {
+class SnapshotQueueServiceTest : TestBase() {
 
     @Test
-    fun mustCorrectlySubmitAndCreatePayoutWhenMerkleTreeDoesNotAlreadyExist() {
+    fun mustCorrectlySubmitAndCreateSnapshotWhenMerkleTreeDoesNotAlreadyExist() {
         val blockchainService = mock<BlockchainService>()
         val chainId = ChainId(1L)
         val assetAddress = ContractAddress("a")
-        val requesterAddress = WalletAddress("1")
+        val ownerAddress = WalletAddress("1")
 
         suppose("requesting user is asset owner") {
             given(blockchainService.getAssetOwner(chainId, assetAddress))
-                .willReturn(requesterAddress)
+                .willReturn(ownerAddress)
         }
 
         val snapshotRepository = mock<SnapshotRepository>()
-        val issuerAddress = ContractAddress("abcd")
         val payoutBlock = BlockNumber(BigInteger.TEN)
-        val ignoredAddresses = setOf(WalletAddress("dead"))
-        val taskUuid = UUID.randomUUID()
+        val ignoredHolderAddresses = setOf(WalletAddress("dead"))
+        val snapshotUuid = UUID.randomUUID()
+        val name = "snapshot-name"
         val params = CreateSnapshotParams(
             chainId = chainId,
-            name = "", // TODO fix in SD-708
+            name = name,
             assetAddress = assetAddress,
-            ownerAddress = requesterAddress,
+            ownerAddress = ownerAddress,
             payoutBlock = payoutBlock,
-            ignoredHolderAddresses = ignoredAddresses
+            ignoredHolderAddresses = ignoredHolderAddresses
         )
 
-        suppose("payout task is created in database") {
+        suppose("snapshot is created in database") {
             given(snapshotRepository.createSnapshot(params))
-                .willReturn(taskUuid)
+                .willReturn(snapshotUuid)
         }
 
-        suppose("pending task will be returned") {
+        suppose("pending snapshot will be returned") {
             given(snapshotRepository.getPending())
                 .willReturn(
                     PendingSnapshot(
-                        id = taskUuid,
-                        name = "", // TODO fix in SD-708
+                        id = snapshotUuid,
+                        name = name,
                         chainId = chainId,
                         assetAddress = assetAddress,
                         blockNumber = payoutBlock,
-                        ignoredHolderAddresses = ignoredAddresses,
-                        ownerAddress = requesterAddress
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress
                     )
                 )
         }
@@ -102,7 +100,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 blockchainService.fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
-                    ignoredErc20Addresses = ignoredAddresses,
+                    ignoredErc20Addresses = ignoredHolderAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
@@ -148,7 +146,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 .willReturn(scheduler)
         }
 
-        val service = CreatePayoutQueueServiceImpl(
+        val service = SnapshotQueueServiceImpl(
             merkleTreeRepository = merkleTreeRepository,
             snapshotRepository = snapshotRepository,
             ipfsService = ipfsService,
@@ -157,28 +155,28 @@ class CreatePayoutQueueServiceTest : TestBase() {
             scheduledExecutorServiceProvider = executorServiceProvider
         )
 
-        verify("payout task is submitted and correct task ID is returned") {
-            val response = service.submitTask(params)
+        verify("snapshot is submitted and correct snapshot ID is returned") {
+            val response = service.submitSnapshot(params)
 
             assertThat(response).withMessage()
-                .isEqualTo(taskUuid)
+                .isEqualTo(snapshotUuid)
         }
 
-        suppose("task is processed") {
+        suppose("snapshot is processed") {
             scheduler.execute()
         }
 
-        suppose("successful task is returned from database") {
-            given(snapshotRepository.getById(taskUuid))
+        suppose("successful snapshot is returned from database") {
+            given(snapshotRepository.getById(snapshotUuid))
                 .willReturn(
                     Snapshot(
-                        id = taskUuid,
-                        name = "", // TODO fix in SD-708
+                        id = snapshotUuid,
+                        name = name,
                         chainId = chainId,
                         assetAddress = assetAddress,
                         blockNumber = payoutBlock,
-                        ignoredHolderAddresses = ignoredAddresses,
-                        ownerAddress = requesterAddress,
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress,
                         data = SuccessfulSnapshotData(
                             merkleTreeRootId = treeUuid,
                             merkleTreeIpfsHash = ipfsHash,
@@ -188,21 +186,21 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 )
         }
 
-        verify("task is successfully executed") {
-            val response = service.getTaskById(taskUuid)
+        verify("snapshot is successfully processed") {
+            val response = service.getSnapshotById(snapshotUuid)
 
             assertThat(response).withMessage()
                 .isEqualTo(
-                    FullCreatePayoutTask(
-                        taskId = taskUuid,
+                    FullSnapshot(
+                        id = snapshotUuid,
+                        name = name,
                         chainId = chainId,
                         assetAddress = assetAddress,
                         payoutBlockNumber = payoutBlock,
-                        ignoredAssetAddresses = ignoredAddresses,
-                        requesterAddress = requesterAddress,
-                        issuerAddress = issuerAddress,
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress,
                         snapshotStatus = SnapshotStatus.SUCCESS,
-                        data = FullCreatePayoutData(
+                        data = FullSnapshotData(
                             totalAssetAmount = totalAssetAmount,
                             merkleRootHash = tree.root.hash,
                             merkleTreeIpfsHash = ipfsHash,
@@ -214,22 +212,22 @@ class CreatePayoutQueueServiceTest : TestBase() {
         }
 
         verify("correct service and repository calls are made") {
-            // submitTask()
+            // submitSnapshot()
             verifyMock(blockchainService)
                 .getAssetOwner(chainId, assetAddress)
             verifyMock(snapshotRepository)
                 .createSnapshot(params)
 
-            // processTasks()
+            // processSnapshots()
             verifyMock(snapshotRepository)
                 .getPending()
 
-            // handlePendingCreatePayoutTask()
+            // handlePendingSnapshot()
             verifyMock(blockchainService)
                 .fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
-                    ignoredErc20Addresses = ignoredAddresses,
+                    ignoredErc20Addresses = ignoredHolderAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
@@ -244,11 +242,11 @@ class CreatePayoutQueueServiceTest : TestBase() {
             verifyNoMoreInteractions(ipfsService)
 
             verifyMock(snapshotRepository)
-                .completeSnapshot(taskUuid, treeUuid, ipfsHash, totalAssetAmount)
+                .completeSnapshot(snapshotUuid, treeUuid, ipfsHash, totalAssetAmount)
 
-            // getTaskById()
+            // getSnapshotById()
             verifyMock(snapshotRepository)
-                .getById(taskUuid)
+                .getById(snapshotUuid)
             verifyNoMoreInteractions(snapshotRepository)
 
             verifyMock(merkleTreeRepository)
@@ -258,47 +256,47 @@ class CreatePayoutQueueServiceTest : TestBase() {
     }
 
     @Test
-    fun mustFailTaskWhenExceptionIsThrownDuringProcessing() {
+    fun mustFailSnapshotWhenExceptionIsThrownDuringProcessing() {
         val blockchainService = mock<BlockchainService>()
         val chainId = ChainId(1L)
         val assetAddress = ContractAddress("a")
-        val requesterAddress = WalletAddress("1")
+        val ownerAddress = WalletAddress("1")
 
         suppose("requesting user is asset owner") {
             given(blockchainService.getAssetOwner(chainId, assetAddress))
-                .willReturn(requesterAddress)
+                .willReturn(ownerAddress)
         }
 
         val snapshotRepository = mock<SnapshotRepository>()
-        val issuerAddress = ContractAddress("abcd")
         val payoutBlock = BlockNumber(BigInteger.TEN)
-        val ignoredAddresses = setOf(WalletAddress("dead"))
-        val taskUuid = UUID.randomUUID()
+        val ignoredHolderAddresses = setOf(WalletAddress("dead"))
+        val snapshotUuid = UUID.randomUUID()
+        val name = "snapshot-name"
         val params = CreateSnapshotParams(
             chainId = chainId,
-            name = "", // TODO fix in SD-708
+            name = name,
             assetAddress = assetAddress,
-            ownerAddress = requesterAddress,
+            ownerAddress = ownerAddress,
             payoutBlock = payoutBlock,
-            ignoredHolderAddresses = ignoredAddresses
+            ignoredHolderAddresses = ignoredHolderAddresses
         )
 
-        suppose("payout task is created in database") {
+        suppose("snapshot is created in database") {
             given(snapshotRepository.createSnapshot(params))
-                .willReturn(taskUuid)
+                .willReturn(snapshotUuid)
         }
 
-        suppose("pending task will be returned") {
+        suppose("pending snapshot will be returned") {
             given(snapshotRepository.getPending())
                 .willReturn(
                     PendingSnapshot(
-                        id = taskUuid,
-                        name = "", // TODO fix in SD-708
+                        id = snapshotUuid,
+                        name = name,
                         chainId = chainId,
                         assetAddress = assetAddress,
                         blockNumber = payoutBlock,
-                        ignoredHolderAddresses = ignoredAddresses,
-                        ownerAddress = requesterAddress
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress
                     )
                 )
         }
@@ -308,7 +306,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 blockchainService.fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
-                    ignoredErc20Addresses = ignoredAddresses,
+                    ignoredErc20Addresses = ignoredHolderAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
@@ -329,7 +327,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
         val merkleTreeRepository = mock<MerkleTreeRepository>()
         val ipfsService = mock<IpfsService>()
 
-        val service = CreatePayoutQueueServiceImpl(
+        val service = SnapshotQueueServiceImpl(
             merkleTreeRepository = merkleTreeRepository,
             snapshotRepository = snapshotRepository,
             ipfsService = ipfsService,
@@ -338,46 +336,46 @@ class CreatePayoutQueueServiceTest : TestBase() {
             scheduledExecutorServiceProvider = executorServiceProvider
         )
 
-        verify("payout task is submitted and correct task ID is returned") {
-            val response = service.submitTask(params)
+        verify("snapshot is submitted and correct snapshot ID is returned") {
+            val response = service.submitSnapshot(params)
 
             assertThat(response).withMessage()
-                .isEqualTo(taskUuid)
+                .isEqualTo(snapshotUuid)
         }
 
-        suppose("task is processed") {
+        suppose("snapshot is processed") {
             scheduler.execute()
         }
 
-        suppose("failed task is returned from database") {
-            given(snapshotRepository.getById(taskUuid))
+        suppose("failed snapshot is returned from database") {
+            given(snapshotRepository.getById(snapshotUuid))
                 .willReturn(
                     Snapshot(
-                        id = taskUuid,
-                        name = "", // TODO fix in SD-708
+                        id = snapshotUuid,
+                        name = name,
                         chainId = chainId,
                         assetAddress = assetAddress,
                         blockNumber = payoutBlock,
-                        ignoredHolderAddresses = ignoredAddresses,
-                        ownerAddress = requesterAddress,
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress,
                         data = OtherSnapshotData(SnapshotStatus.FAILED)
                     )
                 )
         }
 
-        verify("task execution failed") {
-            val response = service.getTaskById(taskUuid)
+        verify("snapshot processing failed") {
+            val response = service.getSnapshotById(snapshotUuid)
 
             assertThat(response).withMessage()
                 .isEqualTo(
-                    FullCreatePayoutTask(
-                        taskId = taskUuid,
+                    FullSnapshot(
+                        id = snapshotUuid,
+                        name = name,
                         chainId = chainId,
                         assetAddress = assetAddress,
                         payoutBlockNumber = payoutBlock,
-                        ignoredAssetAddresses = ignoredAddresses,
-                        requesterAddress = requesterAddress,
-                        issuerAddress = issuerAddress,
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress,
                         snapshotStatus = SnapshotStatus.FAILED,
                         data = null
                     )
@@ -385,33 +383,33 @@ class CreatePayoutQueueServiceTest : TestBase() {
         }
 
         verify("correct service and repository calls are made") {
-            // submitTask()
+            // submitSnapshot()
             verifyMock(blockchainService)
                 .getAssetOwner(chainId, assetAddress)
             verifyMock(snapshotRepository)
                 .createSnapshot(params)
 
-            // processTasks()
+            // processSnapshots()
             verifyMock(snapshotRepository)
                 .getPending()
 
-            // handlePendingCreatePayoutTask()
+            // handlePendingSnapshot()
             verifyMock(blockchainService)
                 .fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
-                    ignoredErc20Addresses = ignoredAddresses,
+                    ignoredErc20Addresses = ignoredHolderAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
             verifyNoMoreInteractions(blockchainService)
 
             verifyMock(snapshotRepository)
-                .failSnapshot(taskUuid)
+                .failSnapshot(snapshotUuid)
 
-            // getTaskById()
+            // getSnapshotById()
             verifyMock(snapshotRepository)
-                .getById(taskUuid)
+                .getById(snapshotUuid)
             verifyNoMoreInteractions(snapshotRepository)
 
             verifyNoInteractions(merkleTreeRepository)
@@ -420,47 +418,47 @@ class CreatePayoutQueueServiceTest : TestBase() {
     }
 
     @Test
-    fun mustCorrectlySubmitAndCreatePayoutWhenMerkleTreeAlreadyExist() {
+    fun mustCorrectlySubmitAndCreateSnapshotWhenMerkleTreeAlreadyExist() {
         val blockchainService = mock<BlockchainService>()
         val chainId = ChainId(1L)
         val assetAddress = ContractAddress("a")
-        val requesterAddress = WalletAddress("1")
+        val ownerAddress = WalletAddress("1")
 
         suppose("requesting user is asset owner") {
             given(blockchainService.getAssetOwner(chainId, assetAddress))
-                .willReturn(requesterAddress)
+                .willReturn(ownerAddress)
         }
 
         val snapshotRepository = mock<SnapshotRepository>()
-        val issuerAddress = ContractAddress("abcd")
         val payoutBlock = BlockNumber(BigInteger.TEN)
-        val ignoredAddresses = setOf(WalletAddress("dead"))
-        val taskUuid = UUID.randomUUID()
+        val ignoredHolderAddresses = setOf(WalletAddress("dead"))
+        val snapshotUuid = UUID.randomUUID()
+        val name = "snapshot-name"
         val params = CreateSnapshotParams(
             chainId = chainId,
-            name = "", // TODO fix in SD-708
+            name = name,
             assetAddress = assetAddress,
-            ownerAddress = requesterAddress,
+            ownerAddress = ownerAddress,
             payoutBlock = payoutBlock,
-            ignoredHolderAddresses = ignoredAddresses
+            ignoredHolderAddresses = ignoredHolderAddresses
         )
 
-        suppose("payout task is created in database") {
+        suppose("snapshot is created in database") {
             given(snapshotRepository.createSnapshot(params))
-                .willReturn(taskUuid)
+                .willReturn(snapshotUuid)
         }
 
-        suppose("pending task will be returned") {
+        suppose("pending snapshot will be returned") {
             given(snapshotRepository.getPending())
                 .willReturn(
                     PendingSnapshot(
-                        id = taskUuid,
-                        name = "", // TODO fix in SD-708
+                        id = snapshotUuid,
+                        name = name,
                         chainId = chainId,
                         assetAddress = assetAddress,
                         blockNumber = payoutBlock,
-                        ignoredHolderAddresses = ignoredAddresses,
-                        ownerAddress = requesterAddress
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress
                     )
                 )
         }
@@ -476,7 +474,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 blockchainService.fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
-                    ignoredErc20Addresses = ignoredAddresses,
+                    ignoredErc20Addresses = ignoredHolderAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
@@ -521,7 +519,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 .willReturn(scheduler)
         }
 
-        val service = CreatePayoutQueueServiceImpl(
+        val service = SnapshotQueueServiceImpl(
             merkleTreeRepository = merkleTreeRepository,
             snapshotRepository = snapshotRepository,
             ipfsService = ipfsService,
@@ -530,28 +528,28 @@ class CreatePayoutQueueServiceTest : TestBase() {
             scheduledExecutorServiceProvider = executorServiceProvider
         )
 
-        verify("payout task is submitted and correct task ID is returned") {
-            val response = service.submitTask(params)
+        verify("snapshot is submitted and correct snapshot ID is returned") {
+            val response = service.submitSnapshot(params)
 
             assertThat(response).withMessage()
-                .isEqualTo(taskUuid)
+                .isEqualTo(snapshotUuid)
         }
 
-        suppose("task is processed") {
+        suppose("snapshot is processed") {
             scheduler.execute()
         }
 
-        suppose("successful task is returned from database") {
-            given(snapshotRepository.getById(taskUuid))
+        suppose("successful snapshot is returned from database") {
+            given(snapshotRepository.getById(snapshotUuid))
                 .willReturn(
                     Snapshot(
-                        id = taskUuid,
-                        name = "", // TODO fix in SD-708
+                        id = snapshotUuid,
+                        name = name,
                         chainId = chainId,
                         assetAddress = assetAddress,
                         blockNumber = payoutBlock,
-                        ignoredHolderAddresses = ignoredAddresses,
-                        ownerAddress = requesterAddress,
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress,
                         data = SuccessfulSnapshotData(
                             merkleTreeRootId = treeUuid,
                             merkleTreeIpfsHash = ipfsHash,
@@ -561,21 +559,21 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 )
         }
 
-        verify("task is successfully executed") {
-            val response = service.getTaskById(taskUuid)
+        verify("snapshot is successfully processed") {
+            val response = service.getSnapshotById(snapshotUuid)
 
             assertThat(response).withMessage()
                 .isEqualTo(
-                    FullCreatePayoutTask(
-                        taskId = taskUuid,
+                    FullSnapshot(
+                        id = snapshotUuid,
+                        name = name,
                         chainId = chainId,
                         assetAddress = assetAddress,
                         payoutBlockNumber = payoutBlock,
-                        ignoredAssetAddresses = ignoredAddresses,
-                        requesterAddress = requesterAddress,
-                        issuerAddress = issuerAddress,
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress,
                         snapshotStatus = SnapshotStatus.SUCCESS,
-                        data = FullCreatePayoutData(
+                        data = FullSnapshotData(
                             totalAssetAmount = totalAssetAmount,
                             merkleRootHash = tree.root.hash,
                             merkleTreeIpfsHash = ipfsHash,
@@ -587,22 +585,22 @@ class CreatePayoutQueueServiceTest : TestBase() {
         }
 
         verify("correct service and repository calls are made") {
-            // submitTask()
+            // submitSnapshot()
             verifyMock(blockchainService)
                 .getAssetOwner(chainId, assetAddress)
             verifyMock(snapshotRepository)
                 .createSnapshot(params)
 
-            // processTasks()
+            // processSnapshots()
             verifyMock(snapshotRepository)
                 .getPending()
 
-            // handlePendingCreatePayoutTask()
+            // handlePendingSnapshot()
             verifyMock(blockchainService)
                 .fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
-                    ignoredErc20Addresses = ignoredAddresses,
+                    ignoredErc20Addresses = ignoredHolderAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
@@ -615,11 +613,11 @@ class CreatePayoutQueueServiceTest : TestBase() {
             verifyNoMoreInteractions(ipfsService)
 
             verifyMock(snapshotRepository)
-                .completeSnapshot(taskUuid, treeUuid, ipfsHash, totalAssetAmount)
+                .completeSnapshot(snapshotUuid, treeUuid, ipfsHash, totalAssetAmount)
 
-            // getTaskById()
+            // getSnapshotById()
             verifyMock(snapshotRepository)
-                .getById(taskUuid)
+                .getById(snapshotUuid)
             verifyNoMoreInteractions(snapshotRepository)
 
             verifyMock(merkleTreeRepository)
@@ -633,7 +631,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
         val blockchainService = mock<BlockchainService>()
         val chainId = ChainId(1L)
         val assetAddress = ContractAddress("a")
-        val requesterAddress = WalletAddress("1")
+        val ownerAddress = WalletAddress("1")
 
         suppose("requesting user is not asset owner") {
             given(blockchainService.getAssetOwner(chainId, assetAddress))
@@ -645,16 +643,16 @@ class CreatePayoutQueueServiceTest : TestBase() {
         }
 
         val snapshotRepository = mock<SnapshotRepository>()
-        val issuerAddress = ContractAddress("abcd")
         val payoutBlock = BlockNumber(BigInteger.TEN)
-        val ignoredAddresses = setOf(WalletAddress("dead"))
+        val ignoredHolderAddresses = setOf(WalletAddress("dead"))
+        val name = "snapshot-name"
         val params = CreateSnapshotParams(
             chainId = chainId,
-            name = "", // TODO fix in SD-708
+            name = name,
             assetAddress = assetAddress,
-            ownerAddress = requesterAddress,
+            ownerAddress = ownerAddress,
             payoutBlock = payoutBlock,
-            ignoredHolderAddresses = ignoredAddresses
+            ignoredHolderAddresses = ignoredHolderAddresses
         )
         val executorServiceProvider = mock<ScheduledExecutorServiceProvider>()
         val scheduler = ManualFixedScheduler()
@@ -667,7 +665,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
         val merkleTreeRepository = mock<MerkleTreeRepository>()
         val ipfsService = mock<IpfsService>()
 
-        val service = CreatePayoutQueueServiceImpl(
+        val service = SnapshotQueueServiceImpl(
             merkleTreeRepository = merkleTreeRepository,
             snapshotRepository = snapshotRepository,
             ipfsService = ipfsService,
@@ -678,12 +676,12 @@ class CreatePayoutQueueServiceTest : TestBase() {
 
         verify("InvalidRequestException exception is thrown") {
             assertThrows<InvalidRequestException>(message) {
-                service.submitTask(params)
+                service.submitSnapshot(params)
             }
         }
 
         verify("correct service and repository calls are made") {
-            // submitTask()
+            // submitSnapshot()
             verifyMock(blockchainService)
                 .getAssetOwner(chainId, assetAddress)
 
@@ -695,41 +693,41 @@ class CreatePayoutQueueServiceTest : TestBase() {
     }
 
     @Test
-    fun mustCorrectlySubmitCreatePayoutForNonOwnerWhenAssetOwnerIsNotChecked() {
+    fun mustCorrectlySubmitCreateSnapshotForNonOwnerWhenAssetOwnerIsNotChecked() {
         val chainId = ChainId(1L)
         val assetAddress = ContractAddress("a")
-        val requesterAddress = WalletAddress("1")
-        val issuerAddress = ContractAddress("abcd")
+        val ownerAddress = WalletAddress("1")
         val payoutBlock = BlockNumber(BigInteger.TEN)
-        val ignoredAddresses = setOf(WalletAddress("dead"))
-        val taskUuid = UUID.randomUUID()
+        val ignoredHolderAddresses = setOf(WalletAddress("dead"))
+        val snapshotUuid = UUID.randomUUID()
+        val name = "snapshot-name"
         val params = CreateSnapshotParams(
             chainId = chainId,
-            name = "", // TODO fix in SD-708
+            name = name,
             assetAddress = assetAddress,
-            ownerAddress = requesterAddress,
+            ownerAddress = ownerAddress,
             payoutBlock = payoutBlock,
-            ignoredHolderAddresses = ignoredAddresses
+            ignoredHolderAddresses = ignoredHolderAddresses
         )
 
         val snapshotRepository = mock<SnapshotRepository>()
 
-        suppose("payout task is created in database") {
+        suppose("snapshot is created in database") {
             given(snapshotRepository.createSnapshot(params))
-                .willReturn(taskUuid)
+                .willReturn(snapshotUuid)
         }
 
-        suppose("pending task will be returned") {
+        suppose("pending snapshot will be returned") {
             given(snapshotRepository.getPending())
                 .willReturn(
                     PendingSnapshot(
-                        id = taskUuid,
-                        name = "", // TODO fix in SD-708
+                        id = snapshotUuid,
+                        name = name,
                         chainId = chainId,
                         assetAddress = assetAddress,
                         blockNumber = payoutBlock,
-                        ignoredHolderAddresses = ignoredAddresses,
-                        ownerAddress = requesterAddress
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress
                     )
                 )
         }
@@ -747,7 +745,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 blockchainService.fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
-                    ignoredErc20Addresses = ignoredAddresses,
+                    ignoredErc20Addresses = ignoredHolderAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
@@ -793,7 +791,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 .willReturn(scheduler)
         }
 
-        val service = CreatePayoutQueueServiceImpl(
+        val service = SnapshotQueueServiceImpl(
             merkleTreeRepository = merkleTreeRepository,
             snapshotRepository = snapshotRepository,
             ipfsService = ipfsService,
@@ -802,28 +800,28 @@ class CreatePayoutQueueServiceTest : TestBase() {
             scheduledExecutorServiceProvider = executorServiceProvider
         )
 
-        verify("payout task is submitted and correct task ID is returned") {
-            val response = service.submitTask(params)
+        verify("snapshot is submitted and correct snapshot ID is returned") {
+            val response = service.submitSnapshot(params)
 
             assertThat(response).withMessage()
-                .isEqualTo(taskUuid)
+                .isEqualTo(snapshotUuid)
         }
 
-        suppose("task is processed") {
+        suppose("snapshot is processed") {
             scheduler.execute()
         }
 
-        suppose("successful task is returned from database") {
-            given(snapshotRepository.getById(taskUuid))
+        suppose("successful snapshot is returned from database") {
+            given(snapshotRepository.getById(snapshotUuid))
                 .willReturn(
                     Snapshot(
-                        id = taskUuid,
-                        name = "", // TODO fix in SD-708
+                        id = snapshotUuid,
+                        name = name,
                         chainId = chainId,
                         assetAddress = assetAddress,
                         blockNumber = payoutBlock,
-                        ignoredHolderAddresses = ignoredAddresses,
-                        ownerAddress = requesterAddress,
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress,
                         data = SuccessfulSnapshotData(
                             merkleTreeRootId = treeUuid,
                             merkleTreeIpfsHash = ipfsHash,
@@ -833,21 +831,21 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 )
         }
 
-        verify("task is successfully executed") {
-            val response = service.getTaskById(taskUuid)
+        verify("snapshot is successfully processed") {
+            val response = service.getSnapshotById(snapshotUuid)
 
             assertThat(response).withMessage()
                 .isEqualTo(
-                    FullCreatePayoutTask(
-                        taskId = taskUuid,
+                    FullSnapshot(
+                        id = snapshotUuid,
+                        name = name,
                         chainId = chainId,
                         assetAddress = assetAddress,
                         payoutBlockNumber = payoutBlock,
-                        ignoredAssetAddresses = ignoredAddresses,
-                        requesterAddress = requesterAddress,
-                        issuerAddress = issuerAddress,
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress,
                         snapshotStatus = SnapshotStatus.SUCCESS,
-                        data = FullCreatePayoutData(
+                        data = FullSnapshotData(
                             totalAssetAmount = totalAssetAmount,
                             merkleRootHash = tree.root.hash,
                             merkleTreeIpfsHash = ipfsHash,
@@ -859,20 +857,20 @@ class CreatePayoutQueueServiceTest : TestBase() {
         }
 
         verify("correct service and repository calls are made") {
-            // submitTask()
+            // submitSnapshot()
             verifyMock(snapshotRepository)
                 .createSnapshot(params)
 
-            // processTasks()
+            // processSnapshots()
             verifyMock(snapshotRepository)
                 .getPending()
 
-            // handlePendingCreatePayoutTask()
+            // handlePendingSnapshot()
             verifyMock(blockchainService)
                 .fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
-                    ignoredErc20Addresses = ignoredAddresses,
+                    ignoredErc20Addresses = ignoredHolderAddresses,
                     startBlock = null,
                     endBlock = payoutBlock
                 )
@@ -887,11 +885,11 @@ class CreatePayoutQueueServiceTest : TestBase() {
             verifyNoMoreInteractions(ipfsService)
 
             verifyMock(snapshotRepository)
-                .completeSnapshot(taskUuid, treeUuid, ipfsHash, totalAssetAmount)
+                .completeSnapshot(snapshotUuid, treeUuid, ipfsHash, totalAssetAmount)
 
-            // getTaskById()
+            // getSnapshotById()
             verifyMock(snapshotRepository)
-                .getById(taskUuid)
+                .getById(snapshotUuid)
             verifyNoMoreInteractions(snapshotRepository)
 
             verifyMock(merkleTreeRepository)
@@ -901,7 +899,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
     }
 
     @Test
-    fun mustCorrectlyFetchAllTasksByChainIdIssuerOwnerAndStatuses() {
+    fun mustCorrectlyFetchAllSnapshotsByChainIdOwnerAndStatuses() {
         val merkleTreeRepository = mock<MerkleTreeRepository>()
         val treeUuid = UUID.randomUUID()
         val tree = MerkleTree(
@@ -916,14 +914,13 @@ class CreatePayoutQueueServiceTest : TestBase() {
 
         val snapshotRepository = mock<SnapshotRepository>()
         val chainId = ChainId(1L)
-        val issuer = ContractAddress("a")
         val owner = WalletAddress("b")
         val ipfsHash = IpfsHash("ipfs-hash")
         val totalAssetAmount = Balance(BigInteger("1000"))
-        val tasks = listOf(
+        val snapshots = listOf(
             Snapshot(
                 id = UUID.randomUUID(),
-                name = "", // TODO fix in SD-708
+                name = "snapshot-1",
                 chainId = chainId,
                 assetAddress = ContractAddress("1"),
                 blockNumber = BlockNumber(BigInteger.TEN),
@@ -937,7 +934,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
             ),
             Snapshot(
                 id = UUID.randomUUID(),
-                name = "", // TODO fix in SD-708
+                name = "snapshot-2",
                 chainId = chainId,
                 assetAddress = ContractAddress("2"),
                 blockNumber = BlockNumber(BigInteger.TEN),
@@ -948,9 +945,9 @@ class CreatePayoutQueueServiceTest : TestBase() {
         )
         val statuses = setOf(SnapshotStatus.PENDING, SnapshotStatus.SUCCESS)
 
-        suppose("some create payout tasks are returned") {
+        suppose("some snapshots are returned") {
             given(snapshotRepository.getAllByChainIdOwnerAndStatuses(chainId, owner, statuses))
-                .willReturn(tasks)
+                .willReturn(snapshots)
         }
 
         val executorServiceProvider = mock<ScheduledExecutorServiceProvider>()
@@ -961,7 +958,7 @@ class CreatePayoutQueueServiceTest : TestBase() {
                 .willReturn(scheduler)
         }
 
-        val service = CreatePayoutQueueServiceImpl(
+        val service = SnapshotQueueServiceImpl(
             merkleTreeRepository = merkleTreeRepository,
             snapshotRepository = snapshotRepository,
             ipfsService = mock(),
@@ -970,21 +967,21 @@ class CreatePayoutQueueServiceTest : TestBase() {
             scheduledExecutorServiceProvider = executorServiceProvider
         )
 
-        verify("task are correctly fetched by issuer and owner") {
-            val response = service.getAllTasksByIssuerAndOwner(chainId, issuer, owner, statuses)
+        verify("snapshots are correctly fetched by chainId and owner") {
+            val response = service.getAllSnapshotsByChainIdOwnerAndStatuses(chainId, owner, statuses)
 
             assertThat(response).withMessage()
                 .containsExactlyInAnyOrder(
-                    FullCreatePayoutTask(
-                        taskId = tasks[0].id,
-                        chainId = tasks[0].chainId,
-                        assetAddress = tasks[0].assetAddress,
-                        payoutBlockNumber = tasks[0].blockNumber,
-                        ignoredAssetAddresses = emptySet(),
-                        requesterAddress = tasks[0].ownerAddress,
-                        issuerAddress = null, // TODO fix in SD-708
+                    FullSnapshot(
+                        id = snapshots[0].id,
+                        name = snapshots[0].name,
+                        chainId = snapshots[0].chainId,
+                        assetAddress = snapshots[0].assetAddress,
+                        payoutBlockNumber = snapshots[0].blockNumber,
+                        ignoredHolderAddresses = emptySet(),
+                        ownerAddress = snapshots[0].ownerAddress,
                         snapshotStatus = SnapshotStatus.SUCCESS,
-                        data = FullCreatePayoutData(
+                        data = FullSnapshotData(
                             totalAssetAmount = totalAssetAmount,
                             merkleRootHash = tree.root.hash,
                             merkleTreeIpfsHash = ipfsHash,
@@ -992,14 +989,14 @@ class CreatePayoutQueueServiceTest : TestBase() {
                             hashFn = tree.hashFn
                         )
                     ),
-                    FullCreatePayoutTask(
-                        taskId = tasks[1].id,
-                        chainId = tasks[1].chainId,
-                        assetAddress = tasks[1].assetAddress,
-                        payoutBlockNumber = tasks[1].blockNumber,
-                        ignoredAssetAddresses = emptySet(),
-                        requesterAddress = tasks[1].ownerAddress,
-                        issuerAddress = null, // TODO fix in SD-708
+                    FullSnapshot(
+                        id = snapshots[1].id,
+                        name = snapshots[1].name,
+                        chainId = snapshots[1].chainId,
+                        assetAddress = snapshots[1].assetAddress,
+                        payoutBlockNumber = snapshots[1].blockNumber,
+                        ignoredHolderAddresses = emptySet(),
+                        ownerAddress = snapshots[1].ownerAddress,
                         snapshotStatus = SnapshotStatus.PENDING,
                         data = null
                     )
