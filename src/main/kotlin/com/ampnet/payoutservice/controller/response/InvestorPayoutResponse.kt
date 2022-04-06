@@ -14,13 +14,13 @@ data class InvestorPayoutResponse(
     val amountClaimed: BigInteger,
 
     @JsonSerialize(using = ToStringSerializer::class)
-    val amountClaimable: BigInteger?,
+    val amountClaimable: BigInteger,
     @JsonSerialize(using = ToStringSerializer::class)
-    val balance: BigInteger?,
+    val balance: BigInteger,
     @JsonIgnore
-    val path: List<PathSegment>?
+    val path: List<PathSegment>
 ) {
     @Suppress("unused") // returned in JSON
     @JsonProperty
-    private val proof = path?.map { it.siblingHash.value }
+    private val proof = path.map { it.siblingHash.value }
 }

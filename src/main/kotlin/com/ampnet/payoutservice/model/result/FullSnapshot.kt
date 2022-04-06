@@ -1,5 +1,6 @@
 package com.ampnet.payoutservice.model.result
 
+import com.ampnet.payoutservice.controller.response.SnapshotResponse
 import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
@@ -16,12 +17,28 @@ data class FullSnapshot(
     val name: String,
     val chainId: ChainId,
     val assetAddress: ContractAddress,
-    val payoutBlockNumber: BlockNumber,
+    val blockNumber: BlockNumber,
     val ignoredHolderAddresses: Set<WalletAddress>,
     val ownerAddress: WalletAddress,
     val snapshotStatus: SnapshotStatus,
     val data: FullSnapshotData?
-)
+) {
+    fun toSnapshotResponse(): SnapshotResponse =
+        SnapshotResponse(
+            id = id,
+            name = name,
+            chainId = chainId.value,
+            status = snapshotStatus,
+            owner = ownerAddress.rawValue,
+            asset = assetAddress.rawValue,
+            totalAssetAmount = data?.totalAssetAmount?.rawValue,
+            ignoredHolderAddresses = ignoredHolderAddresses.mapTo(HashSet()) { it.rawValue },
+            assetSnapshotMerkleRoot = data?.merkleRootHash?.value,
+            assetSnapshotMerkleDepth = data?.merkleTreeDepth,
+            assetSnapshotBlockNumber = blockNumber.value,
+            assetSnapshotMerkleIpfsHash = data?.merkleTreeIpfsHash?.value
+        )
+}
 
 data class FullSnapshotData(
     val totalAssetAmount: Balance,
