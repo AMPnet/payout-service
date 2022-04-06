@@ -25,7 +25,7 @@ class PayoutController(
     companion object : KLogging()
 
     @Suppress("LongParameterList")
-    @GetMapping("/payouts")
+    @GetMapping("/claimable_payouts")
     fun getPayoutsForInvestor(
         @RequestParam(required = true) chainId: Long,
         @RequestParam(required = true) assetFactories: List<String>,

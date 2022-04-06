@@ -260,7 +260,7 @@ class PayoutControllerTest : TestBase() {
             isCanceled = false,
             asset = ContractAddress("bbb$id"),
             totalAssetAmount = Balance(asset),
-            ignoredAssetAddresses = emptySet(),
+            ignoredHolderAddresses = emptySet(),
             assetSnapshotMerkleRoot = rootHash,
             assetSnapshotMerkleDepth = BigInteger.valueOf(id),
             assetSnapshotBlockNumber = BlockNumber(BigInteger.valueOf(id * 100)),

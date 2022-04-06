@@ -18,7 +18,7 @@ data class Payout(
     val isCanceled: Boolean,
     val asset: ContractAddress,
     val totalAssetAmount: Balance,
-    val ignoredAssetAddresses: Set<WalletAddress>,
+    val ignoredHolderAddresses: Set<WalletAddress>,
     val assetSnapshotMerkleRoot: Hash,
     val assetSnapshotMerkleDepth: BigInteger,
     val assetSnapshotBlockNumber: BlockNumber,
@@ -34,7 +34,7 @@ data class Payout(
         isCanceled = struct.isCanceled,
         asset = ContractAddress(struct.asset),
         totalAssetAmount = Balance(struct.totalAssetAmount),
-        ignoredAssetAddresses = struct.ignoredHolderAddresses.mapTo(HashSet()) { WalletAddress(it) },
+        ignoredHolderAddresses = struct.ignoredHolderAddresses.mapTo(HashSet()) { WalletAddress(it) },
         assetSnapshotMerkleRoot = Hash(Numeric.toHexString(struct.assetSnapshotMerkleRoot)),
         assetSnapshotMerkleDepth = struct.assetSnapshotMerkleDepth,
         assetSnapshotBlockNumber = BlockNumber(struct.assetSnapshotBlockNumber),
@@ -53,7 +53,7 @@ data class Payout(
 
             asset = asset.rawValue,
             totalAssetAmount = totalAssetAmount.rawValue,
-            ignoredHolderAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
+            ignoredHolderAddresses = ignoredHolderAddresses.mapTo(HashSet()) { it.rawValue },
 
             assetSnapshotMerkleRoot = assetSnapshotMerkleRoot.value,
             assetSnapshotMerkleDepth = assetSnapshotMerkleDepth.intValueExact(),
