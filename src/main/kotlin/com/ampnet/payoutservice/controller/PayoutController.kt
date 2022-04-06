@@ -7,16 +7,12 @@ import com.ampnet.payoutservice.controller.response.CreatePayoutResponse
 import com.ampnet.payoutservice.controller.response.InvestorPayoutResponse
 import com.ampnet.payoutservice.controller.response.InvestorPayoutsResponse
 import com.ampnet.payoutservice.controller.response.PayoutResponse
-import com.ampnet.payoutservice.exception.ErrorCode
-import com.ampnet.payoutservice.exception.ResourceNotFoundException
 import com.ampnet.payoutservice.model.params.CreateSnapshotParams
 import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
 import com.ampnet.payoutservice.model.params.GetPayoutsForAdminParams
 import com.ampnet.payoutservice.model.params.GetPayoutsForInvestorParams
-import com.ampnet.payoutservice.model.result.FullCreatePayoutTask
-import com.ampnet.payoutservice.model.result.Payout
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
-import com.ampnet.payoutservice.service.CreatePayoutQueueService
+import com.ampnet.payoutservice.service.SnapshotQueueService
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
@@ -37,7 +33,7 @@ import java.util.UUID
 
 @RestController
 class PayoutController(
-    private val createPayoutQueueService: CreatePayoutQueueService,
+    private val snapshotQueueService: SnapshotQueueService,
     private val blockchainService: BlockchainService,
     private val merkleTreeRepository: MerkleTreeRepository
 ) {
@@ -50,13 +46,14 @@ class PayoutController(
         @PathVariable taskId: UUID
     ): ResponseEntity<PayoutResponse> {
         logger.debug { "Get payout task by chainId: $chainId, taskId: $taskId" }
-        return createPayoutQueueService.getTaskById(taskId)
-            ?.takeIf { it.chainId.value == chainId }
-            ?.let { ResponseEntity.ok(it.toPayoutResponse()) }
-            ?: throw ResourceNotFoundException(
-                ErrorCode.PAYOUT_TASK_NOT_FOUND,
-                "Create payout task not found"
-            )
+        TODO("SD-709")
+//        return snapshotQueueService.getSnapshotById(taskId)
+//            ?.takeIf { it.chainId.value == chainId }
+//            ?.let { ResponseEntity.ok(it.toPayoutResponse()) }
+//            ?: throw ResourceNotFoundException(
+//                ErrorCode.PAYOUT_TASK_NOT_FOUND,
+//                "Create payout task not found"
+//            )
     }
 
     @Suppress("LongParameterList")
@@ -79,9 +76,8 @@ class PayoutController(
         val ownerAddress = owner?.let { WalletAddress(it) }
         val statuses = status ?: emptyList()
 
-        val payoutTasks = createPayoutQueueService.getAllTasksByIssuerAndOwner(
+        val payoutTasks = snapshotQueueService.getAllSnapshotsByChainIdOwnerAndStatuses(
             chainId = chainIdValue,
-            issuer = issuerAddress,
             owner = ownerAddress,
             statuses = statuses.mapTo(HashSet()) { it.toSnapshotStatus }
         )
@@ -99,10 +95,11 @@ class PayoutController(
             )
         } else emptyList()
 
-        val otherPayouts = otherTasks.map { it.toPayoutResponse() }
-        val allPayouts = matchCreatedPayoutsWithSuccessfulTasks(successfulTasks, createdPayouts, issuer) + otherPayouts
+        TODO("SD-709")
+//        val otherPayouts = otherTasks.map { it.toPayoutResponse() }
+//        val allPayouts = matchCreatedPayoutsWithSuccessfulTasks(successfulTasks, createdPayouts, issuer) + otherPayouts
 
-        return ResponseEntity.ok(AdminPayoutsResponse(allPayouts))
+//        return ResponseEntity.ok(AdminPayoutsResponse(allPayouts))
     }
 
     @Suppress("LongParameterList")
@@ -176,7 +173,7 @@ class PayoutController(
             "Request payout creation, chainId: $chainId, assetAddress: $assetAddress, requestBody: $requestBody," +
                 " requesterAddress: $requesterAddress"
         }
-        val taskId = createPayoutQueueService.submitTask(
+        val taskId = snapshotQueueService.submitSnapshot(
             CreateSnapshotParams(
                 chainId = ChainId(chainId),
                 name = "", // TODO in SD-709
@@ -188,31 +185,5 @@ class PayoutController(
         )
 
         return ResponseEntity.ok(CreatePayoutResponse(taskId))
-    }
-
-    private fun matchCreatedPayoutsWithSuccessfulTasks(
-        successfulTasks: List<FullCreatePayoutTask>,
-        createdPayouts: List<Payout>,
-        issuer: String?
-    ): List<PayoutResponse> {
-        val tasksByKey = successfulTasks.groupBy { it.toKey() }
-        val payoutsByKey = createdPayouts.groupBy { it.toKey() }
-        val allKeys = (tasksByKey.keys + payoutsByKey.keys).filterNotNull()
-
-        return allKeys.flatMap { key ->
-            val tasks = tasksByKey[key] ?: emptyList()
-            val payouts = payoutsByKey[key] ?: emptyList()
-
-            val matchedTasks = tasks.take(payouts.size)
-            val matchedPayouts = payouts.take(tasks.size)
-            val payoutsWithTask = matchedPayouts.zip(matchedTasks).map {
-                it.first.toPayoutResponse(taskId = it.second.taskId, issuer = it.second.issuerAddress?.rawValue)
-            }
-
-            val remainingTasks = tasks.drop(payouts.size).map { it.toPayoutResponse() }
-            val remainingPayouts = payouts.drop(tasks.size).map { it.toPayoutResponse(taskId = null, issuer = issuer) }
-
-            payoutsWithTask + remainingPayouts + remainingTasks
-        }
     }
 }

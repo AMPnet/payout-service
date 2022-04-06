@@ -16,14 +16,14 @@ import com.ampnet.payoutservice.exception.ErrorCode
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeLeafNode
 import com.ampnet.payoutservice.generated.jooq.tables.MerkleTreeRoot
 import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
-import com.ampnet.payoutservice.model.result.FullCreatePayoutData
-import com.ampnet.payoutservice.model.result.FullCreatePayoutTask
+import com.ampnet.payoutservice.model.result.FullSnapshot
+import com.ampnet.payoutservice.model.result.FullSnapshotData
 import com.ampnet.payoutservice.model.result.OtherSnapshotData
 import com.ampnet.payoutservice.model.result.Snapshot
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
 import com.ampnet.payoutservice.repository.SnapshotRepository
 import com.ampnet.payoutservice.security.WithMockUser
-import com.ampnet.payoutservice.service.CreatePayoutQueueService
+import com.ampnet.payoutservice.service.SnapshotQueueService
 import com.ampnet.payoutservice.testcontainers.HardhatTestContainer
 import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.BlockNumber
@@ -71,13 +71,13 @@ class PayoutControllerApiTest : ControllerTestBase() {
     private lateinit var snapshotRepository: SnapshotRepository
 
     @Autowired
-    private lateinit var createPayoutQueueService: CreatePayoutQueueService
+    private lateinit var snapshotQueueService: SnapshotQueueService
 
     @Autowired
     private lateinit var dslContext: DSLContext
 
     @Autowired
-    private lateinit var createPayoutTaskQueueScheduler: ManualFixedScheduler
+    private lateinit var snapshotQueueScheduler: ManualFixedScheduler
 
     @BeforeEach
     fun beforeEach() {
@@ -285,22 +285,22 @@ class PayoutControllerApiTest : ControllerTestBase() {
         verify("pending create payout task has correct payload") {
             assertThat(pendingTask).withMessage()
                 .isEqualTo(
-                    FullCreatePayoutTask(
-                        taskId = createPayoutResponse.taskId,
+                    FullSnapshot(
+                        id = createPayoutResponse.taskId,
+                        name = "", // TODO in SD-709
                         chainId = chainId,
                         assetAddress = ContractAddress(contract.contractAddress),
                         payoutBlockNumber = payoutBlock,
-                        ignoredAssetAddresses = ignoredAddresses.mapTo(HashSet()) { WalletAddress(it) },
-                        requesterAddress = WalletAddress(HardhatTestContainer.accountAddress1),
-                        issuerAddress = issuerAddress,
+                        ignoredHolderAddresses = ignoredAddresses.mapTo(HashSet()) { WalletAddress(it) },
+                        ownerAddress = WalletAddress(HardhatTestContainer.accountAddress1),
                         snapshotStatus = SnapshotStatus.PENDING,
                         data = null
-                    ).toPayoutResponse()
+                    ) // TODO .toPayoutResponse()
                 )
         }
 
         suppose("create payout task is executed") {
-            createPayoutTaskQueueScheduler.execute()
+            snapshotQueueScheduler.execute()
         }
 
         val completedTask = suppose("create payout task is fetched by ID after execution") {
@@ -316,16 +316,16 @@ class PayoutControllerApiTest : ControllerTestBase() {
         verify("completed create payout task has correct payload") {
             assertThat(completedTask).withMessage()
                 .isEqualTo(
-                    FullCreatePayoutTask(
-                        taskId = createPayoutResponse.taskId,
+                    FullSnapshot(
+                        id = createPayoutResponse.taskId,
+                        name = "", // TODO in SD-709
                         chainId = chainId,
                         assetAddress = ContractAddress(contract.contractAddress),
                         payoutBlockNumber = payoutBlock,
-                        ignoredAssetAddresses = ignoredAddresses.mapTo(HashSet()) { WalletAddress(it) },
-                        requesterAddress = WalletAddress(HardhatTestContainer.accountAddress1),
-                        issuerAddress = issuerAddress,
+                        ignoredHolderAddresses = ignoredAddresses.mapTo(HashSet()) { WalletAddress(it) },
+                        ownerAddress = WalletAddress(HardhatTestContainer.accountAddress1),
                         snapshotStatus = SnapshotStatus.SUCCESS,
-                        data = FullCreatePayoutData(
+                        data = FullSnapshotData(
                             totalAssetAmount = Balance(BigInteger("600")),
                             // checked in next verify block
                             merkleRootHash = Hash(completedTask.assetSnapshotMerkleRoot!!),
@@ -333,7 +333,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                             merkleTreeDepth = completedTask.assetSnapshotMerkleDepth!!, // checked in next verify block
                             hashFn = HashFunction.KECCAK_256
                         )
-                    ).toPayoutResponse()
+                    ) // TODO .toPayoutResponse()
                 )
         }
 
@@ -452,10 +452,10 @@ class PayoutControllerApiTest : ControllerTestBase() {
         }
 
         suppose("create payout task is executed") {
-            createPayoutTaskQueueScheduler.execute()
+            snapshotQueueScheduler.execute()
         }
 
-        val payoutTask = createPayoutQueueService.getTaskById(createPayoutResponse.taskId)!!
+        val payoutTask = snapshotQueueService.getSnapshotById(createPayoutResponse.taskId)!!
         val contractPayout = PayoutStruct(
             BigInteger.ZERO,
             HardhatTestContainer.accountAddress1,
@@ -463,7 +463,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
             false,
             erc20Contract.contractAddress,
             payoutTask.data?.totalAssetAmount?.rawValue!!,
-            payoutTask.ignoredAssetAddresses.map { it.rawValue },
+            payoutTask.ignoredHolderAddresses.map { it.rawValue },
             Numeric.hexStringToByteArray(payoutTask.data?.merkleRootHash?.value!!),
             BigInteger.valueOf(payoutTask.data?.merkleTreeDepth?.toLong()!!),
             payoutTask.payoutBlockNumber.value,
@@ -520,7 +520,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                     AdminPayoutsResponse(
                         listOf(
                             PayoutResponse(
-                                taskId = payoutTask.taskId,
+                                taskId = payoutTask.id,
                                 status = PayoutStatus.PAYOUT_CREATED,
                                 issuer = issuerAddress.rawValue,
 
@@ -628,10 +628,10 @@ class PayoutControllerApiTest : ControllerTestBase() {
         }
 
         suppose("create payout task is executed") {
-            createPayoutTaskQueueScheduler.execute()
+            snapshotQueueScheduler.execute()
         }
 
-        val payoutTask = createPayoutQueueService.getTaskById(createPayoutResponse.taskId)!!
+        val payoutTask = snapshotQueueService.getSnapshotById(createPayoutResponse.taskId)!!
         val contractPayout = PayoutStruct(
             BigInteger.ZERO,
             HardhatTestContainer.accountAddress1,
@@ -639,7 +639,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
             false,
             erc20Contract.contractAddress,
             payoutTask.data?.totalAssetAmount?.rawValue!!,
-            payoutTask.ignoredAssetAddresses.map { it.rawValue },
+            payoutTask.ignoredHolderAddresses.map { it.rawValue },
             Numeric.hexStringToByteArray(payoutTask.data?.merkleRootHash?.value!!),
             BigInteger.valueOf(payoutTask.data?.merkleTreeDepth?.toLong()!!),
             payoutTask.payoutBlockNumber.value,
@@ -820,22 +820,22 @@ class PayoutControllerApiTest : ControllerTestBase() {
         verify("first pending create payout task has correct payload") {
             assertThat(pendingTask).withMessage()
                 .isEqualTo(
-                    FullCreatePayoutTask(
-                        taskId = createPayoutResponse.taskId,
+                    FullSnapshot(
+                        id = createPayoutResponse.taskId,
+                        name = "", // TODO in SD-709
                         chainId = chainId,
                         assetAddress = ContractAddress(contract.contractAddress),
                         payoutBlockNumber = payoutBlock,
-                        ignoredAssetAddresses = emptySet(),
-                        requesterAddress = WalletAddress(HardhatTestContainer.accountAddress1),
-                        issuerAddress = issuerAddress,
+                        ignoredHolderAddresses = emptySet(),
+                        ownerAddress = WalletAddress(HardhatTestContainer.accountAddress1),
                         snapshotStatus = SnapshotStatus.PENDING,
                         data = null
-                    ).toPayoutResponse()
+                    ) // TODO .toPayoutResponse()
                 )
         }
 
         suppose("first create payout task is executed") {
-            createPayoutTaskQueueScheduler.execute()
+            snapshotQueueScheduler.execute()
         }
 
         val completedTask = suppose("first create payout task is fetched by ID after execution") {
@@ -851,16 +851,16 @@ class PayoutControllerApiTest : ControllerTestBase() {
         verify("first completed create payout task is has correct payload") {
             assertThat(completedTask).withMessage()
                 .isEqualTo(
-                    FullCreatePayoutTask(
-                        taskId = createPayoutResponse.taskId,
+                    FullSnapshot(
+                        id = createPayoutResponse.taskId,
+                        name = "", // TODO in SD-709
                         chainId = chainId,
                         assetAddress = ContractAddress(contract.contractAddress),
                         payoutBlockNumber = payoutBlock,
-                        ignoredAssetAddresses = emptySet(),
-                        requesterAddress = WalletAddress(HardhatTestContainer.accountAddress1),
-                        issuerAddress = issuerAddress,
+                        ignoredHolderAddresses = emptySet(),
+                        ownerAddress = WalletAddress(HardhatTestContainer.accountAddress1),
                         snapshotStatus = SnapshotStatus.SUCCESS,
-                        data = FullCreatePayoutData(
+                        data = FullSnapshotData(
                             totalAssetAmount = Balance(BigInteger("10000")),
                             // checked in next verify block
                             merkleRootHash = Hash(completedTask.assetSnapshotMerkleRoot!!),
@@ -868,7 +868,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
                             merkleTreeDepth = completedTask.assetSnapshotMerkleDepth!!, // checked in next verify block
                             hashFn = HashFunction.KECCAK_256
                         )
-                    ).toPayoutResponse()
+                    ) // TODO .toPayoutResponse()
                 )
         }
 
@@ -933,7 +933,7 @@ class PayoutControllerApiTest : ControllerTestBase() {
         }
 
         suppose("second create payout task is executed") {
-            createPayoutTaskQueueScheduler.execute()
+            snapshotQueueScheduler.execute()
         }
 
         val secondCompletedTask = suppose("second create payout task is fetched by ID after execution") {
