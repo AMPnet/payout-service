@@ -30,7 +30,7 @@ class SnapshotController(private val snapshotQueueService: SnapshotQueueService)
     companion object : KLogging()
 
     @GetMapping("/snapshots/{snapshotId}")
-    fun getSnapshotId(
+    fun getSnapshotById(
         @PathVariable snapshotId: UUID,
         @AuthenticationPrincipal ownerAddress: String
     ): ResponseEntity<SnapshotResponse> {
@@ -47,12 +47,12 @@ class SnapshotController(private val snapshotQueueService: SnapshotQueueService)
     @Suppress("LongParameterList")
     @GetMapping("/snapshots")
     fun getSnapshots(
-        @RequestParam(required = false) chainId: Long,
+        @RequestParam(required = false) chainId: Long?,
         @RequestParam(required = false) status: List<SnapshotStatus>?,
         @AuthenticationPrincipal ownerAddress: String
     ): ResponseEntity<SnapshotsResponse> {
         logger.debug { "Get snapshots for owner, chainId: $chainId, ownerAddress: $ownerAddress, statuses: $status" }
-        val chainIdValue = ChainId(chainId)
+        val chainIdValue = chainId?.let { ChainId(it) }
         val ownerAddressValue = WalletAddress(ownerAddress)
         val statuses = status ?: emptyList()
 
