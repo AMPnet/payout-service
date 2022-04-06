@@ -35,45 +35,48 @@ include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutPathForS
 .Response
 include::{snippets}/PayoutInfoControllerApiTest/mustCorrectlyFetchPayoutPathForSomeAccount/http-response.adoc[]
 
-== Payout API
+== Snapshot API
 All endpoint require `Authorization: Bearer JWT` header.
-Chain ID (e.g. 80001) and asset contract address must be provided in the request path.
 
-=== Submit create payout task
-Requests creation of payout Merkle tree for specified parameters. This endpoint will return task ID which can then be
-used to fetch task info via another endpoint. Path arguments in order are: chain ID, asset contract address. Issuer
-address is optional.
+=== Submit create snapshot request
+Requests creation of ERC20 snapshot Merkle tree for specified parameters. This endpoint will return snapshot ID which
+can then be used to fetch snapshot info via another endpoint.
 
 .Request
-include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreatePayoutTaskForSomeAsset/http-request.adoc[]
+include::{snippets}/SnapshotControllerApiTest/mustSuccessfullyCreateSnapshotForSomeAsset/http-request.adoc[]
 .Response
-include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreatePayoutTaskForSomeAsset/http-response.adoc[]
+include::{snippets}/SnapshotControllerApiTest/mustSuccessfullyCreateSnapshotForSomeAsset/http-response.adoc[]
 
-=== Fetch create payout task info
-Fetches create payout task info. Possible task statuses are `PENDING`, `SUCCESS` and `FAILED`. Path arguments are
-Chain ID and task ID.
+=== Fetch snapshot
+Fetches info about stored snapshot by ID. Possible snapshot statuses are `PENDING`, `SUCCESS` and `FAILED`. Single path
+argument is the snapshot ID.
 
 .Request
-include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreateAndExecutePayoutForSomeAsset/http-request.adoc[]
+include::{snippets}/SnapshotControllerApiTest/mustSuccessfullyCreateAndProcessSnapshotForSomeAsset/http-request.adoc[]
 .Response
-include::{snippets}/PayoutControllerApiTest/mustSuccessfullyCreateAndExecutePayoutForSomeAsset/http-response.adoc[]
+include::{snippets}/SnapshotControllerApiTest/mustSuccessfullyCreateAndProcessSnapshotForSomeAsset/http-response.adoc[]
 
-=== Fetch list of payouts
-Fetches all payouts for specified filters. Possible payout statuses are `PROOF_PENDING`, `PROOF_FAILED`, `PROOF_CREATED`
-and `PAYOUT_CREATED`. Multiple values for `status` and `assetFactories` query parameters can be specified by separating
-them with commas.
+=== Fetch list of snapshots
+Fetches all snapshots for the requesting user and specified filters. Possible snapshot statuses are `PENDING`,
+`SUCCESS` and `FAILED`. Available query parameters are `chainId` and `status` and both are optional. Multiple values
+can be specified for `status` query parameter by separating them with commas. Requesting user is specified implicitly
+via the `Authorization: Bearer JWT` header.
 
 .Request
-include::{snippets}/PayoutControllerApiTest/mustReturnAdminPayoutsForSomeIssuerAndOwner/http-request.adoc[]
+include::{snippets}/SnapshotControllerApiTest/mustReturnSnapshotsForSomeChainIdAndOwner/http-request.adoc[]
 .Response
-include::{snippets}/PayoutControllerApiTest/mustReturnAdminPayoutsForSomeIssuerAndOwner/http-response.adoc[]
+include::{snippets}/SnapshotControllerApiTest/mustReturnSnapshotsForSomeChainIdAndOwner/http-response.adoc[]
 
-=== Fetch list of payouts for investor
-Fetches claimable and claimed payouts for investor. Multiple values for `assetFactories` query parameter can be
-specified by separating them with commas. Claimable payouts will also contain proof necessary to claim them via payout
-manager contract.
+== Claimable Payouts API
+All endpoint require `Authorization: Bearer JWT` header.
+
+=== Fetch list of claimable payouts for investor
+Fetches claimable and claimed payouts for an investor. Available query parameters are: `chainId`, `assetFactories`,
+`payoutService`, `payoutManager` and `issuer`. All query parameters are mandatory except `issuer`. Multiple values for
+`assetFactories` query parameter can be specified by separating them with commas. Claimable payouts will also contain
+proof necessary to claim them via the payout manager contract.
 
 .Request
-include::{snippets}/PayoutControllerApiTest/mustReturnClaimedPayoutInfoForSomeInvestor/http-request.adoc[]
+include::{snippets}/PayoutControllerApiTest/mustReturnPayoutsForSomeInvestor/http-request.adoc[]
 .Response
-include::{snippets}/PayoutControllerApiTest/mustReturnClaimedPayoutInfoForSomeInvestor/http-response.adoc[]
+include::{snippets}/PayoutControllerApiTest/mustReturnPayoutsForSomeInvestor/http-response.adoc[]

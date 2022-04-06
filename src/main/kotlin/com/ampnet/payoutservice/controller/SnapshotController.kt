@@ -44,7 +44,6 @@ class SnapshotController(private val snapshotQueueService: SnapshotQueueService)
             )
     }
 
-    @Suppress("LongParameterList")
     @GetMapping("/snapshots")
     fun getSnapshots(
         @RequestParam(required = false) chainId: Long?,

@@ -18,6 +18,7 @@ data class InvestorPayoutResponse(
     val proof: List<String>
 ) {
     companion object {
+        @Suppress("LongParameterList")
         operator fun invoke(
             payout: PayoutResponse,
             investor: String,
