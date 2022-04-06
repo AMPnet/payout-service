@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import org.web3j.abi.TypeReference;
+import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.DynamicArray;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
@@ -21,7 +22,7 @@ import org.web3j.tx.gas.ContractGasProvider;
  * <p>Auto generated code.
  * <p><strong>Do not modify!</strong>
  * <p>Please use the <a href="https://docs.web3j.io/command_line.html">web3j command line tools</a>,
- * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the 
+ * or the org.web3j.codegen.SolidityFunctionWrapperGenerator in the
  * <a href="https://github.com/web3j/web3j/tree/master/codegen">codegen module</a> to update.
  *
  * <p>Generated with web3j version 1.4.1.
@@ -33,6 +34,8 @@ public class IPayoutManager extends FixedContract {
     public static final String FUNC_GETAMOUNTOFCLAIMEDFUNDS = "getAmountOfClaimedFunds";
 
     public static final String FUNC_GETCURRENTPAYOUTID = "getCurrentPayoutId";
+
+    public static final String FUNC_GETFEEMANAGER = "getFeeManager";
 
     public static final String FUNC_GETPAYOUTIDSFORASSET = "getPayoutIdsForAsset";
 
@@ -63,23 +66,30 @@ public class IPayoutManager extends FixedContract {
     }
 
     public RemoteFunctionCall<BigInteger> getAmountOfClaimedFunds(BigInteger _payoutId, String _wallet) {
-        final Function function = new Function(FUNC_GETAMOUNTOFCLAIMEDFUNDS, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(_payoutId), 
-                new org.web3j.abi.datatypes.Address(160, _wallet)), 
+        final Function function = new Function(FUNC_GETAMOUNTOFCLAIMEDFUNDS,
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(_payoutId),
+                        new org.web3j.abi.datatypes.Address(160, _wallet)),
                 Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
         return executeRemoteCallSingleValueReturn(function, BigInteger.class);
     }
 
     public RemoteFunctionCall<BigInteger> getCurrentPayoutId() {
-        final Function function = new Function(FUNC_GETCURRENTPAYOUTID, 
-                Arrays.<Type>asList(), 
+        final Function function = new Function(FUNC_GETCURRENTPAYOUTID,
+                Arrays.<Type>asList(),
                 Arrays.<TypeReference<?>>asList(new TypeReference<Uint256>() {}));
         return executeRemoteCallSingleValueReturn(function, BigInteger.class);
     }
 
+    public RemoteFunctionCall<String> getFeeManager() {
+        final Function function = new Function(FUNC_GETFEEMANAGER,
+                Arrays.<Type>asList(),
+                Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {}));
+        return executeRemoteCallSingleValueReturn(function, String.class);
+    }
+
     public RemoteFunctionCall<List<BigInteger>> getPayoutIdsForAsset(String _assetAddress) {
-        final Function function = new Function(FUNC_GETPAYOUTIDSFORASSET, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _assetAddress)), 
+        final Function function = new Function(FUNC_GETPAYOUTIDSFORASSET,
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _assetAddress)),
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {}));
         return new RemoteFunctionCall<List<BigInteger>>(function,
                 new Callable<List<BigInteger>>() {
@@ -93,8 +103,8 @@ public class IPayoutManager extends FixedContract {
     }
 
     public RemoteFunctionCall<List<BigInteger>> getPayoutIdsForOwner(String _ownerAddress) {
-        final Function function = new Function(FUNC_GETPAYOUTIDSFOROWNER, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _ownerAddress)), 
+        final Function function = new Function(FUNC_GETPAYOUTIDSFOROWNER,
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _ownerAddress)),
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<Uint256>>() {}));
         return new RemoteFunctionCall<List<BigInteger>>(function,
                 new Callable<List<BigInteger>>() {
@@ -108,15 +118,15 @@ public class IPayoutManager extends FixedContract {
     }
 
     public RemoteFunctionCall<PayoutStruct> getPayoutInfo(BigInteger _payoutId) {
-        final Function function = new Function(FUNC_GETPAYOUTINFO, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(_payoutId)), 
+        final Function function = new Function(FUNC_GETPAYOUTINFO,
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.generated.Uint256(_payoutId)),
                 Arrays.<TypeReference<?>>asList(new TypeReference<PayoutStruct>() {}));
         return executeRemoteCallSingleValueReturn(function, PayoutStruct.class);
     }
 
     public RemoteFunctionCall<List<PayoutStruct>> getPayoutsForAsset(String _assetAddress) {
-        final Function function = new Function(FUNC_GETPAYOUTSFORASSET, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _assetAddress)), 
+        final Function function = new Function(FUNC_GETPAYOUTSFORASSET,
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _assetAddress)),
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<PayoutStruct>>() {}));
         return new RemoteFunctionCall<List<PayoutStruct>>(function,
                 new Callable<List<PayoutStruct>>() {
@@ -130,8 +140,8 @@ public class IPayoutManager extends FixedContract {
     }
 
     public RemoteFunctionCall<List<PayoutStruct>> getPayoutsForOwner(String _ownerAddress) {
-        final Function function = new Function(FUNC_GETPAYOUTSFOROWNER, 
-                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _ownerAddress)), 
+        final Function function = new Function(FUNC_GETPAYOUTSFOROWNER,
+                Arrays.<Type>asList(new org.web3j.abi.datatypes.Address(160, _ownerAddress)),
                 Arrays.<TypeReference<?>>asList(new TypeReference<DynamicArray<PayoutStruct>>() {}));
         return new RemoteFunctionCall<List<PayoutStruct>>(function,
                 new Callable<List<PayoutStruct>>() {

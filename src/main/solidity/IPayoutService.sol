@@ -25,4 +25,10 @@ interface IPayoutService {
         address payoutManager,
         uint256[] memory payoutIds
     ) external view returns (PayoutStateForInvestor[] memory);
+
+    function getPayoutFeeForAssetAndAmount(
+        address asset,
+        uint256 amount,
+        address payoutManager
+    ) external view returns (address treasury, uint256 fee);
 }
