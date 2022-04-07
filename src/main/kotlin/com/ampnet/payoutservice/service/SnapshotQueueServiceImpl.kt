@@ -88,7 +88,7 @@ class SnapshotQueueServiceImpl(
             name = name,
             chainId = chainId,
             assetAddress = assetAddress,
-            payoutBlockNumber = blockNumber,
+            blockNumber = blockNumber,
             ignoredHolderAddresses = ignoredHolderAddresses,
             ownerAddress = ownerAddress,
             snapshotStatus = data.status,

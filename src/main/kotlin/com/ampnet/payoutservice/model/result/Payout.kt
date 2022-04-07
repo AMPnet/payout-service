@@ -7,11 +7,9 @@ import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.Hash
 import com.ampnet.payoutservice.util.IpfsHash
-import com.ampnet.payoutservice.util.PayoutStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import org.web3j.utils.Numeric
 import java.math.BigInteger
-import java.util.UUID
 
 data class Payout(
     val payoutId: BigInteger,
@@ -20,7 +18,7 @@ data class Payout(
     val isCanceled: Boolean,
     val asset: ContractAddress,
     val totalAssetAmount: Balance,
-    val ignoredAssetAddresses: Set<WalletAddress>,
+    val ignoredHolderAddresses: Set<WalletAddress>,
     val assetSnapshotMerkleRoot: Hash,
     val assetSnapshotMerkleDepth: BigInteger,
     val assetSnapshotBlockNumber: BlockNumber,
@@ -36,7 +34,7 @@ data class Payout(
         isCanceled = struct.isCanceled,
         asset = ContractAddress(struct.asset),
         totalAssetAmount = Balance(struct.totalAssetAmount),
-        ignoredAssetAddresses = struct.ignoredHolderAddresses.mapTo(HashSet()) { WalletAddress(it) },
+        ignoredHolderAddresses = struct.ignoredHolderAddresses.mapTo(HashSet()) { WalletAddress(it) },
         assetSnapshotMerkleRoot = Hash(Numeric.toHexString(struct.assetSnapshotMerkleRoot)),
         assetSnapshotMerkleDepth = struct.assetSnapshotMerkleDepth,
         assetSnapshotBlockNumber = BlockNumber(struct.assetSnapshotBlockNumber),
@@ -46,21 +44,8 @@ data class Payout(
         remainingRewardAmount = Balance(struct.remainingRewardAmount)
     )
 
-    fun toKey(): PayoutKey =
-        PayoutKey(
-            asset = asset,
-            payoutBlockNumber = assetSnapshotBlockNumber,
-            owner = payoutOwner,
-            merkleRootHash = assetSnapshotMerkleRoot,
-            totalAssetAmount = totalAssetAmount
-        )
-
-    fun toPayoutResponse(taskId: UUID?, issuer: String?): PayoutResponse =
+    fun toPayoutResponse(): PayoutResponse =
         PayoutResponse(
-            taskId = taskId,
-            status = PayoutStatus.PAYOUT_CREATED,
-            issuer = issuer,
-
             payoutId = payoutId,
             payoutOwner = payoutOwner.rawValue,
             payoutInfo = payoutInfo,
@@ -68,7 +53,7 @@ data class Payout(
 
             asset = asset.rawValue,
             totalAssetAmount = totalAssetAmount.rawValue,
-            ignoredHolderAddresses = ignoredAssetAddresses.mapTo(HashSet()) { it.rawValue },
+            ignoredHolderAddresses = ignoredHolderAddresses.mapTo(HashSet()) { it.rawValue },
 
             assetSnapshotMerkleRoot = assetSnapshotMerkleRoot.value,
             assetSnapshotMerkleDepth = assetSnapshotMerkleDepth.intValueExact(),
@@ -80,11 +65,3 @@ data class Payout(
             remainingRewardAmount = remainingRewardAmount.rawValue
         )
 }
-
-data class PayoutKey(
-    val asset: ContractAddress,
-    val payoutBlockNumber: BlockNumber,
-    val owner: WalletAddress,
-    val merkleRootHash: Hash,
-    val totalAssetAmount: Balance
-)

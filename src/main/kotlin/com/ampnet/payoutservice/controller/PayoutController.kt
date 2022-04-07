@@ -1,116 +1,38 @@
 package com.ampnet.payoutservice.controller
 
 import com.ampnet.payoutservice.blockchain.BlockchainService
-import com.ampnet.payoutservice.controller.request.CreatePayoutRequest
-import com.ampnet.payoutservice.controller.response.AdminPayoutsResponse
-import com.ampnet.payoutservice.controller.response.CreatePayoutResponse
 import com.ampnet.payoutservice.controller.response.InvestorPayoutResponse
 import com.ampnet.payoutservice.controller.response.InvestorPayoutsResponse
-import com.ampnet.payoutservice.controller.response.PayoutResponse
-import com.ampnet.payoutservice.model.params.CreateSnapshotParams
 import com.ampnet.payoutservice.model.params.FetchMerkleTreeParams
-import com.ampnet.payoutservice.model.params.GetPayoutsForAdminParams
 import com.ampnet.payoutservice.model.params.GetPayoutsForInvestorParams
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
-import com.ampnet.payoutservice.service.SnapshotQueueService
-import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
-import com.ampnet.payoutservice.util.PayoutStatus
-import com.ampnet.payoutservice.util.SnapshotStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import mu.KLogging
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.math.BigInteger
-import java.util.UUID
 
 @RestController
 class PayoutController(
-    private val snapshotQueueService: SnapshotQueueService,
     private val blockchainService: BlockchainService,
     private val merkleTreeRepository: MerkleTreeRepository
 ) {
 
     companion object : KLogging()
 
-    @GetMapping("/payouts/{chainId}/task/{taskId}")
-    fun getPayoutByTaskId(
-        @PathVariable chainId: Long,
-        @PathVariable taskId: UUID
-    ): ResponseEntity<PayoutResponse> {
-        logger.debug { "Get payout task by chainId: $chainId, taskId: $taskId" }
-        TODO("SD-709")
-//        return snapshotQueueService.getSnapshotById(taskId)
-//            ?.takeIf { it.chainId.value == chainId }
-//            ?.let { ResponseEntity.ok(it.toPayoutResponse()) }
-//            ?: throw ResourceNotFoundException(
-//                ErrorCode.PAYOUT_TASK_NOT_FOUND,
-//                "Create payout task not found"
-//            )
-    }
-
     @Suppress("LongParameterList")
-    @GetMapping("/payouts/{chainId}")
-    fun getPayouts(
-        @PathVariable chainId: Long,
+    @GetMapping("/claimable_payouts")
+    fun getPayoutsForInvestor(
+        @RequestParam(required = true) chainId: Long,
         @RequestParam(required = true) assetFactories: List<String>,
         @RequestParam(required = true) payoutService: String,
         @RequestParam(required = true) payoutManager: String,
         @RequestParam(required = false) issuer: String?,
-        @RequestParam(required = false) owner: String?,
-        @RequestParam(required = false) status: List<PayoutStatus>?
-    ): ResponseEntity<AdminPayoutsResponse> {
-        logger.debug {
-            "Get admin payouts, chainId: $chainId, issuer: $issuer, owner: $owner, statuses: $status," +
-                " assetFactories: $assetFactories, payoutService: $payoutService, payoutManager: $payoutManager"
-        }
-        val chainIdValue = ChainId(chainId)
-        val issuerAddress = issuer?.let { ContractAddress(it) }
-        val ownerAddress = owner?.let { WalletAddress(it) }
-        val statuses = status ?: emptyList()
-
-        val payoutTasks = snapshotQueueService.getAllSnapshotsByChainIdOwnerAndStatuses(
-            chainId = chainIdValue,
-            owner = ownerAddress,
-            statuses = statuses.mapTo(HashSet()) { it.toSnapshotStatus }
-        )
-        val (successfulTasks, otherTasks) = payoutTasks.partition { it.snapshotStatus == SnapshotStatus.SUCCESS }
-        val createdPayouts = if (statuses.isEmpty() || statuses.contains(PayoutStatus.PAYOUT_CREATED)) {
-            blockchainService.getPayoutsForAdmin(
-                GetPayoutsForAdminParams(
-                    chainId = chainIdValue,
-                    issuer = issuerAddress,
-                    assetFactories = assetFactories.map { ContractAddress(it) },
-                    payoutService = ContractAddress(payoutService),
-                    payoutManager = ContractAddress(payoutManager),
-                    owner = ownerAddress
-                )
-            )
-        } else emptyList()
-
-        TODO("SD-709")
-//        val otherPayouts = otherTasks.map { it.toPayoutResponse() }
-//        val allPayouts = matchCreatedPayoutsWithSuccessfulTasks(successfulTasks, createdPayouts, issuer) + otherPayouts
-
-//        return ResponseEntity.ok(AdminPayoutsResponse(allPayouts))
-    }
-
-    @Suppress("LongParameterList")
-    @GetMapping("/payouts/{chainId}/investor/{investorAddress}")
-    fun getPayoutsForInvestor(
-        @PathVariable chainId: Long,
-        @PathVariable investorAddress: String,
-        @RequestParam(required = true) assetFactories: List<String>,
-        @RequestParam(required = true) payoutService: String,
-        @RequestParam(required = true) payoutManager: String,
-        @RequestParam(required = false) issuer: String?
+        @AuthenticationPrincipal investorAddress: String
     ): ResponseEntity<InvestorPayoutsResponse> {
         logger.debug {
             "Get investor payouts, chainId: $chainId, investorAddress: $investorAddress, issuer: $issuer," +
@@ -145,45 +67,20 @@ class PayoutController(
                 val totalAmountClaimable = (totalRewardAmount * balance) / totalAssetAmount
                 val amountClaimable = totalAmountClaimable - payoutData.amountClaimed.rawValue
 
-                val payout = payoutData.payout.toPayoutResponse(taskId = null, issuer = issuer)
+                val payout = payoutData.payout.toPayoutResponse()
 
                 InvestorPayoutResponse(
                     payout = payout,
                     investor = payoutData.investor.rawValue,
                     amountClaimed = payoutData.amountClaimed.rawValue,
 
-                    amountClaimable = if (amountClaimable > BigInteger.ZERO) amountClaimable else null,
-                    balance = if (amountClaimable > BigInteger.ZERO) accountBalance.balance.rawValue else null,
-                    path = if (amountClaimable > BigInteger.ZERO) path else null
+                    amountClaimable = amountClaimable,
+                    balance = accountBalance.balance.rawValue,
+                    path = path
                 )
             } else null
         }
 
         return ResponseEntity.ok(InvestorPayoutsResponse(investorPayouts))
-    }
-
-    @PostMapping("/payouts/{chainId}/{assetAddress}")
-    fun createPayout(
-        @PathVariable chainId: Long,
-        @PathVariable assetAddress: String,
-        @RequestBody requestBody: CreatePayoutRequest,
-        @AuthenticationPrincipal requesterAddress: String
-    ): ResponseEntity<CreatePayoutResponse> {
-        logger.debug {
-            "Request payout creation, chainId: $chainId, assetAddress: $assetAddress, requestBody: $requestBody," +
-                " requesterAddress: $requesterAddress"
-        }
-        val taskId = snapshotQueueService.submitSnapshot(
-            CreateSnapshotParams(
-                chainId = ChainId(chainId),
-                name = "", // TODO in SD-709
-                assetAddress = ContractAddress(assetAddress),
-                ownerAddress = WalletAddress(requesterAddress),
-                payoutBlock = BlockNumber(requestBody.payoutBlockNumber),
-                ignoredHolderAddresses = requestBody.ignoredHolderAddresses.mapTo(HashSet()) { WalletAddress(it) }
-            )
-        )
-
-        return ResponseEntity.ok(CreatePayoutResponse(taskId))
     }
 }
