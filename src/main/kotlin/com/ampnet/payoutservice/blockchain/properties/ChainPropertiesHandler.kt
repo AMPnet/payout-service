@@ -26,6 +26,7 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
             Chain.ETHEREUM_MAIN.id -> applicationProperties.chainEthereum
             Chain.GOERLI_TESTNET.id -> applicationProperties.chainGoerli
             Chain.HARDHAT_TESTNET.id -> applicationProperties.chainHardhatTestnet
+            Chain.AMPNET_POA.id -> applicationProperties.chainPoa
             else -> null
         }
     }
