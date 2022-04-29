@@ -48,8 +48,8 @@ include::{snippets}/SnapshotControllerApiTest/mustSuccessfullyCreateSnapshotForS
 include::{snippets}/SnapshotControllerApiTest/mustSuccessfullyCreateSnapshotForSomeAsset/http-response.adoc[]
 
 === Fetch snapshot
-Fetches info about stored snapshot by ID. Possible snapshot statuses are `PENDING`, `SUCCESS` and `FAILED`. Single path
-argument is the snapshot ID.
+Fetches info about stored snapshot by ID. Possible snapshot statuses are `PENDING`, `SUCCESS` and `FAILED`. Possible
+failure causes are `LOG_RESPONSE_LIMIT` and `OTHER`. Single path argument is the snapshot ID.
 
 .Request
 include::{snippets}/SnapshotControllerApiTest/mustSuccessfullyCreateAndProcessSnapshotForSomeAsset/http-request.adoc[]
@@ -58,9 +58,9 @@ include::{snippets}/SnapshotControllerApiTest/mustSuccessfullyCreateAndProcessSn
 
 === Fetch list of snapshots
 Fetches all snapshots for the requesting user and specified filters. Possible snapshot statuses are `PENDING`,
-`SUCCESS` and `FAILED`. Available query parameters are `chainId` and `status` and both are optional. Multiple values
-can be specified for `status` query parameter by separating them with commas. Requesting user is specified implicitly
-via the `Authorization: Bearer JWT` header.
+`SUCCESS` and `FAILED`. Possible failure causes are `LOG_RESPONSE_LIMIT` and `OTHER`. Available query parameters are
+`chainId` and `status` and both are optional. Multiple values can be specified for `status` query parameter by
+separating them with commas. Requesting user is specified implicitly via the `Authorization: Bearer JWT` header.
 
 .Request
 include::{snippets}/SnapshotControllerApiTest/mustReturnSnapshotsForSomeChainIdAndOwner/http-request.adoc[]
