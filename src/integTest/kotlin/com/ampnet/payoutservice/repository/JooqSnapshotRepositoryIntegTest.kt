@@ -17,6 +17,7 @@ import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.Hash
 import com.ampnet.payoutservice.util.HashFunction
 import com.ampnet.payoutservice.util.IpfsHash
+import com.ampnet.payoutservice.util.SnapshotFailureCause
 import com.ampnet.payoutservice.util.SnapshotStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import org.assertj.core.api.Assertions.assertThat
@@ -90,6 +91,7 @@ class JooqSnapshotRepositoryIntegTest : TestBase() {
                     ignoredHolderAddresses = ignoredHolderAddresses.map { it.rawValue }.toTypedArray(),
                     ownerAddress = ownerAddress.rawValue,
                     status = SnapshotStatus.SUCCESS.toDbEnum,
+                    failureCause = null,
                     resultTree = treeUuid,
                     treeIpfsHash = treeIpfsHash.value,
                     totalAssetAmount = totalAssetAmount.rawValue
@@ -141,6 +143,7 @@ class JooqSnapshotRepositoryIntegTest : TestBase() {
                     ignoredHolderAddresses = ignoredHolderAddresses.map { it.rawValue }.toTypedArray(),
                     ownerAddress = ownerAddress.rawValue,
                     status = SnapshotStatus.PENDING.toDbEnum,
+                    failureCause = null,
                     resultTree = null,
                     treeIpfsHash = null,
                     totalAssetAmount = null
@@ -161,7 +164,7 @@ class JooqSnapshotRepositoryIntegTest : TestBase() {
                         blockNumber = payoutBlock,
                         ignoredHolderAddresses = ignoredHolderAddresses,
                         ownerAddress = ownerAddress,
-                        data = OtherSnapshotData(SnapshotStatus.PENDING)
+                        data = OtherSnapshotData(SnapshotStatus.PENDING, null)
                     )
                 )
         }
@@ -188,6 +191,7 @@ class JooqSnapshotRepositoryIntegTest : TestBase() {
                     ignoredHolderAddresses = ignoredHolderAddresses.map { it.rawValue }.toTypedArray(),
                     ownerAddress = ownerAddress.rawValue,
                     status = SnapshotStatus.FAILED.toDbEnum,
+                    failureCause = SnapshotFailureCause.OTHER.toDbEnum,
                     resultTree = null,
                     treeIpfsHash = null,
                     totalAssetAmount = null
@@ -208,7 +212,7 @@ class JooqSnapshotRepositoryIntegTest : TestBase() {
                         blockNumber = payoutBlock,
                         ignoredHolderAddresses = ignoredHolderAddresses,
                         ownerAddress = ownerAddress,
-                        data = OtherSnapshotData(SnapshotStatus.FAILED)
+                        data = OtherSnapshotData(SnapshotStatus.FAILED, SnapshotFailureCause.OTHER)
                     )
                 )
         }
@@ -219,27 +223,27 @@ class JooqSnapshotRepositoryIntegTest : TestBase() {
         val owner1 = WalletAddress("aaa1")
         val chainId1 = ChainId(1L)
         val owner1chainId1Snapshots = listOf(
-            snapshotRecord(chainId1, owner1, SnapshotStatus.PENDING),
-            snapshotRecord(chainId1, owner1, SnapshotStatus.FAILED)
+            snapshotRecord(chainId1, owner1, SnapshotStatus.PENDING, null),
+            snapshotRecord(chainId1, owner1, SnapshotStatus.FAILED, SnapshotFailureCause.OTHER)
         )
 
         val chainId2 = ChainId(2L)
         val owner1chainId2Snapshots = listOf(
-            snapshotRecord(chainId2, owner1, SnapshotStatus.PENDING),
-            snapshotRecord(chainId2, owner1, SnapshotStatus.PENDING),
-            snapshotRecord(chainId2, owner1, SnapshotStatus.FAILED),
-            snapshotRecord(chainId2, owner1, SnapshotStatus.FAILED)
+            snapshotRecord(chainId2, owner1, SnapshotStatus.PENDING, null),
+            snapshotRecord(chainId2, owner1, SnapshotStatus.PENDING, null),
+            snapshotRecord(chainId2, owner1, SnapshotStatus.FAILED, SnapshotFailureCause.OTHER),
+            snapshotRecord(chainId2, owner1, SnapshotStatus.FAILED, SnapshotFailureCause.OTHER)
         )
 
         val owner2 = WalletAddress("aaa2")
         val owner2chainId1Snapshots = listOf(
-            snapshotRecord(chainId1, owner2, SnapshotStatus.PENDING),
-            snapshotRecord(chainId1, owner2, SnapshotStatus.PENDING),
-            snapshotRecord(chainId1, owner2, SnapshotStatus.PENDING)
+            snapshotRecord(chainId1, owner2, SnapshotStatus.PENDING, null),
+            snapshotRecord(chainId1, owner2, SnapshotStatus.PENDING, null),
+            snapshotRecord(chainId1, owner2, SnapshotStatus.PENDING, null)
         )
 
         val owner2chainId2Snapshots = listOf(
-            snapshotRecord(chainId2, owner2, SnapshotStatus.PENDING)
+            snapshotRecord(chainId2, owner2, SnapshotStatus.PENDING, null)
         )
 
         val owner1Snapshots = owner1chainId1Snapshots + owner1chainId2Snapshots
@@ -368,6 +372,7 @@ class JooqSnapshotRepositoryIntegTest : TestBase() {
                         ignoredHolderAddresses = ignoredHolderAddresses.map { it.rawValue }.toTypedArray(),
                         ownerAddress = ownerAddress.rawValue,
                         status = SnapshotStatus.PENDING.toDbEnum,
+                        failureCause = null,
                         resultTree = null,
                         treeIpfsHash = null,
                         totalAssetAmount = null
@@ -397,6 +402,7 @@ class JooqSnapshotRepositoryIntegTest : TestBase() {
                     ignoredHolderAddresses = ignoredHolderAddresses.map { it.rawValue }.toTypedArray(),
                     ownerAddress = ownerAddress.rawValue,
                     status = SnapshotStatus.PENDING.toDbEnum,
+                    failureCause = null,
                     resultTree = null,
                     treeIpfsHash = null,
                     totalAssetAmount = null
@@ -554,11 +560,11 @@ class JooqSnapshotRepositoryIntegTest : TestBase() {
             blockNumber = payoutBlock,
             ignoredHolderAddresses = ignoredHolderAddresses,
             ownerAddress = ownerAddress,
-            data = OtherSnapshotData(SnapshotStatus.FAILED)
+            data = OtherSnapshotData(SnapshotStatus.FAILED, SnapshotFailureCause.OTHER)
         )
 
         verify("snapshot failed") {
-            val result = repository.failSnapshot(snapshotUuid)
+            val result = repository.failSnapshot(snapshotUuid, SnapshotFailureCause.OTHER)
 
             assertThat(result).withMessage()
                 .isEqualTo(expectedResult)
@@ -575,7 +581,8 @@ class JooqSnapshotRepositoryIntegTest : TestBase() {
     private fun snapshotRecord(
         chainId: ChainId,
         owner: WalletAddress,
-        status: SnapshotStatus
+        status: SnapshotStatus,
+        failureCause: SnapshotFailureCause?
     ): SnapshotRecord {
         val id = UUID.randomUUID()
         return SnapshotRecord(
@@ -587,6 +594,7 @@ class JooqSnapshotRepositoryIntegTest : TestBase() {
             ignoredHolderAddresses = emptyArray(),
             ownerAddress = owner.rawValue,
             status = status.toDbEnum,
+            failureCause = failureCause?.toDbEnum,
             resultTree = null,
             treeIpfsHash = null,
             totalAssetAmount = null
@@ -603,7 +611,10 @@ class JooqSnapshotRepositoryIntegTest : TestBase() {
                 blockNumber = BlockNumber(it.blockNumber!!),
                 ignoredHolderAddresses = emptySet(),
                 ownerAddress = WalletAddress(it.ownerAddress!!),
-                data = OtherSnapshotData(SnapshotStatus.fromDbEnum(it.status!!))
+                data = OtherSnapshotData(
+                    status = SnapshotStatus.fromDbEnum(it.status!!),
+                    failureCause = it.failureCause?.let(SnapshotFailureCause::fromDbEnum)
+                )
             )
         }
 }

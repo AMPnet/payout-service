@@ -5,6 +5,7 @@ import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.IpfsHash
+import com.ampnet.payoutservice.util.SnapshotFailureCause
 import com.ampnet.payoutservice.util.SnapshotStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import java.util.UUID
@@ -22,13 +23,18 @@ data class Snapshot(
 
 sealed interface OptionalSnapshotData {
     val status: SnapshotStatus
+    val failureCause: SnapshotFailureCause?
 }
 
 data class SuccessfulSnapshotData(
     val merkleTreeRootId: UUID,
     val merkleTreeIpfsHash: IpfsHash,
     val totalAssetAmount: Balance,
-    override val status: SnapshotStatus = SnapshotStatus.SUCCESS
+    override val status: SnapshotStatus = SnapshotStatus.SUCCESS,
+    override val failureCause: SnapshotFailureCause? = null
 ) : OptionalSnapshotData
 
-data class OtherSnapshotData(override val status: SnapshotStatus) : OptionalSnapshotData
+data class OtherSnapshotData(
+    override val status: SnapshotStatus,
+    override val failureCause: SnapshotFailureCause?
+) : OptionalSnapshotData

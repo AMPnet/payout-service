@@ -8,6 +8,7 @@ import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.Hash
 import com.ampnet.payoutservice.util.HashFunction
 import com.ampnet.payoutservice.util.IpfsHash
+import com.ampnet.payoutservice.util.SnapshotFailureCause
 import com.ampnet.payoutservice.util.SnapshotStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import java.util.UUID
@@ -21,6 +22,7 @@ data class FullSnapshot(
     val ignoredHolderAddresses: Set<WalletAddress>,
     val ownerAddress: WalletAddress,
     val snapshotStatus: SnapshotStatus,
+    val snapshotFailureCause: SnapshotFailureCause?,
     val data: FullSnapshotData?
 ) {
     fun toSnapshotResponse(): SnapshotResponse =
@@ -29,6 +31,7 @@ data class FullSnapshot(
             name = name,
             chainId = chainId.value,
             status = snapshotStatus,
+            failureCause = snapshotFailureCause,
             owner = ownerAddress.rawValue,
             asset = assetAddress.rawValue,
             totalAssetAmount = data?.totalAssetAmount?.rawValue,

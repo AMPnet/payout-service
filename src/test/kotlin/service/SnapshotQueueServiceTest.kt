@@ -27,6 +27,7 @@ import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.HashFunction
 import com.ampnet.payoutservice.util.IpfsHash
 import com.ampnet.payoutservice.util.MerkleTree
+import com.ampnet.payoutservice.util.SnapshotFailureCause
 import com.ampnet.payoutservice.util.SnapshotStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import org.assertj.core.api.Assertions.assertThat
@@ -200,6 +201,7 @@ class SnapshotQueueServiceTest : TestBase() {
                         ignoredHolderAddresses = ignoredHolderAddresses,
                         ownerAddress = ownerAddress,
                         snapshotStatus = SnapshotStatus.SUCCESS,
+                        snapshotFailureCause = null,
                         data = FullSnapshotData(
                             totalAssetAmount = totalAssetAmount,
                             merkleRootHash = tree.root.hash,
@@ -358,7 +360,7 @@ class SnapshotQueueServiceTest : TestBase() {
                         blockNumber = payoutBlock,
                         ignoredHolderAddresses = ignoredHolderAddresses,
                         ownerAddress = ownerAddress,
-                        data = OtherSnapshotData(SnapshotStatus.FAILED)
+                        data = OtherSnapshotData(SnapshotStatus.FAILED, SnapshotFailureCause.OTHER)
                     )
                 )
         }
@@ -377,6 +379,7 @@ class SnapshotQueueServiceTest : TestBase() {
                         ignoredHolderAddresses = ignoredHolderAddresses,
                         ownerAddress = ownerAddress,
                         snapshotStatus = SnapshotStatus.FAILED,
+                        snapshotFailureCause = SnapshotFailureCause.OTHER,
                         data = null
                     )
                 )
@@ -405,7 +408,170 @@ class SnapshotQueueServiceTest : TestBase() {
             verifyNoMoreInteractions(blockchainService)
 
             verifyMock(snapshotRepository)
-                .failSnapshot(snapshotUuid)
+                .failSnapshot(snapshotUuid, SnapshotFailureCause.OTHER)
+
+            // getSnapshotById()
+            verifyMock(snapshotRepository)
+                .getById(snapshotUuid)
+            verifyNoMoreInteractions(snapshotRepository)
+
+            verifyNoInteractions(merkleTreeRepository)
+            verifyNoInteractions(ipfsService)
+        }
+    }
+
+    @Test
+    fun mustFailSnapshotWhenExceptionWithExceededLogSizeLimitIsThrownDuringProcessing() {
+        val blockchainService = mock<BlockchainService>()
+        val chainId = ChainId(1L)
+        val assetAddress = ContractAddress("a")
+        val ownerAddress = WalletAddress("1")
+
+        suppose("requesting user is asset owner") {
+            given(blockchainService.getAssetOwner(chainId, assetAddress))
+                .willReturn(ownerAddress)
+        }
+
+        val snapshotRepository = mock<SnapshotRepository>()
+        val payoutBlock = BlockNumber(BigInteger.TEN)
+        val ignoredHolderAddresses = setOf(WalletAddress("dead"))
+        val snapshotUuid = UUID.randomUUID()
+        val name = "snapshot-name"
+        val params = CreateSnapshotParams(
+            chainId = chainId,
+            name = name,
+            assetAddress = assetAddress,
+            ownerAddress = ownerAddress,
+            payoutBlock = payoutBlock,
+            ignoredHolderAddresses = ignoredHolderAddresses
+        )
+
+        suppose("snapshot is created in database") {
+            given(snapshotRepository.createSnapshot(params))
+                .willReturn(snapshotUuid)
+        }
+
+        suppose("pending snapshot will be returned") {
+            given(snapshotRepository.getPending())
+                .willReturn(
+                    PendingSnapshot(
+                        id = snapshotUuid,
+                        name = name,
+                        chainId = chainId,
+                        assetAddress = assetAddress,
+                        blockNumber = payoutBlock,
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress
+                    )
+                )
+        }
+
+        suppose("fetching asset balances throws exception") {
+            given(
+                blockchainService.fetchErc20AccountBalances(
+                    chainId = chainId,
+                    erc20ContractAddress = assetAddress,
+                    ignoredErc20Addresses = ignoredHolderAddresses,
+                    startBlock = null,
+                    endBlock = payoutBlock
+                )
+            ).willThrow(RuntimeException(RuntimeException("Log response size exceeded")))
+        }
+
+        val properties = suppose("asset owner will be checked") {
+            ApplicationProperties().apply { payout.checkAssetOwner = true }
+        }
+        val executorServiceProvider = mock<ScheduledExecutorServiceProvider>()
+        val scheduler = ManualFixedScheduler()
+
+        suppose("ManualFixedScheduler will be used") {
+            given(executorServiceProvider.newSingleThreadScheduledExecutor(any()))
+                .willReturn(scheduler)
+        }
+
+        val merkleTreeRepository = mock<MerkleTreeRepository>()
+        val ipfsService = mock<IpfsService>()
+
+        val service = SnapshotQueueServiceImpl(
+            merkleTreeRepository = merkleTreeRepository,
+            snapshotRepository = snapshotRepository,
+            ipfsService = ipfsService,
+            blockchainService = blockchainService,
+            applicationProperties = properties,
+            scheduledExecutorServiceProvider = executorServiceProvider
+        )
+
+        verify("snapshot is submitted and correct snapshot ID is returned") {
+            val response = service.submitSnapshot(params)
+
+            assertThat(response).withMessage()
+                .isEqualTo(snapshotUuid)
+        }
+
+        suppose("snapshot is processed") {
+            scheduler.execute()
+        }
+
+        suppose("failed snapshot is returned from database") {
+            given(snapshotRepository.getById(snapshotUuid))
+                .willReturn(
+                    Snapshot(
+                        id = snapshotUuid,
+                        name = name,
+                        chainId = chainId,
+                        assetAddress = assetAddress,
+                        blockNumber = payoutBlock,
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress,
+                        data = OtherSnapshotData(SnapshotStatus.FAILED, SnapshotFailureCause.LOG_RESPONSE_LIMIT)
+                    )
+                )
+        }
+
+        verify("snapshot processing failed") {
+            val response = service.getSnapshotById(snapshotUuid)
+
+            assertThat(response).withMessage()
+                .isEqualTo(
+                    FullSnapshot(
+                        id = snapshotUuid,
+                        name = name,
+                        chainId = chainId,
+                        assetAddress = assetAddress,
+                        blockNumber = payoutBlock,
+                        ignoredHolderAddresses = ignoredHolderAddresses,
+                        ownerAddress = ownerAddress,
+                        snapshotStatus = SnapshotStatus.FAILED,
+                        snapshotFailureCause = SnapshotFailureCause.LOG_RESPONSE_LIMIT,
+                        data = null
+                    )
+                )
+        }
+
+        verify("correct service and repository calls are made") {
+            // submitSnapshot()
+            verifyMock(blockchainService)
+                .getAssetOwner(chainId, assetAddress)
+            verifyMock(snapshotRepository)
+                .createSnapshot(params)
+
+            // processSnapshots()
+            verifyMock(snapshotRepository)
+                .getPending()
+
+            // handlePendingSnapshot()
+            verifyMock(blockchainService)
+                .fetchErc20AccountBalances(
+                    chainId = chainId,
+                    erc20ContractAddress = assetAddress,
+                    ignoredErc20Addresses = ignoredHolderAddresses,
+                    startBlock = null,
+                    endBlock = payoutBlock
+                )
+            verifyNoMoreInteractions(blockchainService)
+
+            verifyMock(snapshotRepository)
+                .failSnapshot(snapshotUuid, SnapshotFailureCause.LOG_RESPONSE_LIMIT)
 
             // getSnapshotById()
             verifyMock(snapshotRepository)
@@ -573,6 +739,7 @@ class SnapshotQueueServiceTest : TestBase() {
                         ignoredHolderAddresses = ignoredHolderAddresses,
                         ownerAddress = ownerAddress,
                         snapshotStatus = SnapshotStatus.SUCCESS,
+                        snapshotFailureCause = null,
                         data = FullSnapshotData(
                             totalAssetAmount = totalAssetAmount,
                             merkleRootHash = tree.root.hash,
@@ -845,6 +1012,7 @@ class SnapshotQueueServiceTest : TestBase() {
                         ignoredHolderAddresses = ignoredHolderAddresses,
                         ownerAddress = ownerAddress,
                         snapshotStatus = SnapshotStatus.SUCCESS,
+                        snapshotFailureCause = null,
                         data = FullSnapshotData(
                             totalAssetAmount = totalAssetAmount,
                             merkleRootHash = tree.root.hash,
@@ -940,7 +1108,7 @@ class SnapshotQueueServiceTest : TestBase() {
                 blockNumber = BlockNumber(BigInteger.TEN),
                 ignoredHolderAddresses = emptySet(),
                 ownerAddress = owner,
-                data = OtherSnapshotData(SnapshotStatus.PENDING)
+                data = OtherSnapshotData(SnapshotStatus.PENDING, null)
             )
         )
         val statuses = setOf(SnapshotStatus.PENDING, SnapshotStatus.SUCCESS)
@@ -981,6 +1149,7 @@ class SnapshotQueueServiceTest : TestBase() {
                         ignoredHolderAddresses = emptySet(),
                         ownerAddress = snapshots[0].ownerAddress,
                         snapshotStatus = SnapshotStatus.SUCCESS,
+                        snapshotFailureCause = null,
                         data = FullSnapshotData(
                             totalAssetAmount = totalAssetAmount,
                             merkleRootHash = tree.root.hash,
@@ -998,6 +1167,7 @@ class SnapshotQueueServiceTest : TestBase() {
                         ignoredHolderAddresses = emptySet(),
                         ownerAddress = snapshots[1].ownerAddress,
                         snapshotStatus = SnapshotStatus.PENDING,
+                        snapshotFailureCause = null,
                         data = null
                     )
                 )

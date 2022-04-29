@@ -6,7 +6,8 @@ class ResourceNotFoundException(val errorCode: ErrorCode, exceptionMessage: Stri
     }
 }
 
-class InternalException(val errorCode: ErrorCode, exceptionMessage: String) : Exception(exceptionMessage) {
+class InternalException(val errorCode: ErrorCode, exceptionMessage: String, cause: Throwable? = null) :
+    Exception(exceptionMessage, cause) {
     companion object {
         private const val serialVersionUID: Long = -2656013978175834059L
     }

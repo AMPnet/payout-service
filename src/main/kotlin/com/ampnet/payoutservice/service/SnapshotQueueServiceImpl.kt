@@ -21,6 +21,7 @@ import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.HashFunction
 import com.ampnet.payoutservice.util.MerkleTree
+import com.ampnet.payoutservice.util.SnapshotFailureCause
 import com.ampnet.payoutservice.util.SnapshotStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import mu.KLogging
@@ -92,6 +93,7 @@ class SnapshotQueueServiceImpl(
             ignoredHolderAddresses = ignoredHolderAddresses,
             ownerAddress = ownerAddress,
             snapshotStatus = data.status,
+            snapshotFailureCause = data.failureCause,
             data = data.createSnapshotData()
         )
 
@@ -118,7 +120,13 @@ class SnapshotQueueServiceImpl(
                 handlePendingSnapshot(snapshot)
             } catch (ex: Throwable) {
                 logger.error { "Failed to handle pending snapshot, snapshotId: ${snapshot.id}: ${ex.message}" }
-                snapshotRepository.failSnapshot(snapshot.id)
+
+                val cause = when (ex.cause?.message?.contains("Log response size exceeded")) {
+                    true -> SnapshotFailureCause.LOG_RESPONSE_LIMIT
+                    else -> SnapshotFailureCause.OTHER
+                }
+
+                snapshotRepository.failSnapshot(snapshot.id, cause)
             }
         }
     }

@@ -53,12 +53,14 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
             ReadonlyTransactionManager(blockchainProperties.web3j, erc20ContractAddress.rawValue),
             DefaultGasProvider()
         )
+        // TODO we can use ethGetTransactionCount to find start block number via binary search when we go by 2k blocks
         val startBlockParameter =
             startBlock?.value?.let(DefaultBlockParameter::valueOf) ?: DefaultBlockParameterName.EARLIEST
         val endBlockParameter = DefaultBlockParameter.valueOf(endBlock.value)
 
         logger.debug { "Block range from: ${startBlockParameter.value} to: ${endBlockParameter.value}" }
 
+        // TODO split this into 2k blocks for larger assets - TBD on sprint planning
         val accounts = contract.findAccounts(startBlockParameter, endBlockParameter) - ignoredErc20Addresses
 
         logger.debug { "Found ${accounts.size} holder addresses for ERC20 contract: $erc20ContractAddress" }
@@ -151,10 +153,11 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
                     logger.error(error) { "Error processing contract transfer event" }
                     errors += InternalException(
                         ErrorCode.BLOCKCHAIN_CONTRACT_EVENT_READ_ERROR,
-                        "Error processing contract transfer event"
+                        "Error processing contract transfer event",
+                        error
                     )
                 }
-            )
+            ).dispose()
 
         if (errors.isNotEmpty()) {
             throw errors[0]
