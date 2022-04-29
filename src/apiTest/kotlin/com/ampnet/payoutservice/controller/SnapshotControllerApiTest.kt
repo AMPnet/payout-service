@@ -179,7 +179,7 @@ class SnapshotControllerApiTest : ControllerTestBase() {
                         blockNumber = payoutBlock,
                         ignoredHolderAddresses = ignoredAddresses.mapTo(HashSet()) { WalletAddress(it) },
                         ownerAddress = WalletAddress(HardhatTestContainer.accountAddress1),
-                        data = OtherSnapshotData(SnapshotStatus.PENDING)
+                        data = OtherSnapshotData(SnapshotStatus.PENDING, null)
                     )
                 )
         }
@@ -287,6 +287,7 @@ class SnapshotControllerApiTest : ControllerTestBase() {
                         ignoredHolderAddresses = ignoredAddresses.mapTo(HashSet()) { WalletAddress(it) },
                         ownerAddress = WalletAddress(HardhatTestContainer.accountAddress1),
                         snapshotStatus = SnapshotStatus.PENDING,
+                        snapshotFailureCause = null,
                         data = null
                     ).toSnapshotResponse()
                 )
@@ -318,6 +319,7 @@ class SnapshotControllerApiTest : ControllerTestBase() {
                         ignoredHolderAddresses = ignoredAddresses.mapTo(HashSet()) { WalletAddress(it) },
                         ownerAddress = WalletAddress(HardhatTestContainer.accountAddress1),
                         snapshotStatus = SnapshotStatus.SUCCESS,
+                        snapshotFailureCause = null,
                         data = FullSnapshotData(
                             totalAssetAmount = Balance(BigInteger("600")),
                             // checked in next verify block
@@ -570,6 +572,7 @@ class SnapshotControllerApiTest : ControllerTestBase() {
                         ignoredHolderAddresses = emptySet(),
                         ownerAddress = WalletAddress(HardhatTestContainer.accountAddress1),
                         snapshotStatus = SnapshotStatus.PENDING,
+                        snapshotFailureCause = null,
                         data = null
                     ).toSnapshotResponse()
                 )
@@ -601,6 +604,7 @@ class SnapshotControllerApiTest : ControllerTestBase() {
                         ignoredHolderAddresses = emptySet(),
                         ownerAddress = WalletAddress(HardhatTestContainer.accountAddress1),
                         snapshotStatus = SnapshotStatus.SUCCESS,
+                        snapshotFailureCause = null,
                         data = FullSnapshotData(
                             totalAssetAmount = Balance(BigInteger("10000")),
                             // checked in next verify block

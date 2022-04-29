@@ -12,6 +12,7 @@ import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.IpfsHash
+import com.ampnet.payoutservice.util.SnapshotFailureCause
 import com.ampnet.payoutservice.util.SnapshotStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import mu.KLogging
@@ -119,10 +120,11 @@ class JooqSnapshotRepository(private val dslContext: DSLContext, private val uui
             ?.toModel()
     }
 
-    override fun failSnapshot(snapshotId: UUID): Snapshot? {
+    override fun failSnapshot(snapshotId: UUID, cause: SnapshotFailureCause): Snapshot? {
         logger.info { "Marking snapshot as failed, snapshotId: $snapshotId" }
         return dslContext.update(SnapshotTable.SNAPSHOT)
             .set(SnapshotTable.SNAPSHOT.STATUS, DbSnapshotStatus.FAILED)
+            .set(SnapshotTable.SNAPSHOT.FAILURE_CAUSE, cause.toDbEnum)
             .where(SnapshotTable.SNAPSHOT.ID.eq(snapshotId))
             .returning()
             .fetchOne()
@@ -131,13 +133,14 @@ class JooqSnapshotRepository(private val dslContext: DSLContext, private val uui
 
     private fun SnapshotRecord.toModel(): Snapshot {
         val snapshotStatus = SnapshotStatus.fromDbEnum(status!!)
+        val snapshotFailureCause = failureCause?.let { SnapshotFailureCause.fromDbEnum(it) }
         val snapshotData = if (snapshotStatus == SnapshotStatus.SUCCESS) {
             SuccessfulSnapshotData(
                 merkleTreeRootId = resultTree!!,
                 merkleTreeIpfsHash = IpfsHash(treeIpfsHash!!),
                 totalAssetAmount = Balance(totalAssetAmount!!)
             )
-        } else OtherSnapshotData(snapshotStatus)
+        } else OtherSnapshotData(snapshotStatus, snapshotFailureCause)
 
         return Snapshot(
             id = id!!,

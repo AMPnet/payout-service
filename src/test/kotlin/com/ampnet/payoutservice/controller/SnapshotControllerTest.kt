@@ -42,6 +42,7 @@ class SnapshotControllerTest : TestBase() {
             ignoredHolderAddresses = setOf(WalletAddress("b")),
             ownerAddress = WalletAddress("c"),
             snapshotStatus = SnapshotStatus.PENDING,
+            snapshotFailureCause = null,
             data = null
         )
 
@@ -253,6 +254,7 @@ class SnapshotControllerTest : TestBase() {
             ignoredHolderAddresses = emptySet(),
             ownerAddress = owner,
             snapshotStatus = SnapshotStatus.PENDING,
+            snapshotFailureCause = null,
             data = null
         )
     }

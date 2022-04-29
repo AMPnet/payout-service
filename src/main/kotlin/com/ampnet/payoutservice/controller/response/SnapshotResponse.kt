@@ -1,5 +1,6 @@
 package com.ampnet.payoutservice.controller.response
 
+import com.ampnet.payoutservice.util.SnapshotFailureCause
 import com.ampnet.payoutservice.util.SnapshotStatus
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer
@@ -11,6 +12,7 @@ data class SnapshotResponse(
     val name: String,
     val chainId: Long,
     val status: SnapshotStatus,
+    val failureCause: SnapshotFailureCause?,
     val owner: String,
     val asset: String,
     @JsonSerialize(using = ToStringSerializer::class)

@@ -6,6 +6,7 @@ import com.ampnet.payoutservice.model.result.Snapshot
 import com.ampnet.payoutservice.util.Balance
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.IpfsHash
+import com.ampnet.payoutservice.util.SnapshotFailureCause
 import com.ampnet.payoutservice.util.SnapshotStatus
 import com.ampnet.payoutservice.util.WalletAddress
 import java.util.UUID
@@ -29,5 +30,5 @@ interface SnapshotRepository {
         totalAssetAmount: Balance
     ): Snapshot?
 
-    fun failSnapshot(snapshotId: UUID): Snapshot?
+    fun failSnapshot(snapshotId: UUID, cause: SnapshotFailureCause): Snapshot?
 }
