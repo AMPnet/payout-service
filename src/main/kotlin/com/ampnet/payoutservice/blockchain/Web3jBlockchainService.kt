@@ -13,6 +13,7 @@ import com.ampnet.payoutservice.model.result.Payout
 import com.ampnet.payoutservice.model.result.PayoutForInvestor
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
+import com.ampnet.payoutservice.util.BinarySearch
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
@@ -142,27 +143,19 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
     override fun findContractDeploymentBlockNumber(chainId: ChainId, contractAddress: ContractAddress): BlockNumber {
         val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
 
-        tailrec fun findBlock(lowerBound: BigInteger, upperBound: BigInteger): BlockNumber =
-            if (lowerBound - upperBound <= BigInteger.ONE) {
-                BlockNumber(lowerBound)
-            } else {
-                val currentBlock = (lowerBound + upperBound) / BigInteger.TWO
-                val txCount = blockchainProperties.web3j.ethGetTransactionCount(
+        return BinarySearch(
+            lowerBound = BigInteger.ZERO,
+            upperBound = blockchainProperties.web3j.ethBlockNumber()
+                .trySend("Failed RPC call: ethBlockNumber()").blockNumber,
+            getValue = { currentBlock ->
+                blockchainProperties.web3j.ethGetTransactionCount(
                     contractAddress.rawValue,
                     DefaultBlockParameter.valueOf(currentBlock)
                 ).trySend("Failed RPC call: ethGetTransactionCount($contractAddress, $currentBlock)").transactionCount
-
-                findBlock(
-                    lowerBound = if (txCount == BigInteger.ZERO) currentBlock else lowerBound,
-                    upperBound = if (txCount > BigInteger.ZERO) currentBlock else upperBound
-                )
-            }
-
-        return findBlock(
-            lowerBound = BigInteger.ZERO,
-            upperBound = blockchainProperties.web3j.ethBlockNumber()
-                .trySend("Failed RPC call: ethBlockNumber()").blockNumber
-        )
+            },
+            updateLowerBound = { txCount -> txCount == BigInteger.ZERO },
+            updateUpperBound = { txCount -> txCount != BigInteger.ZERO }
+        ).let { BlockNumber(it) }
     }
 
     private fun IERC20.findAccounts(
