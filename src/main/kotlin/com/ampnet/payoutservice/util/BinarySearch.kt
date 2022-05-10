@@ -12,7 +12,7 @@ object BinarySearch {
     ): BigInteger {
         tailrec fun find(lower: BigInteger, upper: BigInteger): BigInteger =
             if (upper - lower <= BigInteger.ONE) {
-                lower
+                lower.min(upper)
             } else {
                 val current = (lower + upper) / BigInteger.TWO
                 val value = getValue(current)

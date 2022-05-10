@@ -85,7 +85,7 @@ class BinarySearchTest : TestBase() {
         val upperBound = BigInteger("100")
         val target = BigInteger("400")
 
-        verify("binary search will return lower bound for reversed bounds") {
+        verify("binary search will return numerically lower bound for reversed bounds") {
             val result = BinarySearch(
                 lowerBound = lowerBound,
                 upperBound = upperBound,
@@ -95,7 +95,7 @@ class BinarySearchTest : TestBase() {
             )
 
             assertThat(result).withMessage()
-                .isEqualTo(lowerBound)
+                .isEqualTo(BigInteger("100"))
         }
     }
 }
