@@ -24,4 +24,6 @@ interface BlockchainService {
     fun getPayoutsForAdmin(params: GetPayoutsForAdminParams): List<Payout>
 
     fun getPayoutsForInvestor(params: GetPayoutsForInvestorParams): List<PayoutForInvestor>
+
+    fun findContractDeploymentBlockNumber(chainId: ChainId, contractAddress: ContractAddress): BlockNumber
 }
