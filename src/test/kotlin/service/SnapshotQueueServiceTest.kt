@@ -56,6 +56,13 @@ class SnapshotQueueServiceTest : TestBase() {
                 .willReturn(ownerAddress)
         }
 
+        val startBlock = BlockNumber(BigInteger("6"))
+
+        suppose("contract deployment block number is returned") {
+            given(blockchainService.findContractDeploymentBlockNumber(chainId, assetAddress))
+                .willReturn(startBlock)
+        }
+
         val snapshotRepository = mock<SnapshotRepository>()
         val payoutBlock = BlockNumber(BigInteger.TEN)
         val ignoredHolderAddresses = setOf(WalletAddress("dead"))
@@ -102,7 +109,7 @@ class SnapshotQueueServiceTest : TestBase() {
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
                     ignoredErc20Addresses = ignoredHolderAddresses,
-                    startBlock = null,
+                    startBlock = startBlock,
                     endBlock = payoutBlock
                 )
             ).willReturn(accountBalances)
@@ -226,11 +233,13 @@ class SnapshotQueueServiceTest : TestBase() {
 
             // handlePendingSnapshot()
             verifyMock(blockchainService)
+                .findContractDeploymentBlockNumber(chainId, assetAddress)
+            verifyMock(blockchainService)
                 .fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
                     ignoredErc20Addresses = ignoredHolderAddresses,
-                    startBlock = null,
+                    startBlock = startBlock,
                     endBlock = payoutBlock
                 )
             verifyNoMoreInteractions(blockchainService)
@@ -267,6 +276,13 @@ class SnapshotQueueServiceTest : TestBase() {
         suppose("requesting user is asset owner") {
             given(blockchainService.getAssetOwner(chainId, assetAddress))
                 .willReturn(ownerAddress)
+        }
+
+        val startBlock = BlockNumber(BigInteger("6"))
+
+        suppose("contract deployment block number is returned") {
+            given(blockchainService.findContractDeploymentBlockNumber(chainId, assetAddress))
+                .willReturn(startBlock)
         }
 
         val snapshotRepository = mock<SnapshotRepository>()
@@ -309,7 +325,7 @@ class SnapshotQueueServiceTest : TestBase() {
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
                     ignoredErc20Addresses = ignoredHolderAddresses,
-                    startBlock = null,
+                    startBlock = startBlock,
                     endBlock = payoutBlock
                 )
             ).willThrow(RuntimeException())
@@ -398,11 +414,13 @@ class SnapshotQueueServiceTest : TestBase() {
 
             // handlePendingSnapshot()
             verifyMock(blockchainService)
+                .findContractDeploymentBlockNumber(chainId, assetAddress)
+            verifyMock(blockchainService)
                 .fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
                     ignoredErc20Addresses = ignoredHolderAddresses,
-                    startBlock = null,
+                    startBlock = startBlock,
                     endBlock = payoutBlock
                 )
             verifyNoMoreInteractions(blockchainService)
@@ -430,6 +448,13 @@ class SnapshotQueueServiceTest : TestBase() {
         suppose("requesting user is asset owner") {
             given(blockchainService.getAssetOwner(chainId, assetAddress))
                 .willReturn(ownerAddress)
+        }
+
+        val startBlock = BlockNumber(BigInteger("6"))
+
+        suppose("contract deployment block number is returned") {
+            given(blockchainService.findContractDeploymentBlockNumber(chainId, assetAddress))
+                .willReturn(startBlock)
         }
 
         val snapshotRepository = mock<SnapshotRepository>()
@@ -472,7 +497,7 @@ class SnapshotQueueServiceTest : TestBase() {
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
                     ignoredErc20Addresses = ignoredHolderAddresses,
-                    startBlock = null,
+                    startBlock = startBlock,
                     endBlock = payoutBlock
                 )
             ).willThrow(RuntimeException(RuntimeException("Log response size exceeded")))
@@ -561,11 +586,13 @@ class SnapshotQueueServiceTest : TestBase() {
 
             // handlePendingSnapshot()
             verifyMock(blockchainService)
+                .findContractDeploymentBlockNumber(chainId, assetAddress)
+            verifyMock(blockchainService)
                 .fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
                     ignoredErc20Addresses = ignoredHolderAddresses,
-                    startBlock = null,
+                    startBlock = startBlock,
                     endBlock = payoutBlock
                 )
             verifyNoMoreInteractions(blockchainService)
@@ -593,6 +620,13 @@ class SnapshotQueueServiceTest : TestBase() {
         suppose("requesting user is asset owner") {
             given(blockchainService.getAssetOwner(chainId, assetAddress))
                 .willReturn(ownerAddress)
+        }
+
+        val startBlock = BlockNumber(BigInteger("6"))
+
+        suppose("contract deployment block number is returned") {
+            given(blockchainService.findContractDeploymentBlockNumber(chainId, assetAddress))
+                .willReturn(startBlock)
         }
 
         val snapshotRepository = mock<SnapshotRepository>()
@@ -641,7 +675,7 @@ class SnapshotQueueServiceTest : TestBase() {
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
                     ignoredErc20Addresses = ignoredHolderAddresses,
-                    startBlock = null,
+                    startBlock = startBlock,
                     endBlock = payoutBlock
                 )
             ).willReturn(accountBalances)
@@ -764,11 +798,13 @@ class SnapshotQueueServiceTest : TestBase() {
 
             // handlePendingSnapshot()
             verifyMock(blockchainService)
+                .findContractDeploymentBlockNumber(chainId, assetAddress)
+            verifyMock(blockchainService)
                 .fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
                     ignoredErc20Addresses = ignoredHolderAddresses,
-                    startBlock = null,
+                    startBlock = startBlock,
                     endBlock = payoutBlock
                 )
             verifyNoMoreInteractions(blockchainService)
@@ -906,6 +942,12 @@ class SnapshotQueueServiceTest : TestBase() {
         val totalAssetAmount = Balance(BigInteger("3"))
 
         val blockchainService = mock<BlockchainService>()
+        val startBlock = BlockNumber(BigInteger("6"))
+
+        suppose("contract deployment block number is returned") {
+            given(blockchainService.findContractDeploymentBlockNumber(chainId, assetAddress))
+                .willReturn(startBlock)
+        }
 
         suppose("some asset balances are fetched") {
             given(
@@ -913,7 +955,7 @@ class SnapshotQueueServiceTest : TestBase() {
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
                     ignoredErc20Addresses = ignoredHolderAddresses,
-                    startBlock = null,
+                    startBlock = startBlock,
                     endBlock = payoutBlock
                 )
             ).willReturn(accountBalances)
@@ -1035,11 +1077,13 @@ class SnapshotQueueServiceTest : TestBase() {
 
             // handlePendingSnapshot()
             verifyMock(blockchainService)
+                .findContractDeploymentBlockNumber(chainId, assetAddress)
+            verifyMock(blockchainService)
                 .fetchErc20AccountBalances(
                     chainId = chainId,
                     erc20ContractAddress = assetAddress,
                     ignoredErc20Addresses = ignoredHolderAddresses,
-                    startBlock = null,
+                    startBlock = startBlock,
                     endBlock = payoutBlock
                 )
             verifyNoMoreInteractions(blockchainService)
