@@ -572,6 +572,46 @@ class Web3jBlockchainServiceIntegTest : TestBase() {
         }
     }
 
+    @Test
+    fun mustCorrectlyFindContractDeploymentBlockNumber() {
+        val mainAccount = accounts[0]
+
+        suppose("100 blocks will be mined") {
+            hardhatContainer.mineUntil(maxAttempts = 100) { false }
+        }
+
+        val contract = suppose("simple ERC20 contract is deployed") {
+            SimpleERC20.deploy(
+                hardhatContainer.web3j,
+                mainAccount,
+                DefaultGasProvider(),
+                listOf(mainAccount.address),
+                listOf(BigInteger("10000")),
+                mainAccount.address
+            ).sendAndMine()
+        }
+
+        val deploymentBlockNumber = contract.transactionReceipt.get().blockNumber
+
+        suppose("250 blocks will be mined") {
+            hardhatContainer.mineUntil(maxAttempts = 250) { false }
+        }
+
+        verify("correct contract deployment block number is returned") {
+            val service = Web3jBlockchainService(hardhatProperties())
+            val foundDeploymentBlock = service.findContractDeploymentBlockNumber(
+                chainId = Chain.HARDHAT_TESTNET.id,
+                contractAddress = ContractAddress(contract.contractAddress)
+            )
+
+            // it's okay to have either the exact deployment block number or one block BEFORE deployment, but not after
+            val diff = deploymentBlockNumber - foundDeploymentBlock.value
+
+            assertThat(diff).withMessage()
+                .isBetween(BigInteger.ZERO, BigInteger.ONE)
+        }
+    }
+
     private fun SimpleERC20.transferAndMine(address: String, amount: BigInteger) {
         transfer(address, amount).sendAsync()
         hardhatContainer.mineUntil {

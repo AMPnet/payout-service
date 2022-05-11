@@ -13,6 +13,7 @@ import com.ampnet.payoutservice.model.result.Payout
 import com.ampnet.payoutservice.model.result.PayoutForInvestor
 import com.ampnet.payoutservice.util.AccountBalance
 import com.ampnet.payoutservice.util.Balance
+import com.ampnet.payoutservice.util.BinarySearch
 import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
@@ -22,6 +23,8 @@ import org.springframework.stereotype.Service
 import org.web3j.protocol.core.DefaultBlockParameter
 import org.web3j.protocol.core.DefaultBlockParameterName
 import org.web3j.protocol.core.RemoteFunctionCall
+import org.web3j.protocol.core.Request
+import org.web3j.protocol.core.Response
 import org.web3j.tx.ReadonlyTransactionManager
 import org.web3j.tx.gas.DefaultGasProvider
 import java.math.BigInteger
@@ -53,7 +56,7 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
             ReadonlyTransactionManager(blockchainProperties.web3j, erc20ContractAddress.rawValue),
             DefaultGasProvider()
         )
-        // TODO we can use ethGetTransactionCount to find start block number via binary search when we go by 2k blocks
+
         val startBlockParameter =
             startBlock?.value?.let(DefaultBlockParameter::valueOf) ?: DefaultBlockParameterName.EARLIEST
         val endBlockParameter = DefaultBlockParameter.valueOf(endBlock.value)
@@ -134,6 +137,25 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
             ErrorCode.BLOCKCHAIN_CONTRACT_READ_ERROR,
             "Failed reading payout data for investor"
         )
+    }
+
+    @Throws(InternalException::class)
+    override fun findContractDeploymentBlockNumber(chainId: ChainId, contractAddress: ContractAddress): BlockNumber {
+        val blockchainProperties = chainHandler.getBlockchainProperties(chainId)
+
+        return BinarySearch(
+            lowerBound = BigInteger.ZERO,
+            upperBound = blockchainProperties.web3j.ethBlockNumber()
+                .trySend("Failed RPC call: ethBlockNumber()").blockNumber,
+            getValue = { currentBlock ->
+                blockchainProperties.web3j.ethGetTransactionCount(
+                    contractAddress.rawValue,
+                    DefaultBlockParameter.valueOf(currentBlock)
+                ).trySend("Failed RPC call: ethGetTransactionCount($contractAddress, $currentBlock)").transactionCount
+            },
+            updateLowerBound = { txCount -> txCount == BigInteger.ZERO },
+            updateUpperBound = { txCount -> txCount != BigInteger.ZERO }
+        ).let { BlockNumber(it) }
     }
 
     private fun IERC20.findAccounts(
@@ -259,5 +281,14 @@ class Web3jBlockchainService(applicationProperties: ApplicationProperties) : Blo
         } catch (ex: Exception) {
             logger.warn("Failed smart contract call", ex)
             null
+        }
+
+    @Suppress("TooGenericExceptionCaught")
+    private fun <T : Response<*>> Request<*, T>.trySend(errorMessage: String): T =
+        try {
+            this.send()
+        } catch (ex: Exception) {
+            logger.error("Failed RPC call", ex)
+            throw InternalException(ErrorCode.BLOCKCHAIN_READ_ERROR, errorMessage)
         }
 }

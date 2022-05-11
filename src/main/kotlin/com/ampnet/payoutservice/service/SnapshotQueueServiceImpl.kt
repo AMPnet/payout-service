@@ -16,7 +16,6 @@ import com.ampnet.payoutservice.model.result.SuccessfulSnapshotData
 import com.ampnet.payoutservice.repository.MerkleTreeRepository
 import com.ampnet.payoutservice.repository.SnapshotRepository
 import com.ampnet.payoutservice.util.Balance
-import com.ampnet.payoutservice.util.BlockNumber
 import com.ampnet.payoutservice.util.ChainId
 import com.ampnet.payoutservice.util.ContractAddress
 import com.ampnet.payoutservice.util.HashFunction
@@ -132,11 +131,15 @@ class SnapshotQueueServiceImpl(
     }
 
     private fun handlePendingSnapshot(snapshot: PendingSnapshot) {
+        val contractDeploymentBlock = blockchainService.findContractDeploymentBlockNumber(
+            chainId = snapshot.chainId,
+            contractAddress = snapshot.assetAddress
+        )
         val balances = blockchainService.fetchErc20AccountBalances(
             chainId = snapshot.chainId,
             erc20ContractAddress = snapshot.assetAddress,
             ignoredErc20Addresses = snapshot.ignoredHolderAddresses,
-            startBlock = chainHandler.getChainProperties(snapshot.chainId)?.startBlockNumber?.let { BlockNumber(it) },
+            startBlock = contractDeploymentBlock,
             endBlock = snapshot.blockNumber
         )
         val totalAssetAmount = Balance(balances.sumOf { it.balance.rawValue })
