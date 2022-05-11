@@ -44,7 +44,6 @@ class SnapshotQueueServiceImpl(
     }
 
     private val executorService = scheduledExecutorServiceProvider.newSingleThreadScheduledExecutor(QUEUE_NAME)
-    private val chainHandler = ChainPropertiesHandler(applicationProperties)
 
     init {
         executorService.scheduleAtFixedRate(
