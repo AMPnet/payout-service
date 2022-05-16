@@ -41,5 +41,6 @@ object Versions {
         const val testContainers = "1.16.2"
         const val postgresDriver = "42.3.1"
         const val jwt = "1.0.1"
+        const val sentry = "5.7.4"
     }
 }
