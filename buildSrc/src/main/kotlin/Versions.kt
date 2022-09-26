@@ -2,7 +2,7 @@ import org.gradle.api.JavaVersion
 
 object Versions {
 
-    const val project = "0.1.2"
+    const val project = "1.0.0"
 
     object Compile {
         const val kotlin = "1.6.10"

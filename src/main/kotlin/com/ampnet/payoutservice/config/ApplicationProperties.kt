@@ -15,8 +15,13 @@ class ApplicationProperties {
     val chainGoerli = ChainProperties()
     val chainMatic = ChainProperties()
     val chainMumbai = ChainProperties()
-    val chainPoa = ChainProperties()
     val chainHardhatTestnet = ChainProperties()
+    val chainBsc = ChainProperties()
+    val chainXdai = ChainProperties()
+    val chainFantom = ChainProperties()
+    val chainMoonriver = ChainProperties()
+    val chainAvalanche = ChainProperties()
+    val chainAurora = ChainProperties()
     var infuraId: String = ""
 }
 
