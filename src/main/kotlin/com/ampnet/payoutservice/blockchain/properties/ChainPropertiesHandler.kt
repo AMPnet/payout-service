@@ -32,6 +32,11 @@ class ChainPropertiesHandler(private val applicationProperties: ApplicationPrope
             Chain.MOONRIVER.id -> applicationProperties.chainMoonriver
             Chain.AVAX.id -> applicationProperties.chainAvalanche
             Chain.AURORA.id -> applicationProperties.chainAurora
+            Chain.ARBITRUM.id -> applicationProperties.chainArbitrum
+            Chain.OPTIMISM.id -> applicationProperties.chainOptimism
+            Chain.CELO.id -> applicationProperties.chainCelo
+            Chain.PARATIME.id -> applicationProperties.chainParaTime
+            Chain.MOONBEAM.id -> applicationProperties.chainMoonbeam
             else -> null
         }
     }
