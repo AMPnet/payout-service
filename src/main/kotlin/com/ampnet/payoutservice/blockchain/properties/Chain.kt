@@ -58,6 +58,31 @@ enum class Chain(val id: ChainId, val rpcUrl: String, val infura: String?) {
         ChainId(1313161554),
         "https://mainnet.aurora.dev/",
         null
+    ),
+    ARBITRUM(
+        ChainId(42161),
+        "https://arb1.arbitrum.io/rpc",
+        null
+    ),
+    OPTIMISM(
+        ChainId(10),
+        "https://mainnet.optimism.io",
+        null
+    ),
+    CELO(
+        ChainId(42220),
+        "https://forno.celo.org",
+        null
+    ),
+    PARATIME(
+        ChainId(42262),
+        "https://emerald.oasis.dev",
+        null
+    ),
+    MOONBEAM(
+        ChainId(1284),
+        "https://moonbeam.public.blastapi.io",
+        null
     );
 
     companion object {
