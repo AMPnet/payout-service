@@ -36,7 +36,7 @@ enum class Chain(val id: ChainId, val rpcUrl: String, val infura: String?) {
     ),
     XDAI(
         ChainId(100),
-        "https://rpc.xdaichain.com/ ",
+        "https://wider-flashy-telescope.xdai.quiknode.pro/3032827d979350ef930fbaf0b041ca1c5262f962/",
         null
     ),
     FANTOM(
@@ -71,7 +71,7 @@ enum class Chain(val id: ChainId, val rpcUrl: String, val infura: String?) {
     ),
     CELO(
         ChainId(42220),
-        "https://forno.celo.org",
+        "https://icy-morning-tree.celo-mainnet.quiknode.pro/8ed0d34e8954249bcd847e85e7a721cbf7a3f464/",
         null
     ),
     PARATIME(
